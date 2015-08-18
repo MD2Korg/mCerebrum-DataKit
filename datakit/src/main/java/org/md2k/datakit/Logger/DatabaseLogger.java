@@ -9,6 +9,7 @@ import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
 import org.md2k.utilities.Report.Log;
+import org.md2k.utilities.UI.UIShow;
 
 import java.util.ArrayList;
 /**
@@ -52,7 +53,7 @@ public class DatabaseLogger extends SQLiteOpenHelper {
             String directory = FileManager.getDirectory(context);
             Log.d(TAG, "directory=" + directory);
             if (directory == null)
-                UIShow.ErrorDialog(context, "Error: Database Logger", "Could not access \""+FileManager.getStorageOption()+"\"");
+                UIShow.ErrorDialog(context, "Error: Database Logger", "Could not access \"" + FileManager.getStorageOption() + "\"");
             else
                 instance = new DatabaseLogger(context);
         }

@@ -48,17 +48,18 @@ public class DataSourceManager extends Manager{
     }
 
     public Message register(DataSource dataSource) {
-        if(databaseLogger==null) return prepareErrorMessage(MessageType.REGISTER);
         DataSourceClient dataSourceClient = registerDataSource(dataSource);
-        Publishers.getInstance().add(dataSourceClient);
+        if(dataSource.isPersistent())
+            Publishers.getInstance().add(dataSourceClient.getDs_id(),databaseLogger);
+        else
+            Publishers.getInstance().add(dataSourceClient.getDs_id());
+
         Bundle bundle = new Bundle();
         bundle.putSerializable(DataSourceClient.class.getSimpleName(), dataSourceClient);
         return prepareMessage(bundle, MessageType.REGISTER);
     }
 
     public Message unregister(int ds_id) {
-        if(databaseLogger==null) return prepareErrorMessage(MessageType.UNREGISTER);
-
         Status status = Publishers.getInstance().remove(ds_id);
         Bundle bundle = new Bundle();
         bundle.putSerializable(Status.class.getSimpleName(), status);
@@ -66,8 +67,6 @@ public class DataSourceManager extends Manager{
     }
 
     public Message subscribe(int ds_id, Messenger reply) {
-        if(databaseLogger==null) return prepareErrorMessage(MessageType.SUBSCRIBE);
-
         Status status = Publishers.getInstance().subscribe(ds_id, reply);
         Bundle bundle = new Bundle();
         bundle.putSerializable(Status.class.getSimpleName(), status);
@@ -75,7 +74,6 @@ public class DataSourceManager extends Manager{
     }
 
     public Message unsubscribe(int ds_id, Messenger reply) {
-        if(databaseLogger==null) return prepareErrorMessage(MessageType.UNSUBSCRIBE);
         Status status = Publishers.getInstance().unsubscribe(ds_id, reply);
         Bundle bundle = new Bundle();
         bundle.putSerializable(Status.class.getSimpleName(), status);
@@ -83,7 +81,6 @@ public class DataSourceManager extends Manager{
     }
 
     public Message find(DataSource dataSource) {
-        if(databaseLogger==null) return prepareErrorMessage(MessageType.FIND);
         ArrayList<DataSourceClient> dataSourceClients = databaseLogger.find(dataSource);
         Bundle bundle = new Bundle();
         bundle.putSerializable(DataSourceClient.class.getSimpleName(), dataSourceClients);
@@ -101,11 +98,8 @@ public class DataSourceManager extends Manager{
             } else if (dataSourceClients.size() == 1) {
                 dataSourceClient = new DataSourceClient(dataSourceClients.get(0).getDs_id(), dataSourceClients.get(0).getDataSource(), new Status(StatusCodes.DATASOURCE_EXISTS));
             } else {
-                dataSourceClient = new DataSourceClient(-1, dataSource, new Status(StatusCodes.DATASOURCE_EXISTS));
+                dataSourceClient = new DataSourceClient(-1, dataSource, new Status(StatusCodes.DATASOURCE_MULTIPLE_EXIST));
             }
-        }
-        if (dataSourceClient.getDs_id() != -1) {
-            Publishers.getInstance().subscribe(dataSourceClient.getDs_id(), databaseLogger);
         }
         return dataSourceClient;
     }

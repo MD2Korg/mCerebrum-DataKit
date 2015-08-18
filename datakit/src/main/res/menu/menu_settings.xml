@@ -5,6 +5,5 @@
         android:id="@+id/action_settings"
         android:title="@string/action_settings"
         android:icon="@drawable/icon_settings_dark"
-        android:orderInCategory="1"
-        app:showAsAction="always" />
+        android:orderInCategory="1" />
 </menu>

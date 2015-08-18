@@ -49,7 +49,6 @@ public class ServiceDataKit extends Service {
     DatabaseLogger databaseLogger = null;
     Messenger mMessenger;
 
-
     @Override
     public void onCreate() {
         super.onCreate();
@@ -87,6 +86,7 @@ public class ServiceDataKit extends Service {
             }
         }
 
+
         @Override
         public void handleMessage(Message msg) {
             message = null;
@@ -94,8 +94,6 @@ public class ServiceDataKit extends Service {
                 if (databaseLogger == null) {
                     Log.d(TAG,"handleMessage(): databaseLogger=null msg="+msg.what);
                     message = Manager.prepareErrorMessage(msg.what);
-                    replyTo = msg.replyTo;
-                    replyTo.send(message);
                 } else {
                     switch (msg.what) {
                         case MessageType.REGISTER:

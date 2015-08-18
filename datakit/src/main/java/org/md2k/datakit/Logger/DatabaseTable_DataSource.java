@@ -63,7 +63,7 @@ public class DatabaseTable_DataSource {
             C_CREATEDATETIME + " LONG, " + C_DATASOURCE + " BLOB not null);";
 
     DatabaseTable_DataSource(SQLiteDatabase db) {
-        create(db);
+        createIfNotExists(db);
     }
 
     private String[] prepareSelectionArgs(DataSource dataSource) {
@@ -125,7 +125,7 @@ public class DatabaseTable_DataSource {
         return selection;
     }
 
-    public void create(SQLiteDatabase db) {
+    public void createIfNotExists(SQLiteDatabase db) {
         db.execSQL(SQL_CREATE_DATASOURCE);
     }
 

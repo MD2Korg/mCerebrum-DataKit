@@ -27,6 +27,7 @@ package org.md2k.datakit.datarouter;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import org.md2k.datakit.Logger.DatabaseLogger;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.status.Status;
 import org.md2k.datakitapi.status.StatusCodes;
@@ -62,32 +63,40 @@ import java.util.List;
 
 public class Publisher {
     int ds_id;
-    private List<Subscriber> subscribers = new ArrayList<Subscriber>();
+    private List<MessageSubscriber> messageSubscribers;
+    private DatabaseSubscriber databaseSubscriber;
     Publisher(int ds_id){
         this.ds_id=ds_id;
+        databaseSubscriber=null;
+        messageSubscribers =new ArrayList<>();
     }
-
+    Publisher(int ds_id, DatabaseLogger databaseLogger){
+        this.ds_id=ds_id;
+        databaseSubscriber=new DatabaseSubscriber(databaseLogger);
+        messageSubscribers =new ArrayList<>();
+    }
     public void setData(DataType dataType) {
         notifyAllObservers(dataType);
     }
-    boolean isAvailable(Subscriber subscriber){
-        for(Subscriber subscriber1:subscribers)
-            if(subscriber1.equals(subscriber))
+    boolean isExists(MessageSubscriber subscriber){
+        for(MessageSubscriber subscriber1: messageSubscribers)
+            if(subscriber1.reply.equals(subscriber.reply))
                 return true;
         return false;
     }
-    public Status add(Subscriber subscriber){
-        if(isAvailable(subscriber)) return new Status(StatusCodes.DATASOURCE_EXISTS);
-        subscribers.add(subscriber);
+    public Status add(MessageSubscriber subscriber){
+        if(isExists(subscriber)) return new Status(StatusCodes.ALREADY_SUBSCRIBED);
+        messageSubscribers.add(subscriber);
         return new Status(StatusCodes.SUCCESS);
     }
-    public Status remove(Subscriber subscriber){
-        if(!isAvailable(subscriber)) return new Status(StatusCodes.DATASOURCE_NOT_FOUND);
-        subscribers.remove(subscriber);
+    public Status remove(MessageSubscriber subscriber){
+        if(!isExists(subscriber)) return new Status(StatusCodes.DATASOURCE_NOT_FOUND);
+        messageSubscribers.remove(subscriber);
         return new Status(StatusCodes.SUCCESS);
     }
     public void notifyAllObservers(DataType dataType){
-        for (Subscriber subscriber : subscribers) {
+        if(databaseSubscriber!=null) databaseSubscriber.update(ds_id,dataType);
+        for (MessageSubscriber subscriber : messageSubscribers) {
             subscriber.update(ds_id,dataType);
         }
     }

@@ -35,13 +35,12 @@ import org.md2k.utilities.Report.Log;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public class MessageSubscriber extends Subscriber {
+public class MessageSubscriber{
     private static final String TAG = MessageSubscriber.class.getSimpleName();
     Messenger reply;
     public MessageSubscriber(Messenger reply){
         this.reply=reply;
     }
-    @Override
     public void update(int ds_id,DataType data) {
         Bundle bundle=new Bundle();
         bundle.putSerializable(DataType.class.getSimpleName(), data);
@@ -52,5 +51,11 @@ public class MessageSubscriber extends Subscriber {
             Log.d(TAG, "subscriber--insert data fails");
             e.printStackTrace();
         }
+    }
+    public Message prepareMessage(Bundle bundle, int messageType) {
+        Message message = Message.obtain(null, 0, 0, 0);
+        message.what = messageType;
+        message.setData(bundle);
+        return message;
     }
 }

@@ -55,10 +55,10 @@ public class DatabaseTable_Data {
     DatabaseTable_Data(SQLiteDatabase db) {
         Log.d(TAG, "DatabaseTable_Data");
 
-        create(db);
+        createIfNotExists(db);
     }
 
-    public void create(SQLiteDatabase db) {
+    public void createIfNotExists(SQLiteDatabase db) {
         db.execSQL(SQL_CREATE_DATA);
     }
     private void insertDB(SQLiteDatabase db){

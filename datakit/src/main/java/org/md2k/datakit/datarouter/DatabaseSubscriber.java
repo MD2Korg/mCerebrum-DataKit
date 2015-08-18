@@ -29,14 +29,13 @@ import org.md2k.datakitapi.datatype.DataType;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public class DatabaseSubscriber extends Subscriber {
 
+public class DatabaseSubscriber {
     private static final String TAG = DatabaseSubscriber.class.getSimpleName();
     DatabaseLogger databaseLogger;
     public DatabaseSubscriber(DatabaseLogger databaseLogger){
         this.databaseLogger=databaseLogger;
     }
-    @Override
     public void update(int ds_id,DataType data) {
         databaseLogger.insert(ds_id, data);
     }

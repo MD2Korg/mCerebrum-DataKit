@@ -45,10 +45,16 @@ public class Publishers {
     Publishers(){
         publishers=new SparseArray<>();
     }
-    public void add(DataSourceClient dataSourceClient){
-        if(dataSourceClient.getDs_id()==-1) return;
-        if(publishers.indexOfKey(dataSourceClient.getDs_id())<0) {
-            publishers.put(dataSourceClient.getDs_id(), new Publisher(dataSourceClient.getDs_id()));
+    public void add(int ds_id){
+        if(ds_id==-1) return;
+        if(publishers.indexOfKey(ds_id)<0) {
+            publishers.put(ds_id, new Publisher(ds_id));
+        }
+    }
+    public void add(int ds_id, DatabaseLogger databaseLogger){
+        if(ds_id==-1) return;
+        if(publishers.indexOfKey(ds_id)<0) {
+            publishers.put(ds_id, new Publisher(ds_id, databaseLogger));
         }
     }
     public Status remove(int ds_id){
@@ -60,21 +66,12 @@ public class Publishers {
     public Status subscribe(int ds_id,Messenger reply){
         if(publishers.indexOfKey(ds_id)<0)
             return new Status(StatusCodes.DATASOURCE_NOT_FOUND);
-        Publisher publisher=publishers.get(ds_id);
-        return publisher.add(new MessageSubscriber(reply));
-    }
-    public Status subscribe(int ds_id,DatabaseLogger databaseLogger){
-        if(publishers.indexOfKey(ds_id)<0)
-            return new Status(StatusCodes.DATASOURCE_NOT_FOUND);
-        Publisher publisher=publishers.get(ds_id);
-        return publisher.add(new DatabaseSubscriber(databaseLogger));
+        return publishers.get(ds_id).add(new MessageSubscriber(reply));
     }
 
     public Status unsubscribe(int ds_id,Messenger reply){
         if(publishers.indexOfKey(ds_id)<0)
             return new Status(StatusCodes.DATASOURCE_NOT_FOUND);
-        Publisher publisher=publishers.get(ds_id);
-        return publisher.remove(new MessageSubscriber(reply));
+        return publishers.get(ds_id).remove(new MessageSubscriber(reply));
     }
-
 }
