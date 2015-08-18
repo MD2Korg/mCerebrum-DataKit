@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/../autosense/autosense.iml" filepath="$PROJECT_DIR$/../autosense/autosense.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../autosense_quality/autosense_quality.iml" filepath="$PROJECT_DIR$/../autosense_quality/autosense_quality.iml" />
+      <module fileurl="file://$PROJECT_DIR$/datakit.iml" filepath="$PROJECT_DIR$/datakit.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../dklibrary/dklibrary.iml" filepath="$PROJECT_DIR$/../dklibrary/dklibrary.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../ema/ema.iml" filepath="$PROJECT_DIR$/../ema/ema.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../intervention/intervention.iml" filepath="$PROJECT_DIR$/../intervention/intervention.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../mCerebrum1.iml" filepath="$PROJECT_DIR$/../mCerebrum1.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../mcerebrumapp/mcerebrumapp.iml" filepath="$PROJECT_DIR$/../mcerebrumapp/mcerebrumapp.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../microsoftband/microsoftband.iml" filepath="$PROJECT_DIR$/../microsoftband/microsoftband.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../microsoftbandui/microsoftbandui.iml" filepath="$PROJECT_DIR$/../microsoftbandui/microsoftbandui.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../moodsurfing/moodsurfing.iml" filepath="$PROJECT_DIR$/../moodsurfing/moodsurfing.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../phonesensor/phonesensor.iml" filepath="$PROJECT_DIR$/../phonesensor/phonesensor.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../plotter/plotter.iml" filepath="$PROJECT_DIR$/../plotter/plotter.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../utilities/utilities.iml" filepath="$PROJECT_DIR$/../utilities/utilities.iml" />
+    </modules>
+  </component>
+</project>
