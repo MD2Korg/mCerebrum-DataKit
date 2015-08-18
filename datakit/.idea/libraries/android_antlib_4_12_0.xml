@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="android_antlib_4-12-0">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../autosense/src/main/lib/android_antlib_4-12-0.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
