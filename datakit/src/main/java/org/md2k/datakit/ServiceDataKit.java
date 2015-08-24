@@ -108,12 +108,14 @@ public class ServiceDataKit extends Service {
                             message = dataSourceManager.find((DataSource) msg.getData().getSerializable(DataSource.class.getSimpleName()));
                             break;
                         case MessageType.INSERT:
+
                             message = dataManager.insert(msg.getData().getInt("ds_id"), (DataType) msg.getData().getSerializable(DataType.class.getSimpleName()));
                             break;
                         case MessageType.QUERY:
                             message = dataManager.query(msg.getData().getInt("ds_id"), msg.getData().getLong("starttimestamp"), msg.getData().getLong("endtimestamp"));
                             break;
                         case MessageType.SUBSCRIBE:
+                            Log.d(TAG,"subscribe");
                             message = dataSourceManager.subscribe(msg.getData().getInt("ds_id"), msg.replyTo);
                             break;
                         case MessageType.UNSUBSCRIBE:

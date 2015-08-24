@@ -31,6 +31,7 @@ import org.md2k.datakit.Logger.DatabaseLogger;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.status.Status;
 import org.md2k.datakitapi.status.StatusCodes;
+import org.md2k.utilities.Report.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,6 +63,7 @@ import java.util.List;
  */
 
 public class Publisher {
+    private static final String TAG = Publisher.class.getSimpleName();
     int ds_id;
     private List<MessageSubscriber> messageSubscribers;
     private DatabaseSubscriber databaseSubscriber;
@@ -75,7 +77,7 @@ public class Publisher {
         databaseSubscriber=new DatabaseSubscriber(databaseLogger);
         messageSubscribers =new ArrayList<>();
     }
-    public void setData(DataType dataType) {
+    public void receivedData(DataType dataType) {
         notifyAllObservers(dataType);
     }
     boolean isExists(MessageSubscriber subscriber){
@@ -85,6 +87,7 @@ public class Publisher {
         return false;
     }
     public Status add(MessageSubscriber subscriber){
+        Log.d(TAG,"Publisher->add()");
         if(isExists(subscriber)) return new Status(StatusCodes.ALREADY_SUBSCRIBED);
         messageSubscribers.add(subscriber);
         return new Status(StatusCodes.SUCCESS);
@@ -95,6 +98,7 @@ public class Publisher {
         return new Status(StatusCodes.SUCCESS);
     }
     public void notifyAllObservers(DataType dataType){
+        Log.d(TAG, "Publisher->notifyAllObservers() ds_id="+ds_id);
         if(databaseSubscriber!=null) databaseSubscriber.update(ds_id,dataType);
         for (MessageSubscriber subscriber : messageSubscribers) {
             subscriber.update(ds_id,dataType);

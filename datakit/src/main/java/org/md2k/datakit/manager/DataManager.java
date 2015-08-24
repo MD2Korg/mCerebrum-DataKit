@@ -3,6 +3,7 @@ package org.md2k.datakit.manager;
 import android.os.Bundle;
 import android.os.Message;
 
+import org.md2k.datakit.datarouter.Publishers;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.messagehandler.MessageType;
 import org.md2k.datakitapi.status.Status;
@@ -43,10 +44,11 @@ public class DataManager extends Manager{
     }
 
     public Message insert(int ds_id, DataType dataType){
-        if(databaseLogger==null) return prepareErrorMessage(MessageType.INSERT);
+        Publishers.getInstance().receivedData(ds_id,dataType);
+//        if(databaseLogger==null) return prepareErrorMessage(MessageType.INSERT);
 
         Bundle bundle=new Bundle();
-        databaseLogger.insert(ds_id,dataType);
+   //     databaseLogger.insert(ds_id,dataType);
         bundle.putSerializable(Status.class.getSimpleName(), new Status(StatusCodes.SUCCESS));
         return prepareMessage(bundle,MessageType.INSERT);
     }

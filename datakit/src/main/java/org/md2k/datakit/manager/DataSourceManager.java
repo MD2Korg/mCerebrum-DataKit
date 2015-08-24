@@ -10,6 +10,7 @@ import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
 import org.md2k.datakitapi.status.Status;
 import org.md2k.datakitapi.status.StatusCodes;
+import org.md2k.utilities.Report.Log;
 
 import java.util.ArrayList;
 
@@ -68,6 +69,7 @@ public class DataSourceManager extends Manager{
 
     public Message subscribe(int ds_id, Messenger reply) {
         Status status = Publishers.getInstance().subscribe(ds_id, reply);
+        Log.d(TAG, "DataSourceManager -> subscribe(ds_id)=" + ds_id + " status=" + status.getStatusCode());
         Bundle bundle = new Bundle();
         bundle.putSerializable(Status.class.getSimpleName(), status);
         return prepareMessage(bundle, MessageType.SUBSCRIBE);

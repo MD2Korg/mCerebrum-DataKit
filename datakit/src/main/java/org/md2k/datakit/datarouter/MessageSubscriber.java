@@ -44,7 +44,7 @@ public class MessageSubscriber{
     public void update(int ds_id,DataType data) {
         Bundle bundle=new Bundle();
         bundle.putSerializable(DataType.class.getSimpleName(), data);
-        Message message=prepareMessage(bundle, MessageType.INSERT);
+        Message message=prepareMessage(bundle, MessageType.SUBSCRIBED_DATA);
         try {
             reply.send(message);
         } catch (RemoteException e) {

@@ -3,7 +3,7 @@ package org.md2k.datakit.datarouter;
 import android.os.Messenger;
 import android.util.SparseArray;
 import org.md2k.datakit.Logger.DatabaseLogger;
-import org.md2k.datakitapi.source.datasource.DataSourceClient;
+import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.status.Status;
 import org.md2k.datakitapi.status.StatusCodes;
 
@@ -56,6 +56,9 @@ public class Publishers {
         if(publishers.indexOfKey(ds_id)<0) {
             publishers.put(ds_id, new Publisher(ds_id, databaseLogger));
         }
+    }
+    public void receivedData(int ds_id,DataType dataType){
+        publishers.get(ds_id).receivedData(dataType);
     }
     public Status remove(int ds_id){
         if(publishers.indexOfKey(ds_id)<0) return new Status(StatusCodes.DATASOURCE_NOT_FOUND);
