@@ -41,15 +41,15 @@ public class MessageSubscriber{
     public MessageSubscriber(Messenger reply){
         this.reply=reply;
     }
-    public void update(int ds_id,DataType data) {
+    public boolean update(DataType data) {
         Bundle bundle=new Bundle();
         bundle.putSerializable(DataType.class.getSimpleName(), data);
         Message message=prepareMessage(bundle, MessageType.SUBSCRIBED_DATA);
         try {
             reply.send(message);
+            return true;
         } catch (RemoteException e) {
-            Log.d(TAG, "subscriber--insert data fails");
-            e.printStackTrace();
+            return false;
         }
     }
     public Message prepareMessage(Bundle bundle, int messageType) {

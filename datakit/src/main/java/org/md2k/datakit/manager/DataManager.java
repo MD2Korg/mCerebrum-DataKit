@@ -45,10 +45,7 @@ public class DataManager extends Manager{
 
     public Message insert(int ds_id, DataType dataType){
         Publishers.getInstance().receivedData(ds_id,dataType);
-//        if(databaseLogger==null) return prepareErrorMessage(MessageType.INSERT);
-
         Bundle bundle=new Bundle();
-   //     databaseLogger.insert(ds_id,dataType);
         bundle.putSerializable(Status.class.getSimpleName(), new Status(StatusCodes.SUCCESS));
         return prepareMessage(bundle,MessageType.INSERT);
     }

@@ -94,14 +94,19 @@ public class Publisher {
     }
     public Status remove(MessageSubscriber subscriber){
         if(!isExists(subscriber)) return new Status(StatusCodes.DATASOURCE_NOT_FOUND);
-        messageSubscribers.remove(subscriber);
+        for(int i=0;i<messageSubscribers.size();i++) {
+            if (messageSubscribers.get(i).reply.equals(subscriber.reply)) {
+                messageSubscribers.remove(i);
+                break;
+            }
+        }
         return new Status(StatusCodes.SUCCESS);
     }
     public void notifyAllObservers(DataType dataType){
-        Log.d(TAG, "Publisher->notifyAllObservers() ds_id="+ds_id);
         if(databaseSubscriber!=null) databaseSubscriber.update(ds_id,dataType);
         for (MessageSubscriber subscriber : messageSubscribers) {
-            subscriber.update(ds_id,dataType);
+            if(!subscriber.update(dataType))
+                messageSubscribers.remove(subscriber);
         }
     }
 }
