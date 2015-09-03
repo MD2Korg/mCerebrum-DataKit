@@ -61,8 +61,10 @@ public class ServiceDataKit extends Service {
     @Override
     public void onDestroy() {
         Log.d(TAG, "onDestroy()...");
-        if (databaseLogger != null)
+        if (databaseLogger != null) {
             databaseLogger.close();
+            databaseLogger=null;
+        }
         super.onDestroy();
         Log.d(TAG, "...onDestroy()");
     }
