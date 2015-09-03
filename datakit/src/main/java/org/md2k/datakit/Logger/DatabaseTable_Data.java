@@ -92,7 +92,7 @@ public class DatabaseTable_Data {
     }
     private String prepareSelection() {
         String selection = "";
-        selection=C_ID+"=? AND "+C_DATETIME+" >=? AND "+C_DATETIME+" <=?";
+        selection=C_DATASOURCE_ID+"=? AND "+C_DATETIME+" >=? AND "+C_DATETIME+" <=?";
         return selection;
     }
 
