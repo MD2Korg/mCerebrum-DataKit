@@ -84,18 +84,26 @@ public class FileManager {
          **/
         String strSDCardPath = System.getenv("SECONDARY_STORAGE");
         String directory = null;
-        Log.d(TAG, "External SD Card=" + strSDCardPath + " context=" + context);
-
+        Log.d(TAG, "External SD Card=" + strSDCardPath + " context=" + context + " state=" + Environment.getExternalStorageState());
+        File[] externalFilesDirs = context.getExternalFilesDirs(null);
+        for (File externalFilesDir : externalFilesDirs)
+            if (externalFilesDir.getAbsolutePath().contains(strSDCardPath))
+                return externalFilesDir.getAbsolutePath();
+        return null;/*
         if (strSDCardPath != null && strSDCardPath.length() != 0) {
             directory = strSDCardPath + "/Android/data/" + context.getPackageName() + "/files/";
+
+            Log.d(TAG,"External SDCard Directory="+directory);
             File dir = new File(directory);
+
             if (!dir.exists()) {
-                if (!dir.mkdirs()) {
+                dir.mkdirs();
+                if(!dir.exists())
                     directory = null;
-                }
             }
         }
-        return directory;
+        Log.d(TAG,"External SDCard Directory="+directory);
+        return directory;*/
     }
 
     public static String getCurrentSDCardOptionString() {

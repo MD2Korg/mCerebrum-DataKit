@@ -45,7 +45,7 @@ public class DatabaseTable_Data {
     private static String C_SAMPLE="sample";
     ArrayList<ContentValues> cValues = new ArrayList<ContentValues>();
     long lastUnlock=0;
-    private static long WAITTIME = 2 * 1000L; // 10 second;
+    private static long WAITTIME = 2 * 1000L; // 2 second;
 
     private static final String SQL_CREATE_DATA = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" + C_ID + " INTEGER PRIMARY KEY autoincrement, " +
             C_DATASOURCE_ID + " TEXT, " + C_DATETIME + " LONG, " +
