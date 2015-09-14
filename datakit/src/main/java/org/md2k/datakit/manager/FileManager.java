@@ -11,17 +11,17 @@ import java.io.File;
  * Copyright (c) 2015, The University of Memphis, MD2K Center
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
  * All rights reserved.
- *
+ * <p/>
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- *
+ * <p/>
  * * Redistributions of source code must retain the above copyright notice, this
  * list of conditions and the following disclaimer.
- *
+ * <p/>
  * * Redistributions in binary form must reproduce the above copyright notice,
  * this list of conditions and the following disclaimer in the documentation
  * and/or other materials provided with the distribution.
- *
+ * <p/>
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -86,24 +86,13 @@ public class FileManager {
         String directory = null;
         Log.d(TAG, "External SD Card=" + strSDCardPath + " context=" + context + " state=" + Environment.getExternalStorageState());
         File[] externalFilesDirs = context.getExternalFilesDirs(null);
-        for (File externalFilesDir : externalFilesDirs)
+        Log.d(TAG, "External File Dir: size=" + externalFilesDirs.length);
+        for (File externalFilesDir : externalFilesDirs) {
+            if (externalFilesDir == null) continue;
             if (externalFilesDir.getAbsolutePath().contains(strSDCardPath))
                 return externalFilesDir.getAbsolutePath();
-        return null;/*
-        if (strSDCardPath != null && strSDCardPath.length() != 0) {
-            directory = strSDCardPath + "/Android/data/" + context.getPackageName() + "/files/";
-
-            Log.d(TAG,"External SDCard Directory="+directory);
-            File dir = new File(directory);
-
-            if (!dir.exists()) {
-                dir.mkdirs();
-                if(!dir.exists())
-                    directory = null;
-            }
         }
-        Log.d(TAG,"External SDCard Directory="+directory);
-        return directory;*/
+        return null;
     }
 
     public static String getCurrentSDCardOptionString() {
