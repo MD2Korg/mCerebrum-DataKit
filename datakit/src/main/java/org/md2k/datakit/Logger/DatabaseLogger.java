@@ -83,7 +83,6 @@ public class DatabaseLogger extends SQLiteOpenHelper {
     }
 
     public ArrayList<DataSourceClient> find(DataSource dataSource) {
-        Log.d(TAG, "find() db=" + db.toString() + " db.isOpen=" + db.isOpen());
         return databaseTable_dataSource.findDataSource(db, dataSource);
     }
 

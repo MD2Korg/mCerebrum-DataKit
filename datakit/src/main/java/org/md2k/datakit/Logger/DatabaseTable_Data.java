@@ -63,6 +63,7 @@ public class DatabaseTable_Data {
     }
     private void insertDB(SQLiteDatabase db){
         if(cValues.size()==0) return;
+        if(!db.isOpen()) return;
         db.beginTransaction();
         for (int i = 0; i < cValues.size(); i++)
             db.insert(TABLE_NAME, null, cValues.get(i));
