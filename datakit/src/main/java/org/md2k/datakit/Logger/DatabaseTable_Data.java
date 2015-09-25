@@ -1,4 +1,4 @@
-package org.md2k.datakit.Logger;
+package org.md2k.datakit.logger;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -62,8 +62,10 @@ public class DatabaseTable_Data {
         db.execSQL(SQL_CREATE_DATA);
     }
     private void insertDB(SQLiteDatabase db){
+
+        Log.d(TAG,"DataBaseLogger() db isopen="+db.isOpen()+" readonly="+db.isReadOnly()+" isWriteAheadLoggingEnabled="+db.isWriteAheadLoggingEnabled());
         if(cValues.size()==0) return;
-        if(!db.isOpen()) return;
+//        if(!db.isOpen()) return;
         db.beginTransaction();
         for (int i = 0; i < cValues.size(); i++)
             db.insert(TABLE_NAME, null, cValues.get(i));
@@ -77,11 +79,15 @@ public class DatabaseTable_Data {
 
     public void insert(SQLiteDatabase db, int dataSourceId, DataType dataType) {
         ContentValues contentValues=prepareData(dataSourceId, dataType);
+        Log.d(TAG,"insert ...");
+        Log.d(TAG,"DataBaseLogger() db isopen="+db.isOpen()+" readonly="+db.isReadOnly()+" isWriteAheadLoggingEnabled="+db.isWriteAheadLoggingEnabled());
         cValues.add(contentValues);
-        if (dataType.getStartDateTime() - lastUnlock >= WAITTIME) {
+        if (dataType.getDateTime() - lastUnlock >= WAITTIME) {
+            Log.d(TAG,"update db()");
             insertDB(db);
-            lastUnlock=dataType.getStartDateTime();
+            lastUnlock=dataType.getDateTime();
         }
+        Log.d(TAG,"...insert");
     }
     private String[] prepareSelectionArgs(int ds_id,long starttimestamp,long endtimestamp) {
         ArrayList<String> selectionArgs = new ArrayList<>();
@@ -129,6 +135,7 @@ public class DatabaseTable_Data {
         return dataTypes;
     }
     public ArrayList<DataType> query(SQLiteDatabase db, int ds_id, int last_n_sample){
+        Log.d(TAG,"ds_id="+ds_id+" last_n_sample="+last_n_sample);
         ArrayList<DataType> dataTypes = new ArrayList<>();
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
         queryBuilder.setTables(TABLE_NAME);
@@ -141,16 +148,17 @@ public class DatabaseTable_Data {
                 dataTypes.add(DataType.fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE))));
             } while (mCursor.moveToNext());
         }
-        if (mCursor != null && !mCursor.isClosed()) {
+        if (!mCursor.isClosed()) {
             mCursor.close();
         }
+        Log.d(TAG,"datatype length="+dataTypes.size());
         return dataTypes;
     }
 
     public ContentValues prepareData(int dataSourceId, DataType dataType) {
         ContentValues contentValues=new ContentValues();
         byte[] dataTypeArray = dataType.toBytes();
-        long startDateTime = dataType.getStartDateTime();
+        long startDateTime = dataType.getDateTime();
 
         contentValues.put(C_DATASOURCE_ID, dataSourceId);
         contentValues.put(C_DATETIME, startDateTime);

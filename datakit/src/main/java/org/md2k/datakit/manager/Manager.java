@@ -3,7 +3,7 @@ package org.md2k.datakit.manager;
 import android.os.Bundle;
 import android.os.Message;
 
-import org.md2k.datakit.Logger.DatabaseLogger;
+import org.md2k.datakit.logger.DatabaseLogger;
 import org.md2k.datakitapi.status.Status;
 import org.md2k.datakitapi.status.StatusCodes;
 

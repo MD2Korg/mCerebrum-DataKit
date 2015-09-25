@@ -2,7 +2,7 @@ package org.md2k.datakit.datarouter;
 
 import android.os.Messenger;
 import android.util.SparseArray;
-import org.md2k.datakit.Logger.DatabaseLogger;
+import org.md2k.datakit.logger.DatabaseLogger;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.status.Status;
 import org.md2k.datakitapi.status.StatusCodes;
@@ -76,5 +76,8 @@ public class Publishers {
         if(publishers.indexOfKey(ds_id)<0)
             return new Status(StatusCodes.DATASOURCE_NOT_FOUND);
         return publishers.get(ds_id).remove(new MessageSubscriber(reply));
+    }
+    public void close(){
+        instance=null;
     }
 }

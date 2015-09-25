@@ -8,7 +8,7 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 
-import org.md2k.datakit.Logger.DatabaseLogger;
+import org.md2k.datakit.logger.DatabaseLogger;
 import org.md2k.datakit.manager.DataManager;
 import org.md2k.datakit.manager.DataSourceManager;
 import org.md2k.datakit.manager.Manager;
@@ -46,21 +46,35 @@ import org.md2k.utilities.Report.Log;
 
 public class ServiceDataKit extends Service {
     private static final String TAG = ServiceDataKit.class.getSimpleName();
-    DatabaseLogger databaseLogger = null;
+//    DatabaseLogger databaseLogger = null;
     Messenger mMessenger;
+    DataSourceManager dataSourceManager;
+    DataManager dataManager;
 
     @Override
     public void onCreate() {
         super.onCreate();
         Log.d(TAG, "onCreate()...");
+        dataSourceManager = new DataSourceManager();
+        dataManager = new DataManager();
+
         databaseLogger = DatabaseLogger.getInstance(ServiceDataKit.this);
         mMessenger = new Messenger(new IncomingHandler());
         Log.d(TAG, "databaseLogger=" + databaseLogger);
         Log.d(TAG, "...onCreate()");
+/*        Notification notification = new Notification(R.drawable.icon_tick_dark, getText(R.string.app_name),System.currentTimeMillis());
+        Intent notificationIntent = new Intent(this, ServiceDataKit.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        notification.setLatestEventInfo(this, "DataKit", "running", pendingIntent);
+        startForeground(Notification.FLAG_ONGOING_EVENT, notification);
+*/
     }
     @Override
     public void onDestroy() {
         Log.d(TAG, "onDestroy()...");
+        dataSourceManager = null;
+        dataManager = null;
+
         if (databaseLogger != null) {
             databaseLogger.close();
             databaseLogger=null;
@@ -76,16 +90,10 @@ public class ServiceDataKit extends Service {
     }
 
     private class IncomingHandler extends Handler {
-        DataSourceManager dataSourceManager;
-        DataManager dataManager;
         Message message;
         Messenger replyTo;
 
         IncomingHandler() {
-            if (databaseLogger != null) {
-                dataSourceManager = new DataSourceManager();
-                dataManager = new DataManager();
-            }
         }
 
 
