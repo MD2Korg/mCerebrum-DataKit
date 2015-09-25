@@ -77,6 +77,9 @@ public class DatabaseLogger extends SQLiteOpenHelper {
     public ArrayList<DataType> query(int ds_id, long starttimestamp, long endtimestamp) {
         return databaseTable_data.query(db, ds_id, starttimestamp, endtimestamp);
     }
+    public ArrayList<DataType> query(int ds_id, int last_n_sample) {
+        return databaseTable_data.query(db, ds_id, last_n_sample);
+    }
 
     public DataSourceClient register(DataSource dataSource) {
         return databaseTable_dataSource.register(db, dataSource);

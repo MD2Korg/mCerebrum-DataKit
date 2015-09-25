@@ -45,6 +45,7 @@ public class DataManager extends Manager{
     }
 
     public Message insert(int ds_id, DataType dataType){
+        Log.d(TAG,"ds_id="+ds_id);
         Publishers.getInstance().receivedData(ds_id,dataType);
         Bundle bundle=new Bundle();
         bundle.putSerializable(Status.class.getSimpleName(), new Status(StatusCodes.SUCCESS));
@@ -57,4 +58,12 @@ public class DataManager extends Manager{
         bundle.putSerializable(DataType.class.getSimpleName(),dataTypes);
         return prepareMessage(bundle, MessageType.QUERY);
     }
+    public Message query(int ds_id,int last_n_sample){
+        if(databaseLogger==null) return prepareErrorMessage(MessageType.QUERY);
+        ArrayList<DataType> dataTypes = databaseLogger.query(ds_id, last_n_sample);
+        Bundle bundle=new Bundle();
+        bundle.putSerializable(DataType.class.getSimpleName(),dataTypes);
+        return prepareMessage(bundle, MessageType.QUERY);
+    }
+
 }

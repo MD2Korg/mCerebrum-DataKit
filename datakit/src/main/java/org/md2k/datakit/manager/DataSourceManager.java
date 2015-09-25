@@ -49,6 +49,7 @@ public class DataSourceManager extends Manager{
     }
 
     public Message register(DataSource dataSource) {
+        Log.d(TAG,"register: "+dataSource.getType());
         DataSourceClient dataSourceClient = registerDataSource(dataSource);
         if(dataSource.isPersistent())
             Publishers.getInstance().add(dataSourceClient.getDs_id(),databaseLogger);

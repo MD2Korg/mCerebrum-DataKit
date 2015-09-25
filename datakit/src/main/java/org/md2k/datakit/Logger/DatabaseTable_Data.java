@@ -91,9 +91,21 @@ public class DatabaseTable_Data {
         String[] stringArray = selectionArgs.toArray(new String[selectionArgs.size()]);
         return stringArray;
     }
+    private String[] prepareSelectionArgs(int ds_id) {
+        ArrayList<String> selectionArgs = new ArrayList<>();
+        selectionArgs.add(String.valueOf(ds_id));
+        String[] stringArray = selectionArgs.toArray(new String[selectionArgs.size()]);
+        return stringArray;
+    }
+
     private String prepareSelection() {
         String selection = "";
         selection=C_DATASOURCE_ID+"=? AND "+C_DATETIME+" >=? AND "+C_DATETIME+" <=?";
+        return selection;
+    }
+    private String prepareSelectionLastSamples() {
+        String selection = "";
+        selection=C_DATASOURCE_ID+"=?";
         return selection;
     }
 
@@ -106,6 +118,24 @@ public class DatabaseTable_Data {
         String[] selectionArgs = prepareSelectionArgs(ds_id,starttimestamp,endtimestamp);
         Cursor mCursor = db.query(TABLE_NAME,
                 columns, selection, selectionArgs, null, null, null);
+        if (mCursor.moveToFirst()) {
+            do {
+                dataTypes.add(DataType.fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE))));
+            } while (mCursor.moveToNext());
+        }
+        if (mCursor != null && !mCursor.isClosed()) {
+            mCursor.close();
+        }
+        return dataTypes;
+    }
+    public ArrayList<DataType> query(SQLiteDatabase db, int ds_id, int last_n_sample){
+        ArrayList<DataType> dataTypes = new ArrayList<>();
+        SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
+        queryBuilder.setTables(TABLE_NAME);
+        String[] columns = new String[]{C_SAMPLE};
+        String selection = prepareSelectionLastSamples();
+        String[] selectionArgs = prepareSelectionArgs(ds_id);
+        Cursor mCursor = db.query(TABLE_NAME, columns, selection, selectionArgs, null, null,"_id DESC", String.valueOf(last_n_sample));
         if (mCursor.moveToFirst()) {
             do {
                 dataTypes.add(DataType.fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE))));
