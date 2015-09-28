@@ -43,17 +43,24 @@ import java.util.ArrayList;
 
 public class DataSourceManager extends Manager{
     private static final String TAG = DataSourceManager.class.getSimpleName();
+    Publishers publishers;
 
     public DataSourceManager() {
         super();
+        publishers=Publishers.getInstance();
+    }
+    public void close(){
+        publishers.close();
+
     }
 
     public Message register(DataSource dataSource) {
+        Log.d(TAG,"register: "+dataSource.getType());
         DataSourceClient dataSourceClient = registerDataSource(dataSource);
         if(dataSource.isPersistent())
-            Publishers.getInstance().add(dataSourceClient.getDs_id(),databaseLogger);
+            publishers.add(dataSourceClient.getDs_id(),databaseLogger);
         else
-            Publishers.getInstance().add(dataSourceClient.getDs_id());
+            publishers.add(dataSourceClient.getDs_id());
 
         Bundle bundle = new Bundle();
         bundle.putSerializable(DataSourceClient.class.getSimpleName(), dataSourceClient);
@@ -94,6 +101,7 @@ public class DataSourceManager extends Manager{
         if (dataSource == null)
             dataSourceClient = new DataSourceClient(-1, dataSource, new Status(StatusCodes.INVALID_ENTRY));
         else {
+            Log.d(TAG,"databaseLogger="+databaseLogger);
             ArrayList<DataSourceClient> dataSourceClients = databaseLogger.find(dataSource);
             if (dataSourceClients.size() == 0) {
                 dataSourceClient = databaseLogger.register(dataSource);

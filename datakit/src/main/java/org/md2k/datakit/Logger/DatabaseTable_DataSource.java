@@ -1,4 +1,4 @@
-package org.md2k.datakit.Logger;
+package org.md2k.datakit.logger;
 
 import android.content.ContentValues;
 import android.database.Cursor;

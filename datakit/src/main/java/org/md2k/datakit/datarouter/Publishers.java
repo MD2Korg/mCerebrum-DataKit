@@ -2,10 +2,11 @@ package org.md2k.datakit.datarouter;
 
 import android.os.Messenger;
 import android.util.SparseArray;
-import org.md2k.datakit.Logger.DatabaseLogger;
+import org.md2k.datakit.logger.DatabaseLogger;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.status.Status;
 import org.md2k.datakitapi.status.StatusCodes;
+import org.md2k.utilities.Report.Log;
 
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -76,5 +77,15 @@ public class Publishers {
         if(publishers.indexOfKey(ds_id)<0)
             return new Status(StatusCodes.DATASOURCE_NOT_FOUND);
         return publishers.get(ds_id).remove(new MessageSubscriber(reply));
+    }
+    public void close(){
+        Log.d(TAG, "close: publishers size=" + publishers.size());
+        for(int i=0;i<publishers.size();i++) {
+            int key = publishers.keyAt(i);
+            publishers.get(key).close();
+        }
+        publishers.clear();
+        publishers=null;
+        instance=null;
     }
 }

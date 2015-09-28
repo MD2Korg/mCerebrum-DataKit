@@ -1,4 +1,4 @@
-package org.md2k.datakit.Logger;
+package org.md2k.datakit.logger;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -66,16 +66,22 @@ public class DatabaseLogger extends SQLiteOpenHelper {
         databaseTable_data.commit(db);
         if (db.isOpen())
             db.close();
+        super.close();
+        db=null;
         instance = null;
-//        super.close();
     }
 
     public void insert(int dataSourceId, DataType dataType) {
+        Log.d(TAG,"insert() db="+db);
+        Log.d(TAG,"insert() db="+db+" isopen="+db.isOpen()+" readonly="+db.isReadOnly()+" isWriteAheadLoggingEnabled="+db.isWriteAheadLoggingEnabled());
         databaseTable_data.insert(db, dataSourceId, dataType);
     }
 
     public ArrayList<DataType> query(int ds_id, long starttimestamp, long endtimestamp) {
         return databaseTable_data.query(db, ds_id, starttimestamp, endtimestamp);
+    }
+    public ArrayList<DataType> query(int ds_id, int last_n_sample) {
+        return databaseTable_data.query(db, ds_id, last_n_sample);
     }
 
     public DataSourceClient register(DataSource dataSource) {
@@ -89,6 +95,7 @@ public class DatabaseLogger extends SQLiteOpenHelper {
     public DatabaseLogger(Context context) {
         super(context, FileManager.getFilePath(context), null, FileManager.VERSION);
         db = this.getWritableDatabase();
+        Log.d(TAG, "DataBaseLogger() db isopen=" + db.isOpen() + " readonly=" + db.isReadOnly() + " isWriteAheadLoggingEnabled=" + db.isWriteAheadLoggingEnabled());
         databaseTable_dataSource = new DatabaseTable_DataSource(db);
         databaseTable_data = new DatabaseTable_Data(db);
     }

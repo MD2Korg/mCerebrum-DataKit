@@ -27,7 +27,7 @@ package org.md2k.datakit.datarouter;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import org.md2k.datakit.Logger.DatabaseLogger;
+import org.md2k.datakit.logger.DatabaseLogger;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.status.Status;
 import org.md2k.datakitapi.status.StatusCodes;
@@ -71,6 +71,10 @@ public class Publisher {
         this.ds_id=ds_id;
         databaseSubscriber=null;
         messageSubscribers =new ArrayList<>();
+    }
+    public void close(){
+        messageSubscribers.clear();
+        messageSubscribers=null;
     }
     Publisher(int ds_id, DatabaseLogger databaseLogger){
         this.ds_id=ds_id;
