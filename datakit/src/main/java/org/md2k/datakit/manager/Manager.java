@@ -6,6 +6,7 @@ import android.os.Message;
 import org.md2k.datakit.logger.DatabaseLogger;
 import org.md2k.datakitapi.status.Status;
 import org.md2k.datakitapi.status.StatusCodes;
+import org.md2k.utilities.Report.Log;
 
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -34,10 +35,12 @@ import org.md2k.datakitapi.status.StatusCodes;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 public class Manager {
+    private static final String TAG = Manager.class.getSimpleName();
     DatabaseLogger databaseLogger = null;
 
     public Manager(){
         databaseLogger = DatabaseLogger.getInstance(null);
+        Log.d(TAG, "databaseLogger=" + databaseLogger);
     }
     public Message prepareMessage(Bundle bundle, int messageType){
         Message message = Message.obtain(null, 0, 0, 0);

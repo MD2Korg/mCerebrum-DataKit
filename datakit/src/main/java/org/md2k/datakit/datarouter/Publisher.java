@@ -72,6 +72,10 @@ public class Publisher {
         databaseSubscriber=null;
         messageSubscribers =new ArrayList<>();
     }
+    public void close(){
+        messageSubscribers.clear();
+        messageSubscribers=null;
+    }
     Publisher(int ds_id, DatabaseLogger databaseLogger){
         this.ds_id=ds_id;
         databaseSubscriber=new DatabaseSubscriber(databaseLogger);
