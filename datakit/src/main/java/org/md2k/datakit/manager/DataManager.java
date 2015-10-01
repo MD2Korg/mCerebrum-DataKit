@@ -45,7 +45,6 @@ public class DataManager extends Manager{
     }
 
     public Message insert(int ds_id, DataType dataType){
-        Log.d(TAG,"ds_id="+ds_id);
         Publishers.getInstance().receivedData(ds_id,dataType);
         Bundle bundle=new Bundle();
         bundle.putSerializable(Status.class.getSimpleName(), new Status(StatusCodes.SUCCESS));

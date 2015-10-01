@@ -106,6 +106,8 @@ public class ServiceDataKit extends Service {
                         message = dataSourceManager.unregister(msg.getData().getInt("ds_id"));
                         break;
                     case MessageType.FIND:
+                        DataSource dataSource=(DataSource) msg.getData().getSerializable(DataSource.class.getSimpleName());
+                        Log.d(TAG,"curDataSourceType="+dataSource.getType());
                         message = dataSourceManager.find((DataSource) msg.getData().getSerializable(DataSource.class.getSimpleName()));
                         break;
                     case MessageType.INSERT:
@@ -118,7 +120,7 @@ public class ServiceDataKit extends Service {
                             message = dataManager.query(msg.getData().getInt("ds_id"), msg.getData().getInt("last_n_sample"));
                         break;
                     case MessageType.SUBSCRIBE:
-                        Log.d(TAG, "subscribe");
+                        Log.d(TAG, "subscribe ds_id="+msg.getData().getInt("ds_id"));
                         message = dataSourceManager.subscribe(msg.getData().getInt("ds_id"), msg.replyTo);
                         break;
                     case MessageType.UNSUBSCRIBE:

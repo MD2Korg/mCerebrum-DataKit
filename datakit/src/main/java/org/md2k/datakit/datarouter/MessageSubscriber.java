@@ -41,9 +41,10 @@ public class MessageSubscriber{
     public MessageSubscriber(Messenger reply){
         this.reply=reply;
     }
-    public boolean update(DataType data) {
+    public boolean update(int ds_id,DataType data) {
         Bundle bundle=new Bundle();
         bundle.putSerializable(DataType.class.getSimpleName(), data);
+        bundle.putInt("ds_id",ds_id);
         Message message=prepareMessage(bundle, MessageType.SUBSCRIBED_DATA);
         try {
             reply.send(message);

@@ -101,7 +101,6 @@ public class DataSourceManager extends Manager{
         if (dataSource == null)
             dataSourceClient = new DataSourceClient(-1, dataSource, new Status(StatusCodes.INVALID_ENTRY));
         else {
-            Log.d(TAG,"databaseLogger="+databaseLogger);
             ArrayList<DataSourceClient> dataSourceClients = databaseLogger.find(dataSource);
             if (dataSourceClients.size() == 0) {
                 dataSourceClient = databaseLogger.register(dataSource);

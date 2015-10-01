@@ -91,7 +91,6 @@ public class Publisher {
         return false;
     }
     public Status add(MessageSubscriber subscriber){
-        Log.d(TAG,"Publisher->add()");
         if(isExists(subscriber)) return new Status(StatusCodes.ALREADY_SUBSCRIBED);
         messageSubscribers.add(subscriber);
         return new Status(StatusCodes.SUCCESS);
@@ -109,7 +108,7 @@ public class Publisher {
     public void notifyAllObservers(DataType dataType){
         if(databaseSubscriber!=null) databaseSubscriber.update(ds_id,dataType);
         for (MessageSubscriber subscriber : messageSubscribers) {
-            if(!subscriber.update(dataType))
+            if(!subscriber.update(ds_id,dataType))
                 messageSubscribers.remove(subscriber);
         }
     }
