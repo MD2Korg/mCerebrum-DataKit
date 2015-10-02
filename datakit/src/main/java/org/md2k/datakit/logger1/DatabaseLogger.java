@@ -1,4 +1,4 @@
-package org.md2k.datakit.logger;
+package org.md2k.datakit.logger1;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -46,6 +46,10 @@ public class DatabaseLogger extends SQLiteOpenHelper {
     SQLiteDatabase db = null;
 
     private static DatabaseLogger instance = null;
+    public void removeAll(){
+        databaseTable_data.removeAll(db);
+        databaseTable_dataSource.removeAll(db);
+    }
 
     public static DatabaseLogger getInstance(Context context) {
         if(instance==null && context==null) return null;
@@ -72,8 +76,6 @@ public class DatabaseLogger extends SQLiteOpenHelper {
     }
 
     public void insert(int dataSourceId, DataType dataType) {
-        Log.d(TAG,"insert() db="+db);
-        Log.d(TAG,"insert() db="+db+" isopen="+db.isOpen()+" readonly="+db.isReadOnly()+" isWriteAheadLoggingEnabled="+db.isWriteAheadLoggingEnabled());
         databaseTable_data.insert(db, dataSourceId, dataType);
     }
 

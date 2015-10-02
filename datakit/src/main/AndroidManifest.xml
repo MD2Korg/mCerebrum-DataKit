@@ -18,6 +18,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ActivityDataKitSettings"
+            android:enabled="true"
+            android:exported="true"
+            android:icon="@drawable/ic_settings_white_24dp"
+            android:label="Settings"></activity>
 
         <service
             android:name=".ServiceDataKit"

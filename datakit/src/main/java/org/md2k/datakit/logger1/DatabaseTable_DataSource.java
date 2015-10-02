@@ -1,4 +1,4 @@
-package org.md2k.datakit.logger;
+package org.md2k.datakit.logger1;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -10,7 +10,6 @@ import org.md2k.datakitapi.source.datasource.DataSourceClient;
 import org.md2k.datakitapi.status.Status;
 import org.md2k.datakitapi.status.StatusCodes;
 import org.md2k.datakitapi.time.DateTime;
-import org.md2k.utilities.Report.Log;
 
 import java.util.ArrayList;
 
@@ -130,9 +129,7 @@ public class DatabaseTable_DataSource {
     }
 
     public ArrayList<DataSourceClient> findDataSource(SQLiteDatabase db, DataSource dataSource) {
-        Log.d(TAG, "findDataSource()...");
         ArrayList<DataSourceClient> dataSourceClients = new ArrayList<>();
-        Log.d(TAG, "findDataSource() db=" + db.toString());
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
         queryBuilder.setTables(TABLE_NAME);
         String[] columns = new String[]{C_DS_ID, C_DATASOURCE};
@@ -155,6 +152,9 @@ public class DatabaseTable_DataSource {
             }
         }
         return dataSourceClients;
+    }
+    public void removeAll(SQLiteDatabase db){
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
     }
 
     public DataSourceClient register(SQLiteDatabase db, DataSource dataSource) {

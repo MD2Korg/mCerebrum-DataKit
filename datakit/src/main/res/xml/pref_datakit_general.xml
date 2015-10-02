@@ -1,0 +1,14 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="Database">
+        <Preference
+            android:key="database_location"
+            android:icon="@drawable/ic_location_searching_white_24dp"
+            android:title="Location" />
+        <Preference
+            android:key="database_clear"
+            android:icon="@drawable/ic_remove_circle_outline_white_24dp"
+            android:title="Clear All Data"
+            />
+    </PreferenceCategory>
+</PreferenceScreen>

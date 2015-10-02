@@ -14,50 +14,66 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:paddingBottom="10dp"
-        android:paddingTop="5dp">
+        android:paddingTop="0dp">
 
         <TextView
             android:id="@+id/service_text"
             style="@style/textview_heading1_dark"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_column="0"
-            android:text="Service" />
-
-        <View style="@style/view_divider_dark" />
-
-        <Switch
-            android:id="@+id/switchService"
-            style="@style/switch_dark"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="right"
-            android:checked="false"
-            android:showText="false"
-            android:text="Service Status:" />
+            android:layout_column="0"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Service"
+            android:textColor="@color/amber_900" />
+
+        <View
+            style="@style/view_divider_dark" />
 
         <TextView
-            android:id="@+id/service_info"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_column="0"
-            android:text="Running time: 0 minutes" />
+            android:text="Time"
+            android:id="@+id/textViewTime"
+            android:textSize="40dp"
+            android:background="@drawable/circle_border"
+            android:textColor="@drawable/textview_click"
+            android:gravity="center_vertical|center_horizontal"
+            android:layout_gravity="center_horizontal"
+            android:minWidth="200dp"
+            android:minHeight="100dp"
+            android:padding="10dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="20dp" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Start Service"
+            android:id="@+id/buttonServiceStartStop"
+            android:layout_gravity="center_horizontal"
+            android:background="@drawable/button_green" />
+
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingBottom="10dp"
-        android:paddingTop="20dp">
+        android:paddingTop="20dp"
+        android:paddingBottom="10dp">
 
         <TextView
-            android:id="@+id/configuration_text"
+            android:id="@+id/sample_text"
             style="@style/textview_heading1_dark"
             android:layout_width="wrap_content"
-            android:text="Settings" />
+            android:layout_height="wrap_content"
+            android:layout_column="0"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Settings"
+            android:textColor="@color/amber_900" />
 
-        <View style="@style/view_divider_dark" />
+        <View
+            style="@style/view_divider_dark" />
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
