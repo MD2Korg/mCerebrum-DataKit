@@ -8,7 +8,7 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 
-import org.md2k.datakit.logger1.DatabaseLogger;
+import org.md2k.datakit.Logger.DatabaseLogger;
 import org.md2k.datakit.manager.DataManager;
 import org.md2k.datakit.manager.DataSourceManager;
 import org.md2k.datakitapi.datatype.DataType;
