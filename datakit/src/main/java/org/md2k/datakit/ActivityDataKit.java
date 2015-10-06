@@ -2,14 +2,11 @@ package org.md2k.datakit;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
-import android.widget.CompoundButton;
-import android.widget.Switch;
 import android.widget.TextView;
 
 import org.md2k.datakit.manager.FileManager;
@@ -53,31 +50,6 @@ public class ActivityDataKit extends Activity {
         Log.d(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_data_kit);
-        final Button buttonService = (Button) findViewById(R.id.buttonServiceStartStop);
-
-        buttonService.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(ActivityDataKit.this, ServiceDataKit.class);
-
-                if (buttonService.getText().equals("Start Service")) {
-                    startService(intent);
-                } else {
-                    stopService(intent);
-                }
-            }
-        });
-        findViewById(R.id.textViewTime).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(ActivityDataKit.this, ServiceDataKit.class);
-                if (((TextView) findViewById(R.id.textViewTime)).getText().equals("OFF")) {
-                    startService(intent);
-                } else {
-                    stopService(intent);
-                }
-            }
-        });
         if (getActionBar() != null)
             getActionBar().setDisplayHomeAsUpEnabled(true);
 
@@ -85,7 +57,6 @@ public class ActivityDataKit extends Activity {
     void updateSDCardSetttingsText(){
         ((TextView)findViewById(R.id.textview_sdcard_settings)).setText(FileManager.getCurrentSDCardOptionString());
         ((TextView)findViewById(R.id.textview_location_sd)).setText(FileManager.getValidSDcard(ActivityDataKit.this));
-        ((TextView)findViewById(R.id.textview_location_db)).setText(FileManager.getFilePath(ActivityDataKit.this));
     }
 
     @Override
@@ -125,6 +96,13 @@ public class ActivityDataKit extends Activity {
                 break;
             case R.id.action_about:
                 intent = new Intent(this, ActivityAbout.class);
+                try {
+                    intent.putExtra(org.md2k.utilities.Constants.VERSION_CODE,String.valueOf(this.getPackageManager().getPackageInfo(getPackageName(),0).versionCode));
+                    intent.putExtra(org.md2k.utilities.Constants.VERSION_NAME,this.getPackageManager().getPackageInfo(getPackageName(),0).versionName);
+                } catch (PackageManager.NameNotFoundException e) {
+                    e.printStackTrace();
+                }
+
                 startActivity(intent);
                 break;
             case R.id.action_copyright:
@@ -139,12 +117,9 @@ public class ActivityDataKit extends Activity {
         @Override
         public void run() {
             {
-                long time = Apps.serviceRunningTime(ActivityDataKit.this, Constants.SERVICE_NAME);
+                long time = Apps.serviceRunningTime(getApplicationContext(), Constants.SERVICE_NAME);
                 if (time < 0) {
                     ((TextView) findViewById(R.id.textViewTime)).setText("OFF");
-
-                    ((Button) findViewById(R.id.buttonServiceStartStop)).setText("Start Service");
-                    findViewById(R.id.buttonServiceStartStop).setBackground(getResources().getDrawable(R.drawable.button_green));
 
                 } else {
                     long runtime = time / 1000;
@@ -154,9 +129,6 @@ public class ActivityDataKit extends Activity {
                     runtime /= 60;
                     int hour = (int) runtime;
                     ((TextView) findViewById(R.id.textViewTime)).setText(String.format("%02d:%02d:%02d", hour, minute, second));
-                    ((Button) findViewById(R.id.buttonServiceStartStop)).setText("Stop Service");
-                    findViewById(R.id.buttonServiceStartStop).setBackground(getResources().getDrawable(R.drawable.button_red));
-
                 }
                 mHandler.postDelayed(this, 1000);
             }

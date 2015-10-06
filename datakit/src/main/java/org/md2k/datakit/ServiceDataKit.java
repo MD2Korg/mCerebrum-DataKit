@@ -54,7 +54,7 @@ public class ServiceDataKit extends Service {
     public void onCreate() {
         super.onCreate();
         Log.d(TAG, "onCreate()...");
-        databaseLogger = DatabaseLogger.getInstance(ServiceDataKit.this);
+        databaseLogger = DatabaseLogger.getInstance(getApplicationContext());
 
         dataSourceManager = new DataSourceManager();
         dataManager = new DataManager();
@@ -62,6 +62,11 @@ public class ServiceDataKit extends Service {
         mMessenger = new Messenger(new IncomingHandler());
         Log.d(TAG, "databaseLogger=" + databaseLogger);
         Log.d(TAG, "...onCreate()");
+    }
+    @Override
+    public boolean onUnbind(Intent intent){
+        Log.d(TAG,"unbind()...package="+intent.getPackage());
+        return super.onUnbind(intent);
     }
 
     @Override
@@ -106,7 +111,6 @@ public class ServiceDataKit extends Service {
                         break;
                     case MessageType.FIND:
                         DataSource dataSource=(DataSource) msg.getData().getSerializable(DataSource.class.getSimpleName());
-                        Log.d(TAG,"curDataSourceType="+dataSource.getType());
                         message = dataSourceManager.find((DataSource) msg.getData().getSerializable(DataSource.class.getSimpleName()));
                         break;
                     case MessageType.INSERT:
@@ -119,7 +123,6 @@ public class ServiceDataKit extends Service {
                             message = dataManager.query(msg.getData().getInt("ds_id"), msg.getData().getInt("last_n_sample"));
                         break;
                     case MessageType.SUBSCRIBE:
-                        Log.d(TAG, "subscribe ds_id="+msg.getData().getInt("ds_id"));
                         message = dataSourceManager.subscribe(msg.getData().getInt("ds_id"), msg.replyTo);
                         break;
                     case MessageType.UNSUBSCRIBE:

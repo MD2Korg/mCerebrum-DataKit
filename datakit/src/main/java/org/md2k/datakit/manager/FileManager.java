@@ -2,6 +2,7 @@ package org.md2k.datakit.manager;
 
 import android.content.Context;
 import android.os.Environment;
+import android.os.StatFs;
 
 import org.md2k.utilities.Report.Log;
 
@@ -40,6 +41,9 @@ public class FileManager {
     public static final int EXTERNAL_SDCARD_FOLLOWED_BY_INTERNAL_SDCARD = 4;
     public static final int NONE = 5;
     public static int STORAGE_OPTION = EXTERNAL_SDCARD_FOLLOWED_BY_INTERNAL_SDCARD;
+    public static final String INTERNAL_SDCARD_STR = "Internal SD Card";
+    public static final String EXTERNAL_SDCARD_STR = "External SD Card";
+
     private static final String TAG = FileManager.class.getSimpleName();
 
     public static String getFileName() {
@@ -49,9 +53,9 @@ public class FileManager {
     public static String getStorageOption() {
         switch (STORAGE_OPTION) {
             case INTERNAL_SDCARD:
-                return "Internal SD Card";
+                return INTERNAL_SDCARD_STR;
             case EXTERNAL_SDCARD:
-                return "External SD Card";
+                return EXTERNAL_SDCARD_STR;
             case INTERNAL_SDCARD_FOLLOWED_BY_EXTERNAL_SDCARD:
                 return "both Internal & External SD Card";
             case EXTERNAL_SDCARD_FOLLOWED_BY_INTERNAL_SDCARD:
@@ -78,6 +82,12 @@ public class FileManager {
     }
 
     public static String getExternalSDCardDirectory(Context context) {
+        File file = getExternalSDCardPath(context);
+        if (file == null) return null;
+        return file.getAbsolutePath();
+    }
+
+    public static File getExternalSDCardPath(Context context) {
         /**
          * TODO: There is no straight forward way to detect the presence of removable SD card.
          * This functions works for Samsung Galaxy S4. But for different phone, it needs to check
@@ -90,7 +100,7 @@ public class FileManager {
         for (File externalFilesDir : externalFilesDirs) {
             if (externalFilesDir == null) continue;
             if (externalFilesDir.getAbsolutePath().contains(strSDCardPath))
-                return externalFilesDir.getAbsolutePath();
+                return externalFilesDir;
         }
         return null;
     }
@@ -98,9 +108,9 @@ public class FileManager {
     public static String getCurrentSDCardOptionString() {
         switch (STORAGE_OPTION) {
             case INTERNAL_SDCARD:
-                return "Internal SDcard";
+                return INTERNAL_SDCARD_STR;
             case EXTERNAL_SDCARD:
-                return "External SDcard";
+                return EXTERNAL_SDCARD_STR;
             case INTERNAL_SDCARD_FOLLOWED_BY_EXTERNAL_SDCARD:
                 return "Internal SDcard followed by External SDcard";
             case EXTERNAL_SDCARD_FOLLOWED_BY_INTERNAL_SDCARD:
@@ -124,30 +134,79 @@ public class FileManager {
         switch (STORAGE_OPTION) {
             case INTERNAL_SDCARD:
                 if (getInternalSDCardDirectory(context) == null) return "Not found";
-                else return "Internal SDCard";
+                else return INTERNAL_SDCARD_STR;
             case EXTERNAL_SDCARD:
                 if (getExternalSDCardDirectory(context) == null) return "Not found";
-                else return "External SDCard";
+                else return EXTERNAL_SDCARD_STR;
             case INTERNAL_SDCARD_FOLLOWED_BY_EXTERNAL_SDCARD:
-                if (getInternalSDCardDirectory(context) != null) return "Internal SDCard";
-                else if (getExternalSDCardDirectory(context) != null) return "External SDCard";
+                if (getInternalSDCardDirectory(context) != null) return INTERNAL_SDCARD_STR;
+                else if (getExternalSDCardDirectory(context) != null) return EXTERNAL_SDCARD_STR;
                 else return "Not found";
             case EXTERNAL_SDCARD_FOLLOWED_BY_INTERNAL_SDCARD:
-                if (getExternalSDCardDirectory(context) != null) return "External SDCard";
-                else if (getInternalSDCardDirectory(context) != null) return "Internal SDCard";
+                if (getExternalSDCardDirectory(context) != null) return EXTERNAL_SDCARD_STR;
+                else if (getInternalSDCardDirectory(context) != null) return INTERNAL_SDCARD_STR;
                 else return "Not found";
             case NONE:
                 return "none";
             default:
                 return "(null)";
         }
+    }
 
+    public static String getStorageSpace(Context context) {
+        String sdCard = getValidSDcard(context);
+        String available = "-", total = "-";
+        if (sdCard.equals(INTERNAL_SDCARD_STR)) {
+            available = getAvailableInternalSDCardSize(Environment.getExternalStorageDirectory());
+            total = getTotalExternalSDCardSize(Environment.getExternalStorageDirectory());
+        } else if (sdCard.equals(EXTERNAL_SDCARD_STR)) {
+            available = getAvailableInternalSDCardSize(getExternalSDCardPath(context));
+            total = getTotalExternalSDCardSize(getExternalSDCardPath(context));
+        }
+        return available + " (out of " + total + ")";
+    }
+
+    public static String getAvailableInternalSDCardSize(File path) {
+        StatFs stat = new StatFs(path.getPath());
+        long blockSize = stat.getBlockSizeLong();
+        long remainingBlocks = stat.getFreeBlocksLong();
+        return formatSize(remainingBlocks * blockSize);
+    }
+
+    public static String getTotalExternalSDCardSize(File path) {
+        StatFs stat = new StatFs(path.getPath());
+        long blockSize = stat.getBlockSizeLong();
+        long totalBlocks = stat.getBlockCountLong();
+        return formatSize(totalBlocks * blockSize);
+    }
+
+    public static String formatSize(long size) {
+        String suffix = null;
+        if (size >= 1024) {
+            suffix = " KB";
+            size /= 1024;
+            if (size >= 1024) {
+                suffix = " MB";
+                size /= 1024;
+            }
+        }
+
+        StringBuilder resultBuffer = new StringBuilder(Long.toString(size));
+
+        int commaOffset = resultBuffer.length() - 3;
+        while (commaOffset > 0) {
+            resultBuffer.insert(commaOffset, ',');
+            commaOffset -= 3;
+        }
+
+        if (suffix != null) resultBuffer.append(suffix);
+        return resultBuffer.toString();
     }
 
     public static String getDirectory(Context context) {
         if (context == null) return null;
         Log.d(TAG, "getDirectory.. STORAGE_OPTION=" + STORAGE_OPTION + " Context=" + context);
-        String directory = null;
+        String directory;
         switch (STORAGE_OPTION) {
             case INTERNAL_SDCARD:
                 directory = getInternalSDCardDirectory(context);

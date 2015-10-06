@@ -1,10 +1,19 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory
-        android:title="Database">
+        android:title="Storage">
         <Preference
             android:key="database_location"
-            android:icon="@drawable/ic_location_searching_white_24dp"
+            android:icon="@drawable/ic_sd_storage_white_24dp"
             android:title="Location" />
+        <Preference
+            android:key="storage_space"
+            android:icon="@drawable/ic_assessment_white_24dp"
+            android:title="Remaining Space"
+            />
+        <Preference
+            android:key="database_filename"
+            android:icon="@drawable/ic_folder_white_24dp"
+            android:title="Database Location" />
         <Preference
             android:key="database_clear"
             android:icon="@drawable/ic_remove_circle_outline_white_24dp"

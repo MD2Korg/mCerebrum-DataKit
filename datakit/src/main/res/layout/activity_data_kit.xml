@@ -45,14 +45,6 @@
             android:layout_marginTop="20dp"
             android:layout_marginBottom="20dp" />
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Start Service"
-            android:id="@+id/buttonServiceStartStop"
-            android:layout_gravity="center_horizontal"
-            android:background="@drawable/button_green" />
-
     </LinearLayout>
 
     <LinearLayout
@@ -95,19 +87,6 @@
             android:text="Location:" />
         <TextView
             android:id="@+id/textview_location_sd"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_column="0"
-            style="@style/textview_normal_dark"
-            android:text="" />
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_column="0"
-            style="@style/textview_heading2_dark"
-            android:text="Database Location" />
-        <TextView
-            android:id="@+id/textview_location_db"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_column="0"

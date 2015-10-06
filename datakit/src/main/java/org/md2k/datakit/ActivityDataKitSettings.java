@@ -57,12 +57,24 @@ public class ActivityDataKitSettings extends PreferenceActivity {
     }
 
     void setupPreferences() {
+        setupDatabaseFile();
         setupDatabaseLocation();
         setupDatabaseClear();
+        setupSDCardSpace();
     }
     void setupDatabaseLocation(){
         Preference preference = findPreference("database_location");
         preference.setSummary(FileManager.getValidSDcard(ActivityDataKitSettings.this));
+    }
+    void setupSDCardSpace(){
+        Preference preference = findPreference("storage_space");
+        preference.setSummary(FileManager.getStorageSpace(ActivityDataKitSettings.this));
+    }
+
+    void setupDatabaseFile(){
+        Preference preference = findPreference("database_filename");
+        preference.setSummary(FileManager.getFilePath(ActivityDataKitSettings.this));
+
     }
     void setupDatabaseClear(){
         Preference preference = findPreference("database_clear");
@@ -94,9 +106,9 @@ public class ActivityDataKitSettings extends PreferenceActivity {
     }
 
     void handleService(boolean opType) {
-        Intent intent = new Intent(getBaseContext(), ServiceDataKit.class);
+        Intent intent = new Intent(getApplicationContext(), ServiceDataKit.class);
         if (opType == false) {
-            if (Apps.isServiceRunning(getBaseContext(), Constants.SERVICE_NAME)) {
+            if (Apps.isServiceRunning(getApplicationContext(), Constants.SERVICE_NAME)) {
                 stopService(intent);
             }
         }
@@ -137,7 +149,7 @@ public class ActivityDataKitSettings extends PreferenceActivity {
         @Override
         protected String doInBackground(String... strings) {
             try {
-                DatabaseLogger databaseLogger = DatabaseLogger.getInstance(ActivityDataKitSettings.this);
+                DatabaseLogger databaseLogger = DatabaseLogger.getInstance(getApplicationContext());
                 assert databaseLogger != null;
                 databaseLogger.removeAll();
             } catch (Exception e) {
@@ -145,13 +157,12 @@ public class ActivityDataKitSettings extends PreferenceActivity {
             return null;
         }
 
-        // Once Music File is downloaded
         @Override
         protected void onPostExecute(String file_url) {
             // Dismiss the dialog after the Music file was downloaded
             dismissDialog(progress_bar_type);
             handleService(true);
-            Toast.makeText(getBaseContext(), "Database is Deleted", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "Database is Deleted", Toast.LENGTH_LONG).show();
         }
     }
 
