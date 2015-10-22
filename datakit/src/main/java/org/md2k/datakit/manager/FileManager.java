@@ -155,29 +155,49 @@ public class FileManager {
 
     public static String getStorageSpace(Context context) {
         String sdCard = getValidSDcard(context);
-        String available = "-", total = "-";
+        long available=0, total=0, used=0;
+        String availableStr = "-", totalStr = "-", usedStr="-";
         if (sdCard.equals(INTERNAL_SDCARD_STR)) {
-            available = getAvailableInternalSDCardSize(Environment.getExternalStorageDirectory());
-            total = getTotalExternalSDCardSize(Environment.getExternalStorageDirectory());
+            available = getAvailableSDCardSize(Environment.getExternalStorageDirectory());
+            total = getTotalSDCardSize(Environment.getExternalStorageDirectory());
+            used=total-available;
+            availableStr=formatSize(available);
+            usedStr=formatSize(used);
+            totalStr=formatSize(total);
         } else if (sdCard.equals(EXTERNAL_SDCARD_STR)) {
-            available = getAvailableInternalSDCardSize(getExternalSDCardPath(context));
-            total = getTotalExternalSDCardSize(getExternalSDCardPath(context));
+            available = getAvailableSDCardSize(getExternalSDCardPath(context));
+            total = getTotalSDCardSize(getExternalSDCardPath(context));
+            used=total-available;
+            availableStr=formatSize(available);
+            totalStr=formatSize(total);
+            usedStr=formatSize(used);
+
         }
-        return available + " (out of " + total + ")";
+        return usedStr + " out of " + totalStr + " ( "+String.valueOf(used*100/total)+"% )";
+    }
+    public static String getFileSize(Context context){
+        long fileSize=getFileSize(new File(getFilePath(context)));
+        return formatSize(fileSize);
+    }
+    public static long getFileSize(File file){
+        long fileSize=0;
+        if(file.exists())
+            fileSize=file.length();
+        return fileSize;
     }
 
-    public static String getAvailableInternalSDCardSize(File path) {
+    public static long getAvailableSDCardSize(File path) {
         StatFs stat = new StatFs(path.getPath());
         long blockSize = stat.getBlockSizeLong();
         long remainingBlocks = stat.getFreeBlocksLong();
-        return formatSize(remainingBlocks * blockSize);
+        return remainingBlocks * blockSize;
     }
 
-    public static String getTotalExternalSDCardSize(File path) {
+    public static long getTotalSDCardSize(File path) {
         StatFs stat = new StatFs(path.getPath());
         long blockSize = stat.getBlockSizeLong();
         long totalBlocks = stat.getBlockCountLong();
-        return formatSize(totalBlocks * blockSize);
+        return totalBlocks * blockSize;
     }
 
     public static String formatSize(long size) {

@@ -50,7 +50,7 @@ public class Manager {
     }
     public static Message prepareErrorMessage(int messageType){
         Bundle bundle=new Bundle();
-        bundle.putSerializable(Status.class.getSimpleName(),new Status(StatusCodes.FAILED));
+        bundle.putSerializable(Status.class.getSimpleName(),new Status(StatusCodes.INTERNAL_ERROR));
         Message message = Message.obtain(null, 0, 0, 0);
         message.what=messageType;
         message.setData(bundle);

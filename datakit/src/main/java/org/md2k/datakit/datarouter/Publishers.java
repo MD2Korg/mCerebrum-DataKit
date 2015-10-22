@@ -46,36 +46,41 @@ public class Publishers {
     Publishers(){
         publishers=new SparseArray<>();
     }
-    public void add(int ds_id){
-        if(ds_id==-1) return;
+    public int add(int ds_id){
+        if(ds_id==-1) return StatusCodes.DATASOURCE_INVALID;
         if(publishers.indexOfKey(ds_id)<0) {
             publishers.put(ds_id, new Publisher(ds_id));
-        }
+            return StatusCodes.SUCCESS;
+        }else return StatusCodes.DATASOURCE_EXIST;
     }
-    public void add(int ds_id, DatabaseLogger databaseLogger){
-        if(ds_id==-1) return;
+    public int add(int ds_id, DatabaseLogger databaseLogger){
+        if(ds_id==-1) return StatusCodes.DATASOURCE_INVALID;
         if(publishers.indexOfKey(ds_id)<0) {
             publishers.put(ds_id, new Publisher(ds_id, databaseLogger));
-        }
+            return StatusCodes.SUCCESS;
+        }else return StatusCodes.DATASOURCE_EXIST;
     }
     public void receivedData(int ds_id,DataType dataType){
         publishers.get(ds_id).receivedData(dataType);
     }
-    public Status remove(int ds_id){
-        if(publishers.indexOfKey(ds_id)<0) return new Status(StatusCodes.DATASOURCE_NOT_FOUND);
+    public int remove(int ds_id){
+        if(publishers.indexOfKey(ds_id)<0) return StatusCodes.DATASOURCE_NOT_EXIST;
         publishers.remove(ds_id);
-        return new Status(StatusCodes.SUCCESS);
+        return StatusCodes.SUCCESS;
+    }
+    public boolean isExist(int ds_id){
+        return publishers.indexOfKey(ds_id) >= 0;
     }
 
-    public Status subscribe(int ds_id,Messenger reply){
+    public int subscribe(int ds_id,Messenger reply){
         if(publishers.indexOfKey(ds_id)<0)
-            return new Status(StatusCodes.DATASOURCE_NOT_FOUND);
+            return StatusCodes.DATASOURCE_NOT_EXIST;
         return publishers.get(ds_id).add(new MessageSubscriber(reply));
     }
 
-    public Status unsubscribe(int ds_id,Messenger reply){
+    public int unsubscribe(int ds_id,Messenger reply){
         if(publishers.indexOfKey(ds_id)<0)
-            return new Status(StatusCodes.DATASOURCE_NOT_FOUND);
+            return StatusCodes.DATASOURCE_NOT_EXIST;
         return publishers.get(ds_id).remove(new MessageSubscriber(reply));
     }
     public void close(){

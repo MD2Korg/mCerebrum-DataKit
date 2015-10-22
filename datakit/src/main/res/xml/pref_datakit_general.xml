@@ -4,16 +4,21 @@
         <Preference
             android:key="database_location"
             android:icon="@drawable/ic_sd_storage_white_24dp"
-            android:title="Location" />
+            android:title="Database Location" />
         <Preference
             android:key="storage_space"
-            android:icon="@drawable/ic_assessment_white_24dp"
-            android:title="Remaining Space"
+            android:icon="@drawable/ic_photo_size_select_small_white_24dp"
+            android:title="Used Space"
+            />
+        <Preference
+            android:key="database_size"
+            android:icon="@drawable/ic_insert_chart_white_24dp"
+            android:title="Database Size"
             />
         <Preference
             android:key="database_filename"
             android:icon="@drawable/ic_folder_white_24dp"
-            android:title="Database Location" />
+            android:title="File Path" />
         <Preference
             android:key="database_clear"
             android:icon="@drawable/ic_remove_circle_outline_white_24dp"

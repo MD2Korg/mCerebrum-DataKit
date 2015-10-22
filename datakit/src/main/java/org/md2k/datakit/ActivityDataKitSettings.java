@@ -61,6 +61,7 @@ public class ActivityDataKitSettings extends PreferenceActivity {
         setupDatabaseLocation();
         setupDatabaseClear();
         setupSDCardSpace();
+        setupDatabaseSize();
     }
     void setupDatabaseLocation(){
         Preference preference = findPreference("database_location");
@@ -69,6 +70,10 @@ public class ActivityDataKitSettings extends PreferenceActivity {
     void setupSDCardSpace(){
         Preference preference = findPreference("storage_space");
         preference.setSummary(FileManager.getStorageSpace(ActivityDataKitSettings.this));
+    }
+    void setupDatabaseSize(){
+        Preference preference = findPreference("database_size");
+        preference.setSummary(FileManager.getFileSize(ActivityDataKitSettings.this));
     }
 
     void setupDatabaseFile(){
@@ -107,7 +112,7 @@ public class ActivityDataKitSettings extends PreferenceActivity {
 
     void handleService(boolean opType) {
         Intent intent = new Intent(getApplicationContext(), ServiceDataKit.class);
-        if (opType == false) {
+        if (!opType) {
             if (Apps.isServiceRunning(getApplicationContext(), Constants.SERVICE_NAME)) {
                 stopService(intent);
             }
@@ -161,7 +166,8 @@ public class ActivityDataKitSettings extends PreferenceActivity {
         protected void onPostExecute(String file_url) {
             // Dismiss the dialog after the Music file was downloaded
             dismissDialog(progress_bar_type);
-            handleService(true);
+//            handleService(true);
+            setupPreferences();
             Toast.makeText(getApplicationContext(), "Database is Deleted", Toast.LENGTH_LONG).show();
         }
     }

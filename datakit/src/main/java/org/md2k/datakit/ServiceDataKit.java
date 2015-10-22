@@ -110,7 +110,6 @@ public class ServiceDataKit extends Service {
                         message = dataSourceManager.unregister(msg.getData().getInt("ds_id"));
                         break;
                     case MessageType.FIND:
-                        DataSource dataSource=(DataSource) msg.getData().getSerializable(DataSource.class.getSimpleName());
                         message = dataSourceManager.find((DataSource) msg.getData().getSerializable(DataSource.class.getSimpleName()));
                         break;
                     case MessageType.INSERT:

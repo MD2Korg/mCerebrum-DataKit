@@ -68,29 +68,37 @@ public class DataSourceManager extends Manager{
     }
 
     public Message unregister(int ds_id) {
-        Status status = Publishers.getInstance().remove(ds_id);
+        int statusCode=publishers.remove(ds_id);
         Bundle bundle = new Bundle();
-        bundle.putSerializable(Status.class.getSimpleName(), status);
+        bundle.putSerializable(Status.class.getSimpleName(), new Status(statusCode));
         return prepareMessage(bundle, MessageType.UNREGISTER);
     }
 
     public Message subscribe(int ds_id, Messenger reply) {
-        Status status = Publishers.getInstance().subscribe(ds_id, reply);
-        Log.d(TAG, "DataSourceManager -> subscribe(ds_id)=" + ds_id + " status=" + status.getStatusCode());
+        int statusCode = publishers.subscribe(ds_id, reply);
         Bundle bundle = new Bundle();
-        bundle.putSerializable(Status.class.getSimpleName(), status);
+        bundle.putSerializable(Status.class.getSimpleName(), new Status(statusCode));
         return prepareMessage(bundle, MessageType.SUBSCRIBE);
     }
 
     public Message unsubscribe(int ds_id, Messenger reply) {
-        Status status = Publishers.getInstance().unsubscribe(ds_id, reply);
+        int statusCode = publishers.unsubscribe(ds_id, reply);
         Bundle bundle = new Bundle();
-        bundle.putSerializable(Status.class.getSimpleName(), status);
+        bundle.putSerializable(Status.class.getSimpleName(), new Status(statusCode));
         return prepareMessage(bundle, MessageType.UNSUBSCRIBE);
     }
 
     public Message find(DataSource dataSource) {
         ArrayList<DataSourceClient> dataSourceClients = databaseLogger.find(dataSource);
+        if(dataSourceClients.size()>0){
+            for(int i=0;i<dataSourceClients.size();i++){
+                if(publishers.isExist(dataSourceClients.get(i).getDs_id())) {
+                    int ds_id=dataSourceClients.get(i).getDs_id();
+                    DataSourceClient dataSourceClient = new DataSourceClient(ds_id,dataSource,new Status(StatusCodes.DATASOURCE_PUBLISHED));
+                    dataSourceClients.set(i,dataSourceClient);
+                }
+            }
+        }
         Bundle bundle = new Bundle();
         bundle.putSerializable(DataSourceClient.class.getSimpleName(), dataSourceClients);
         return prepareMessage(bundle, MessageType.FIND);
@@ -98,14 +106,14 @@ public class DataSourceManager extends Manager{
 
     public DataSourceClient registerDataSource(DataSource dataSource) {
         DataSourceClient dataSourceClient;
-        if (dataSource == null)
-            dataSourceClient = new DataSourceClient(-1, dataSource, new Status(StatusCodes.INVALID_ENTRY));
+        if (dataSource == null || dataSource.getType()==null || dataSource.getApplication().getType()==null)
+            dataSourceClient = new DataSourceClient(-1, dataSource, new Status(StatusCodes.DATASOURCE_INVALID));
         else {
             ArrayList<DataSourceClient> dataSourceClients = databaseLogger.find(dataSource);
             if (dataSourceClients.size() == 0) {
                 dataSourceClient = databaseLogger.register(dataSource);
             } else if (dataSourceClients.size() == 1) {
-                dataSourceClient = new DataSourceClient(dataSourceClients.get(0).getDs_id(), dataSourceClients.get(0).getDataSource(), new Status(StatusCodes.DATASOURCE_EXISTS));
+                dataSourceClient = new DataSourceClient(dataSourceClients.get(0).getDs_id(), dataSourceClients.get(0).getDataSource(), new Status(StatusCodes.DATASOURCE_EXIST));
             } else {
                 dataSourceClient = new DataSourceClient(-1, dataSource, new Status(StatusCodes.DATASOURCE_MULTIPLE_EXIST));
             }
