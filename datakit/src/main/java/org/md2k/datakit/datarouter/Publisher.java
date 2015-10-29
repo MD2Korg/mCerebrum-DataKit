@@ -1,8 +1,6 @@
 package org.md2k.datakit.datarouter;
 
-import org.md2k.datakit.Logger.DatabaseLogger;
 import org.md2k.datakitapi.datatype.DataType;
-import org.md2k.datakitapi.status.Status;
 import org.md2k.datakitapi.status.StatusCodes;
 
 import java.util.ArrayList;
@@ -37,31 +35,41 @@ import java.util.List;
 public class Publisher {
     private static final String TAG = Publisher.class.getSimpleName();
     int ds_id;
+    boolean active;
     private List<MessageSubscriber> messageSubscribers;
     private DatabaseSubscriber databaseSubscriber;
     Publisher(int ds_id){
         this.ds_id=ds_id;
         databaseSubscriber=null;
+        active=false;
         messageSubscribers =new ArrayList<>();
     }
     public void close(){
         messageSubscribers.clear();
         messageSubscribers=null;
     }
-    Publisher(int ds_id, DatabaseLogger databaseLogger){
-        this.ds_id=ds_id;
-        databaseSubscriber=new DatabaseSubscriber(databaseLogger);
-        messageSubscribers =new ArrayList<>();
+    public void setDatabaseSubscriber(DatabaseSubscriber databaseSubscriber){
+        this.databaseSubscriber=databaseSubscriber;
+    }
+    public void setActive(boolean active){
+        this.active=active;
+    }
+    public boolean isActive(){
+        return active;
     }
     public void receivedData(DataType dataType) {
         notifyAllObservers(dataType);
     }
     boolean isExists(MessageSubscriber subscriber){
-        for(MessageSubscriber subscriber1: messageSubscribers)
-            if(subscriber1.reply.equals(subscriber.reply))
-                return true;
-        return false;
+        return get(subscriber) != -1;
     }
+    int get(MessageSubscriber subscriber){
+        for(int i=0;i<messageSubscribers.size();i++)
+            if(messageSubscribers.get(i).reply.equals(subscriber.reply))
+                return i;
+        return -1;
+    }
+
     public int add(MessageSubscriber subscriber){
         if(isExists(subscriber)) return StatusCodes.ALREADY_SUBSCRIBED;
         messageSubscribers.add(subscriber);
@@ -69,12 +77,7 @@ public class Publisher {
     }
     public int remove(MessageSubscriber subscriber){
         if(!isExists(subscriber)) return StatusCodes.DATASOURCE_NOT_EXIST;
-        for(int i=0;i<messageSubscribers.size();i++) {
-            if (messageSubscribers.get(i).reply.equals(subscriber.reply)) {
-                messageSubscribers.remove(i);
-                break;
-            }
-        }
+        messageSubscribers.remove(get(subscriber));
         return StatusCodes.SUCCESS;
     }
     public void notifyAllObservers(DataType dataType){

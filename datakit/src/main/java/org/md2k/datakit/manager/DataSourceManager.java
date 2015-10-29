@@ -51,17 +51,19 @@ public class DataSourceManager extends Manager{
     }
     public void close(){
         publishers.close();
-
     }
+
 
     public Message register(DataSource dataSource) {
         Log.d(TAG,"register: "+dataSource.getType());
         DataSourceClient dataSourceClient = registerDataSource(dataSource);
-        if(dataSource.isPersistent())
-            publishers.add(dataSourceClient.getDs_id(),databaseLogger);
-        else
-            publishers.add(dataSourceClient.getDs_id());
-
+        if(dataSource.isPersistent()) {
+            publishers.addPublisher(dataSourceClient.getDs_id(), databaseLogger);
+        }
+        else {
+            publishers.addPublisher(dataSourceClient.getDs_id());
+            publishers.setActive(dataSourceClient.getDs_id(),true);
+        }
         Bundle bundle = new Bundle();
         bundle.putSerializable(DataSourceClient.class.getSimpleName(), dataSourceClient);
         return prepareMessage(bundle, MessageType.REGISTER);
@@ -94,7 +96,7 @@ public class DataSourceManager extends Manager{
             for(int i=0;i<dataSourceClients.size();i++){
                 if(publishers.isExist(dataSourceClients.get(i).getDs_id())) {
                     int ds_id=dataSourceClients.get(i).getDs_id();
-                    DataSourceClient dataSourceClient = new DataSourceClient(ds_id,dataSource,new Status(StatusCodes.DATASOURCE_PUBLISHED));
+                    DataSourceClient dataSourceClient = new DataSourceClient(ds_id,dataSource,new Status(StatusCodes.DATASOURCE_ACTIVE));
                     dataSourceClients.set(i,dataSourceClient);
                 }
             }

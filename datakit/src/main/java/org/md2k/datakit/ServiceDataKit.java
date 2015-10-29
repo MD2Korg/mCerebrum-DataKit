@@ -1,16 +1,21 @@
 package org.md2k.datakit;
 
+import android.app.AlertDialog;
 import android.app.Service;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.view.WindowManager;
 
 import org.md2k.datakit.Logger.DatabaseLogger;
 import org.md2k.datakit.manager.DataManager;
 import org.md2k.datakit.manager.DataSourceManager;
+import org.md2k.datakit.manager.FileManager;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.messagehandler.MessageType;
 import org.md2k.datakitapi.source.datasource.DataSource;
@@ -55,7 +60,10 @@ public class ServiceDataKit extends Service {
         super.onCreate();
         Log.d(TAG, "onCreate()...");
         databaseLogger = DatabaseLogger.getInstance(getApplicationContext());
-
+        if(databaseLogger==null) {
+            showAlertDialogDatabase(this);
+            stopSelf();
+        }
         dataSourceManager = new DataSourceManager();
         dataManager = new DataManager();
 
@@ -65,8 +73,22 @@ public class ServiceDataKit extends Service {
     }
     @Override
     public boolean onUnbind(Intent intent){
-        Log.d(TAG,"unbind()...package="+intent.getPackage());
+        Log.d(TAG, "unbind()...package=" + intent.getPackage());
         return super.onUnbind(intent);
+    }
+    static void showAlertDialogDatabase(final Context context){
+        AlertDialog alertDialog = new AlertDialog.Builder(context)
+                .setTitle("Error: Database Logger")
+                .setIcon(R.drawable.ic_error_outline_white_24dp)
+                .setMessage("Could not access \"" + FileManager.getStorageOption() + "\"")
+                .setNegativeButton("Ok", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                })
+                .create();
+        alertDialog.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
+        alertDialog.show();
     }
 
     @Override

@@ -1,15 +1,18 @@
 package org.md2k.datakit.Logger;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.view.WindowManager;
 
+import org.md2k.datakit.R;
 import org.md2k.datakit.manager.FileManager;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
 import org.md2k.utilities.Report.Log;
-import org.md2k.utilities.UI.UIShow;
 
 import java.util.ArrayList;
 /**
@@ -56,14 +59,11 @@ public class DatabaseLogger extends SQLiteOpenHelper {
         if (instance == null) {
             String directory = FileManager.getDirectory(context);
             Log.d(TAG, "directory=" + directory);
-            if (directory == null)
-                UIShow.ErrorDialog(context, "Error: Database Logger", "Could not access \"" + FileManager.getStorageOption() + "\"");
-            else
+            if (directory != null)
                 instance = new DatabaseLogger(context);
         }
         return instance;
     }
-
 
     public void close() {
         Log.d(TAG, "close()");
