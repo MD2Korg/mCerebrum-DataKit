@@ -151,10 +151,9 @@ public class DatabaseTable_Data {
     public ContentValues prepareData(int dataSourceId, DataType dataType) {
         ContentValues contentValues=new ContentValues();
         byte[] dataTypeArray = dataType.toBytes();
-        long startDateTime = dataType.getDateTime();
 
         contentValues.put(C_DATASOURCE_ID, dataSourceId);
-        contentValues.put(C_DATETIME, startDateTime);
+        contentValues.put(C_DATETIME, dataType.getDateTime());
         contentValues.put(C_SAMPLE, dataTypeArray);
         return contentValues;
     }

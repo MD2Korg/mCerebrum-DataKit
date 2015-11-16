@@ -15,6 +15,9 @@ import org.md2k.utilities.Report.Log;
 import org.md2k.utilities.UI.ActivityAbout;
 import org.md2k.utilities.UI.ActivityCopyright;
 
+import java.util.SimpleTimeZone;
+import java.util.TimeZone;
+
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
@@ -48,6 +51,7 @@ public class ActivityDataKit extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate()");
+//        Log.d(TAG,"time="+System.currentTimeMillis()+" timezone="+ TimeZone.getDefault().getRawOffset()+" "+TimeZone.getDefault().getDSTSavings());
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_data_kit);
         if (getActionBar() != null)
