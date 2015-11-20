@@ -1,9 +1,13 @@
 package org.md2k.datakit.datarouter;
 
+import android.os.Message;
+
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.status.StatusCodes;
+import org.md2k.utilities.Report.Log;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -37,6 +41,7 @@ public class Publisher {
     int ds_id;
     boolean active;
     private List<MessageSubscriber> messageSubscribers;
+
     private DatabaseSubscriber databaseSubscriber;
     Publisher(int ds_id){
         this.ds_id=ds_id;
@@ -73,6 +78,7 @@ public class Publisher {
     public int add(MessageSubscriber subscriber){
         if(isExists(subscriber)) return StatusCodes.ALREADY_SUBSCRIBED;
         messageSubscribers.add(subscriber);
+        Log.d(TAG,"add()... id="+ds_id+" size="+messageSubscribers.size());
         return StatusCodes.SUCCESS;
     }
     public int remove(MessageSubscriber subscriber){
@@ -81,7 +87,15 @@ public class Publisher {
         return StatusCodes.SUCCESS;
     }
     public void notifyAllObservers(DataType dataType){
+
+        if(messageSubscribers.size()>0)
+            Log.d(TAG, "id="+ds_id+" subscriber=" + messageSubscribers.size());
         if(databaseSubscriber!=null) databaseSubscriber.update(ds_id,dataType);
+        for (Iterator<MessageSubscriber> iterator = messageSubscribers.iterator(); iterator.hasNext();) {
+            MessageSubscriber subscriber = iterator.next();
+            if(!subscriber.update(ds_id,dataType))
+                iterator.remove();
+        }
         for (MessageSubscriber subscriber : messageSubscribers) {
             if(!subscriber.update(ds_id,dataType))
                 messageSubscribers.remove(subscriber);
