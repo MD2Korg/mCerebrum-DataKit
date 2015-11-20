@@ -96,9 +96,5 @@ public class Publisher {
             if(!subscriber.update(ds_id,dataType))
                 iterator.remove();
         }
-        for (MessageSubscriber subscriber : messageSubscribers) {
-            if(!subscriber.update(ds_id,dataType))
-                messageSubscribers.remove(subscriber);
-        }
     }
 }
