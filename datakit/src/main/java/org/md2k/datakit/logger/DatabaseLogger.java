@@ -1,4 +1,4 @@
-package org.md2k.datakit.Logger1;
+package org.md2k.datakit.logger;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -40,14 +40,16 @@ import java.util.ArrayList;
 
 public class DatabaseLogger extends SQLiteOpenHelper {
     private static final String TAG = DatabaseLogger.class.getSimpleName();
-    DatabaseTable_DataSource databaseTable_dataSource = null;
-    DatabaseTable_Data databaseTable_data = null;
+     DatabaseTable_DataSource databaseTable_dataSource = null;
+     DatabaseTable_Data databaseTable_data = null;
     SQLiteDatabase db = null;
 
     private static DatabaseLogger instance = null;
     public void removeAll(){
         databaseTable_data.removeAll(db);
         databaseTable_dataSource.removeAll(db);
+
+
     }
 
     public static DatabaseLogger getInstance(Context context) throws IOException {
