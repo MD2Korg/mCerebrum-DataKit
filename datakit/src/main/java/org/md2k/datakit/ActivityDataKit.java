@@ -10,6 +10,7 @@ import android.view.MenuItem;
 import android.widget.TextView;
 
 import org.md2k.datakit.manager.FileManager;
+import org.md2k.datakitapi.time.DateTime;
 import org.md2k.utilities.Apps;
 import org.md2k.utilities.Report.Log;
 import org.md2k.utilities.UI.ActivityAbout;
@@ -51,6 +52,7 @@ public class ActivityDataKit extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate()");
+//        Log.d(TAG,"timezone offset="+ DateTime.getTimeZoneOffset()+" daylight offset="+DateTime.getDayLightSavingOffset()+ "isdaylightsavingon="+DateTime.isDayLightSavingNow());
 //        Log.d(TAG,"time="+System.currentTimeMillis()+" timezone="+ TimeZone.getDefault().getRawOffset()+" "+TimeZone.getDefault().getDSTSavings());
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_data_kit);

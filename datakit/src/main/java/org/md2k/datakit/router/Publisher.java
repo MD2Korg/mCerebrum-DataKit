@@ -1,6 +1,4 @@
-package org.md2k.datakit.datarouter;
-
-import android.os.Message;
+package org.md2k.datakit.router;
 
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.status.StatusCodes;

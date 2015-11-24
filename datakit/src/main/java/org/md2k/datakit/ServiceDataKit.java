@@ -12,14 +12,11 @@ import android.os.Messenger;
 import android.os.RemoteException;
 import android.view.WindowManager;
 
-import org.md2k.datakit.Logger.DatabaseLogger;
-import org.md2k.datakit.manager.DataManager;
-import org.md2k.datakit.manager.DataSourceManager;
+import org.md2k.datakit.Logger1.DatabaseLogger;
 import org.md2k.datakit.manager.FileManager;
-import org.md2k.datakitapi.datatype.DataType;
-import org.md2k.datakitapi.messagehandler.MessageType;
-import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.utilities.Report.Log;
+
+import java.io.IOException;
 
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -50,23 +47,21 @@ import org.md2k.utilities.Report.Log;
 
 public class ServiceDataKit extends Service {
     private static final String TAG = ServiceDataKit.class.getSimpleName();
+    MessageController messageController;
     DatabaseLogger databaseLogger = null;
     Messenger mMessenger;
-    DataSourceManager dataSourceManager;
-    DataManager dataManager;
 
     @Override
     public void onCreate() {
         super.onCreate();
         Log.d(TAG, "onCreate()...");
-        databaseLogger = DatabaseLogger.getInstance(getApplicationContext());
-        if(databaseLogger==null) {
+        messageController=MessageController.getInstance(ServiceDataKit.this);
+        try {
+            databaseLogger = DatabaseLogger.getInstance(getApplicationContext());
+        } catch (IOException e) {
             showAlertDialogDatabase(this);
             stopSelf();
         }
-        dataSourceManager = new DataSourceManager();
-        dataManager = new DataManager();
-
         mMessenger = new Messenger(new IncomingHandler());
         Log.d(TAG, "databaseLogger=" + databaseLogger);
         Log.d(TAG, "...onCreate()");
@@ -94,9 +89,6 @@ public class ServiceDataKit extends Service {
     @Override
     public void onDestroy() {
         Log.d(TAG, "onDestroy()...");
-        dataSourceManager.close();
-        dataSourceManager = null;
-        dataManager = null;
 
         if (databaseLogger != null) {
             databaseLogger.close();
@@ -113,7 +105,6 @@ public class ServiceDataKit extends Service {
     }
 
     private class IncomingHandler extends Handler {
-        Message message;
         Messenger replyTo;
 
         IncomingHandler() {
@@ -121,43 +112,15 @@ public class ServiceDataKit extends Service {
 
 
         @Override
-        public void handleMessage(Message msg) {
-            message = null;
-            try {
-                switch (msg.what) {
-                    case MessageType.REGISTER:
-                        message = dataSourceManager.register((DataSource) msg.getData().getSerializable(DataSource.class.getSimpleName()));
-                        break;
-                    case MessageType.UNREGISTER:
-                        message = dataSourceManager.unregister(msg.getData().getInt("ds_id"));
-                        break;
-                    case MessageType.FIND:
-                        message = dataSourceManager.find((DataSource) msg.getData().getSerializable(DataSource.class.getSimpleName()));
-                        break;
-                    case MessageType.INSERT:
-                        message = dataManager.insert(msg.getData().getInt("ds_id"), (DataType) msg.getData().getSerializable(DataType.class.getSimpleName()));
-                        break;
-                    case MessageType.QUERY:
-                        if (msg.getData().containsKey("starttimestamp"))
-                            message = dataManager.query(msg.getData().getInt("ds_id"), msg.getData().getLong("starttimestamp"), msg.getData().getLong("endtimestamp"));
-                        else
-                            message = dataManager.query(msg.getData().getInt("ds_id"), msg.getData().getInt("last_n_sample"));
-                        break;
-                    case MessageType.SUBSCRIBE:
-                        message = dataSourceManager.subscribe(msg.getData().getInt("ds_id"), msg.replyTo);
-                        break;
-                    case MessageType.UNSUBSCRIBE:
-                        message = dataSourceManager.unsubscribe(msg.getData().getInt("ds_id"), msg.replyTo);
-                        break;
+        public void handleMessage(Message incomingMessage) {
+            Message outgoingMessage = messageController.execute(incomingMessage);
+            if (outgoingMessage != null) {
+                replyTo = incomingMessage.replyTo;
+                try {
+                    replyTo.send(outgoingMessage);
+                } catch (RemoteException e) {
+                    e.printStackTrace();
                 }
-                if (message != null) {
-                    replyTo = msg.replyTo;
-                    replyTo.send(message);
-                }
-
-            } catch (RemoteException rme) {
-                //Show an Error Message
-                Log.d(TAG, "Error: invocation failed");
             }
         }
     }

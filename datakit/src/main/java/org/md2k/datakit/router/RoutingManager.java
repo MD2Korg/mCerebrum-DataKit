@@ -1,29 +1,20 @@
-package org.md2k.datakit.datarouter;
-
-import android.os.Bundle;
-import android.os.Message;
-import android.os.Messenger;
-import android.os.RemoteException;
-
-import org.md2k.datakitapi.datatype.DataType;
-import org.md2k.datakitapi.messagehandler.MessageType;
-import org.md2k.utilities.Report.Log;
+package org.md2k.datakit.router;
 
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
  * All rights reserved.
- *
+ * <p/>
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- *
+ * <p/>
  * * Redistributions of source code must retain the above copyright notice, this
  * list of conditions and the following disclaimer.
- *
+ * <p/>
  * * Redistributions in binary form must reproduce the above copyright notice,
  * this list of conditions and the following disclaimer in the documentation
  * and/or other materials provided with the distribution.
- *
+ * <p/>
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,28 +26,5 @@ import org.md2k.utilities.Report.Log;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public class MessageSubscriber{
-    private static final String TAG = MessageSubscriber.class.getSimpleName();
-    Messenger reply;
-    public MessageSubscriber(Messenger reply){
-        this.reply=reply;
-    }
-    public boolean update(int ds_id,DataType data) {
-        Bundle bundle=new Bundle();
-        bundle.putSerializable(DataType.class.getSimpleName(), data);
-        bundle.putInt("ds_id",ds_id);
-        Message message=prepareMessage(bundle, MessageType.SUBSCRIBED_DATA);
-        try {
-            reply.send(message);
-            return true;
-        } catch (RemoteException e) {
-            return false;
-        }
-    }
-    public Message prepareMessage(Bundle bundle, int messageType) {
-        Message message = Message.obtain(null, 0, 0, 0);
-        message.what = messageType;
-        message.setData(bundle);
-        return message;
-    }
+public class RoutingManager {
 }

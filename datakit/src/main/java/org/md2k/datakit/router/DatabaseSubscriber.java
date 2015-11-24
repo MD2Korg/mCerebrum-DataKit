@@ -1,6 +1,6 @@
-package org.md2k.datakit.datarouter;
+package org.md2k.datakit.router;
 
-import org.md2k.datakit.Logger.DatabaseLogger;
+import org.md2k.datakit.Logger1.DatabaseLogger;
 import org.md2k.datakitapi.datatype.DataType;
 
 /**

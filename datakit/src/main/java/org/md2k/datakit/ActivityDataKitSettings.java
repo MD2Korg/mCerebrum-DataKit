@@ -12,7 +12,7 @@ import android.preference.PreferenceActivity;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import org.md2k.datakit.Logger.DatabaseLogger;
+import org.md2k.datakit.Logger1.DatabaseLogger;
 import org.md2k.datakit.manager.FileManager;
 import org.md2k.utilities.Apps;
 
