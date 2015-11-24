@@ -3,7 +3,7 @@ package org.md2k.datakit.router;
 import android.os.Messenger;
 import android.util.SparseArray;
 
-import org.md2k.datakit.Logger1.DatabaseLogger;
+import org.md2k.datakit.logger2.DatabaseLogger;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.status.StatusCodes;
 import org.md2k.utilities.Report.Log;
