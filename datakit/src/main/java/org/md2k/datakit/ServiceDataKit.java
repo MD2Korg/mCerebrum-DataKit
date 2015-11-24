@@ -12,7 +12,7 @@ import android.os.Messenger;
 import android.os.RemoteException;
 import android.view.WindowManager;
 
-import org.md2k.datakit.logger2.DatabaseLogger;
+import org.md2k.datakit.logger.DatabaseLogger;
 import org.md2k.datakit.manager.FileManager;
 import org.md2k.utilities.Report.Log;
 
