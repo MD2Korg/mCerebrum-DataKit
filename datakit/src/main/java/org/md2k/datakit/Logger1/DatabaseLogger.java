@@ -1,19 +1,15 @@
-package org.md2k.datakit.Logger;
+package org.md2k.datakit.Logger1;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.view.WindowManager;
-
-import org.md2k.datakit.R;
 import org.md2k.datakit.manager.FileManager;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
 import org.md2k.utilities.Report.Log;
 
+import java.io.IOException;
 import java.util.ArrayList;
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -54,13 +50,13 @@ public class DatabaseLogger extends SQLiteOpenHelper {
         databaseTable_dataSource.removeAll(db);
     }
 
-    public static DatabaseLogger getInstance(Context context) {
-        if(instance==null && context==null) return null;
+    public static DatabaseLogger getInstance(Context context) throws IOException {
         if (instance == null) {
             String directory = FileManager.getDirectory(context);
             Log.d(TAG, "directory=" + directory);
             if (directory != null)
                 instance = new DatabaseLogger(context);
+            else throw new IOException("Database directory not found");
         }
         return instance;
     }
