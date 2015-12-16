@@ -5,7 +5,7 @@
     android:orientation="vertical"
     tools:context=".ActivityMain">
 
-<include layout="@layout/layout_status" />
+    <include layout="@layout/layout_status" />
 
     <LinearLayout
         android:id="@+id/ll_privacy"
@@ -20,7 +20,7 @@
             android:layout_height="wrap_content">
 
             <TextView
-                style="@style/AppTheme_Teal_Light.textView_Header_Teal_Left_Round"
+                style="?attr/text_view_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/title_privacy" />
@@ -42,52 +42,49 @@
                 android:weightSum="2">
 
                 <LinearLayout
-                    android:orientation="horizontal"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:orientation="horizontal"
                     android:weightSum="3">
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_weight="1"
                         android:text="@string/privacy_status"
-                        android:textStyle="bold"
-                        android:layout_weight="1" />
+                        android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/textViewPrivacyStatus"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Disabled"
-                        android:textColor="@color/teal_A700"
-                        android:textStyle="bold"
-                        android:layout_weight="2" />
+                        android:layout_weight="2"
+                        style="?attr/text_view_primary_color"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
                 <LinearLayout
-                    android:orientation="horizontal"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:orientation="horizontal"
                     android:weightSum="3">
 
                     <TextView
                         android:id="@+id/textViewPrivacyOptionTitle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_weight="1"
                         android:text="@string/privacy_option"
-                        android:textStyle="bold"
-                        android:layout_weight="1" />
+                        android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/textViewPrivacyOption"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="N/A"
-                        android:textColor="@color/teal_A700"
-                        android:textStyle="bold"
-                        android:layout_weight="2" />
+                        android:layout_weight="2"
+                        style="?attr/text_view_primary_color"
+                        android:textStyle="bold" />
                 </LinearLayout>
-
             </LinearLayout>
 
             <Button
@@ -95,9 +92,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:background="@drawable/button_teal"
-                android:gravity="center"
-                android:textStyle="bold"
+                style="?attr/button"
                 android:text="@string/configure" />
 
         </LinearLayout>
@@ -116,7 +111,7 @@
             android:layout_height="wrap_content">
 
             <TextView
-                style="@style/AppTheme_Teal_Light.textView_Header_Teal_Left_Round"
+                style="?attr/text_view_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/settings" />
