@@ -1,7 +1,10 @@
-package org.md2k.datakit.router;
+package org.md2k.datakit;
 
-import org.md2k.datakit.logger.DatabaseLogger;
-import org.md2k.datakitapi.datatype.DataType;
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.view.MenuItem;
+
+import org.md2k.utilities.Report.Log;
 
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -30,13 +33,33 @@ import org.md2k.datakitapi.datatype.DataType;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-public class DatabaseSubscriber {
-    private static final String TAG = DatabaseSubscriber.class.getSimpleName();
-    DatabaseLogger databaseLogger;
-    public DatabaseSubscriber(DatabaseLogger databaseLogger){
-        this.databaseLogger=databaseLogger;
+public class ActivityPrivacy extends AppCompatActivity {
+    private static final String TAG = ActivityPrivacy.class.getSimpleName();
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate()");
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_privacy);
+        getFragmentManager().beginTransaction().replace(R.id.layout_preference_fragment,
+                new PrefsFragmentPrivacySettings()).commit();
+        if (getSupportActionBar() != null)
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
-    public void insert(int ds_id, DataType data) {
-        databaseLogger.insert(ds_id, data);
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            // Respond to the action bar's Up/Home button
+            case android.R.id.home:
+                finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+
 }

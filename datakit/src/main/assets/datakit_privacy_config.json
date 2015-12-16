@@ -1,0 +1,113 @@
+{
+  "duration_options": [
+    {
+      "id": "300000",
+      "title": "5 Minutes",
+      "value": 300000
+    },
+    {
+      "id": "600000",
+      "title": "10 Minutes",
+      "value": 600000
+    },
+    {
+      "id": "900000",
+      "title": "15 Minutes",
+      "value": 900000
+    },
+    {
+      "id": "1800000",
+      "title": "30 Minutes",
+      "value": 1800000
+    }
+  ],
+  "privacy_type_options": [
+    {
+      "id": "location",
+      "title": "Location",
+      "summary": "GPS",
+      "source": [
+        {
+          "platform_type": "PHONE",
+          "datasource_type": "LOCATION"
+        }
+      ]
+    },
+    {
+      "id": "activity",
+      "title": "Activity",
+      "summary": "GPS, Accelerometer, Gyroscope",
+      "source": [
+        {
+          "platform_type": "PHONE",
+          "datasource_type": "LOCATION"
+        },
+        {
+          "platform_type": "PHONE",
+          "datasource_type": "ACCELEROMETER"
+        },
+        {
+          "platform_type": "PHONE",
+          "datasource_type": "GYROSCOPE"
+        }
+      ]
+    },
+    {
+      "id": "chest_sensor",
+      "title": "Chest Sensor",
+      "summary": "",
+      "source": [
+        {
+          "platform_type": "AUTOSENSE_CHEST",
+          "datasource_type": "RESPIRATION"
+        },
+        {
+          "platform_type": "AUTOSENSE_CHEST",
+          "datasource_type": "ECG"
+        },
+        {
+          "platform_type": "AUTOSENSE_CHEST",
+          "datasource_type": "RESPIRATION"
+        }
+      ]
+    },
+    {
+      "id": "wrist_sensor",
+      "title": "Wrist Sensors",
+      "summary": "",
+      "source": [
+        {
+          "platform_type": "AUTOSENSE_CHEST",
+          "datasource_type": "RESPIRATION"
+        },
+        {
+          "platform_type": "AUTOSENSE_CHEST",
+          "datasource_type": "ECG"
+        },
+        {
+          "platform_type": "AUTOSENSE_CHEST",
+          "datasource_type": "RESPIRATION"
+        }
+      ]
+    },
+    {
+      "id": "ema_intervention",
+      "title": "EMA & Intervention",
+      "summary": "",
+      "source": [
+        {
+          "platform_type": "AUTOSENSE_CHEST",
+          "datasource_type": "RESPIRATION"
+        },
+        {
+          "platform_type": "AUTOSENSE_CHEST",
+          "datasource_type": "ECG"
+        },
+        {
+          "platform_type": "AUTOSENSE_CHEST",
+          "datasource_type": "RESPIRATION"
+        }
+      ]
+    }
+  ]
+}

@@ -1,7 +1,7 @@
-package org.md2k.datakit.router;
+package org.md2k.datakit.operation;
 
-import org.md2k.datakit.logger.DatabaseLogger;
-import org.md2k.datakitapi.datatype.DataType;
+import android.content.Context;
+import java.io.IOException;
 
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -29,14 +29,18 @@ import org.md2k.datakitapi.datatype.DataType;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+public class DataManager {
+    private static final String TAG = DataManager.class.getSimpleName();
+    Context context;
+    private static DataManager instance=null;
+    public static DataManager getInstance(Context context) throws IOException {
+        if(instance==null)
+            instance=new DataManager(context);
+        return instance;
+    }
 
-public class DatabaseSubscriber {
-    private static final String TAG = DatabaseSubscriber.class.getSimpleName();
-    DatabaseLogger databaseLogger;
-    public DatabaseSubscriber(DatabaseLogger databaseLogger){
-        this.databaseLogger=databaseLogger;
+    private DataManager(Context context) throws IOException {
+        this.context=context;
     }
-    public void insert(int ds_id, DataType data) {
-        databaseLogger.insert(ds_id, data);
-    }
+
 }

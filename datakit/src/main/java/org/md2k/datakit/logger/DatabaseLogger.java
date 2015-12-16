@@ -3,7 +3,8 @@ package org.md2k.datakit.logger;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import org.md2k.datakit.manager.FileManager;
+
+import org.md2k.datakit.operation.FileManager;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
@@ -11,21 +12,22 @@ import org.md2k.utilities.Report.Log;
 
 import java.io.IOException;
 import java.util.ArrayList;
+
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
  * All rights reserved.
- *
+ * <p/>
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- *
+ * <p/>
  * * Redistributions of source code must retain the above copyright notice, this
  * list of conditions and the following disclaimer.
- *
+ * <p/>
  * * Redistributions in binary form must reproduce the above copyright notice,
  * this list of conditions and the following disclaimer in the documentation
  * and/or other materials provided with the distribution.
- *
+ * <p/>
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -40,16 +42,16 @@ import java.util.ArrayList;
 
 public class DatabaseLogger extends SQLiteOpenHelper {
     private static final String TAG = DatabaseLogger.class.getSimpleName();
-     DatabaseTable_DataSource databaseTable_dataSource = null;
-     DatabaseTable_Data databaseTable_data = null;
+    DatabaseTable_DataSource databaseTable_dataSource = null;
+    DatabaseTable_Data databaseTable_data = null;
     SQLiteDatabase db = null;
 
     private static DatabaseLogger instance = null;
-    public void removeAll(){
+
+    public void removeAll() {
+        //TODO: need to check crashes
         databaseTable_data.removeAll(db);
         databaseTable_dataSource.removeAll(db);
-
-
     }
 
     public static DatabaseLogger getInstance(Context context) throws IOException {
@@ -69,7 +71,7 @@ public class DatabaseLogger extends SQLiteOpenHelper {
         if (db.isOpen())
             db.close();
         super.close();
-        db=null;
+        db = null;
         instance = null;
     }
 
@@ -77,9 +79,10 @@ public class DatabaseLogger extends SQLiteOpenHelper {
         databaseTable_data.insert(db, dataSourceId, dataType);
     }
 
-    public ArrayList<DataType> query(int ds_id, long starttimestamp, long endtimestamp) {
-        return databaseTable_data.query(db, ds_id, starttimestamp, endtimestamp);
+    public ArrayList<DataType> query(int ds_id, long startTimestamp, long endTimestamp) {
+        return databaseTable_data.query(db, ds_id, startTimestamp, endTimestamp);
     }
+
     public ArrayList<DataType> query(int ds_id, int last_n_sample) {
         return databaseTable_data.query(db, ds_id, last_n_sample);
     }

@@ -1,0 +1,24 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:title="Privacy Status">
+        <Preference
+            android:key="status"
+            android:title="Status"
+            />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="Settings: Duration"
+        android:key="category_duration"
+        >
+        <ListPreference
+            android:key="duration"
+            android:title="Duration"
+            />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="Privacy Type"
+        android:key="category_privacy_type"
+        >
+    </PreferenceCategory>
+</PreferenceScreen>

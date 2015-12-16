@@ -48,27 +48,27 @@ public class Publishers {
     Publishers() {
         publishers = new SparseArray<>();
     }
+
+    public int addPublisher(int ds_id, DatabaseLogger databaseLogger) {
+        int status = addPublisher(ds_id);
+        if (status == StatusCodes.SUCCESS)
+            publishers.get(ds_id).setDatabaseSubscriber(new DatabaseSubscriber(databaseLogger));
+        return StatusCodes.SUCCESS;
+    }
+
     public int addPublisher(int ds_id) {
         if (ds_id == -1) return StatusCodes.DATASOURCE_INVALID;
         if (publishers.indexOfKey(ds_id) < 0) {
             publishers.put(ds_id, new Publisher(ds_id));
         }
-        publishers.get(ds_id).setActive(true);
         return StatusCodes.SUCCESS;
     }
+
     public int addSubscriber(int ds_id) {
         if (ds_id == -1) return StatusCodes.DATASOURCE_INVALID;
         if (publishers.indexOfKey(ds_id) < 0) {
             publishers.put(ds_id, new Publisher(ds_id));
-            publishers.get(ds_id).setActive(false);
         }
-        return StatusCodes.SUCCESS;
-    }
-
-    public int addPublisher(int ds_id, DatabaseLogger databaseLogger) {
-        int status=addPublisher(ds_id);
-        if(status==StatusCodes.SUCCESS)
-            publishers.get(ds_id).setDatabaseSubscriber(new DatabaseSubscriber(databaseLogger));
         return StatusCodes.SUCCESS;
     }
 
@@ -77,29 +77,24 @@ public class Publishers {
     }
 
     public int remove(int ds_id) {
-        if(!isExist(ds_id))
+        if (!isExist(ds_id))
             return StatusCodes.DATASOURCE_NOT_EXIST;
         publishers.get(ds_id).setDatabaseSubscriber(null);
-        publishers.get(ds_id).setActive(false);
         return StatusCodes.SUCCESS;
     }
-    public void setActive(int ds_id, boolean active){
-        publishers.get(ds_id).setActive(active);
-    }
-
     public boolean isExist(int ds_id) {
         return publishers.indexOfKey(ds_id) >= 0;
     }
 
     public int subscribe(int ds_id, Messenger reply) {
-        int status=addSubscriber(ds_id);
-        if(status==StatusCodes.SUCCESS)
-            status= publishers.get(ds_id).add(new MessageSubscriber(reply));
+        int status = addSubscriber(ds_id);
+        if (status == StatusCodes.SUCCESS)
+            status = publishers.get(ds_id).add(new MessageSubscriber(reply));
         return status;
     }
 
     public int unsubscribe(int ds_id, Messenger reply) {
-        if(!isExist(ds_id))
+        if (!isExist(ds_id))
             return StatusCodes.DATASOURCE_NOT_EXIST;
         return publishers.get(ds_id).remove(new MessageSubscriber(reply));
     }

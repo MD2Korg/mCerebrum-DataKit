@@ -28,4 +28,9 @@ package org.md2k.datakit;
  */
 public class Constants {
     public static String SERVICE_NAME="org.md2k.datakit.ServiceDataKit";
+    public static final int ASSET=0;
+    public static final int INTERNAL_SDCARD=1;
+    public static final int EXTERNAL_SDCARD=2;
+    public static final int FILE_LOCATION=ASSET;
+    public static final String CONFIG_FILENAME = "datakit_privacy_config.json";
 }

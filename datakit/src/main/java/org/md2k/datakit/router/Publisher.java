@@ -37,31 +37,25 @@ import java.util.List;
 public class Publisher {
     private static final String TAG = Publisher.class.getSimpleName();
     int ds_id;
-    boolean active;
     private List<MessageSubscriber> messageSubscribers;
 
     private DatabaseSubscriber databaseSubscriber;
     Publisher(int ds_id){
         this.ds_id=ds_id;
         databaseSubscriber=null;
-        active=false;
         messageSubscribers =new ArrayList<>();
     }
     public void close(){
+        ds_id=-1;
         messageSubscribers.clear();
         messageSubscribers=null;
+        databaseSubscriber=null;
     }
     public void setDatabaseSubscriber(DatabaseSubscriber databaseSubscriber){
         this.databaseSubscriber=databaseSubscriber;
     }
-    public void setActive(boolean active){
-        this.active=active;
-    }
-    public boolean isActive(){
-        return active;
-    }
     public void receivedData(DataType dataType) {
-        notifyAllObservers(dataType);
+            notifyAllObservers(dataType);
     }
     boolean isExists(MessageSubscriber subscriber){
         return get(subscriber) != -1;
@@ -85,10 +79,9 @@ public class Publisher {
         return StatusCodes.SUCCESS;
     }
     public void notifyAllObservers(DataType dataType){
-
         if(messageSubscribers.size()>0)
             Log.d(TAG, "id="+ds_id+" subscriber=" + messageSubscribers.size());
-        if(databaseSubscriber!=null) databaseSubscriber.update(ds_id,dataType);
+        if(databaseSubscriber!=null) databaseSubscriber.insert(ds_id, dataType);
         for (Iterator<MessageSubscriber> iterator = messageSubscribers.iterator(); iterator.hasNext();) {
             MessageSubscriber subscriber = iterator.next();
             if(!subscriber.update(ds_id,dataType))

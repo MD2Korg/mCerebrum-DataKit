@@ -11,9 +11,7 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.view.WindowManager;
-
-import org.md2k.datakit.logger.DatabaseLogger;
-import org.md2k.datakit.manager.FileManager;
+import org.md2k.datakit.message.MessageController;
 import org.md2k.utilities.Report.Log;
 
 import java.io.IOException;
@@ -48,34 +46,33 @@ import java.io.IOException;
 public class ServiceDataKit extends Service {
     private static final String TAG = ServiceDataKit.class.getSimpleName();
     MessageController messageController;
-    DatabaseLogger databaseLogger = null;
     Messenger mMessenger;
 
     @Override
     public void onCreate() {
         super.onCreate();
         Log.d(TAG, "onCreate()...");
-        messageController=MessageController.getInstance(ServiceDataKit.this);
         try {
-            databaseLogger = DatabaseLogger.getInstance(getApplicationContext());
+            messageController = MessageController.getInstance(ServiceDataKit.this);
         } catch (IOException e) {
-            showAlertDialogDatabase(this);
-            stopSelf();
+            showAlertDialog(this,e.getMessage());
+            e.printStackTrace();
         }
         mMessenger = new Messenger(new IncomingHandler());
-        Log.d(TAG, "databaseLogger=" + databaseLogger);
         Log.d(TAG, "...onCreate()");
     }
+
     @Override
-    public boolean onUnbind(Intent intent){
+    public boolean onUnbind(Intent intent) {
         Log.d(TAG, "unbind()...package=" + intent.getPackage());
         return super.onUnbind(intent);
     }
-    static void showAlertDialogDatabase(final Context context){
+
+    static void showAlertDialog(final Context context, String message) {
         AlertDialog alertDialog = new AlertDialog.Builder(context)
-                .setTitle("Error: Database Logger")
-                .setIcon(R.drawable.ic_error_outline_white_24dp)
-                .setMessage("Could not access \"" + FileManager.getStorageOption() + "\"")
+                .setTitle("Error")
+                .setIcon(R.drawable.ic_error_red_50dp)
+                .setMessage(message)
                 .setNegativeButton("Ok", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -88,14 +85,9 @@ public class ServiceDataKit extends Service {
 
     @Override
     public void onDestroy() {
-        Log.d(TAG, "onDestroy()...");
-
-        if (databaseLogger != null) {
-            databaseLogger.close();
-            databaseLogger = null;
-        }
+        messageController.close();
+        Log.d(TAG, "onDestroy()");
         super.onDestroy();
-        Log.d(TAG, "...onDestroy()");
     }
 
     @Override
