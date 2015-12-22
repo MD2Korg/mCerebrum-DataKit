@@ -45,22 +45,23 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
+                    android:layout_weight="1"
                     android:weightSum="3">
 
                     <TextView
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:text="@string/privacy_status"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:layout_weight="1.2" />
 
                     <TextView
                         android:id="@+id/textViewPrivacyStatus"
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="2"
                         style="?attr/text_view_primary_color"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:layout_weight="1.8" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -71,19 +72,18 @@
 
                     <TextView
                         android:id="@+id/textViewPrivacyOptionTitle"
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
+                        android:layout_weight="1.2"
                         android:text="@string/privacy_option"
                         android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/textViewPrivacyOption"
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="2"
-                        style="?attr/text_view_primary_color"
-                        android:textStyle="bold" />
+                        android:layout_weight="1.8"
+                        style="?attr/text_view_primary_color" />
                 </LinearLayout>
             </LinearLayout>
 

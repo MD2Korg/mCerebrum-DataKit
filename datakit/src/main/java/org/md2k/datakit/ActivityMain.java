@@ -99,10 +99,10 @@ public class ActivityMain extends AppCompatActivity {
         TextView textViewOption=((TextView) findViewById(R.id.textViewPrivacyOption));
 
         if (privacyController.isActive()) {
-            textViewStatus.setText("ON (Remaining Time: " + DateTime.convertTimeToDayTimeStr(privacyController.getRemainingTime()) + ")");
+            textViewStatus.setText("ON ("+ DateTime.convertTimestampToTimeStr(privacyController.getRemainingTime()) + ")");
             textViewOption.setText(privacyController.getActiveList());
             textViewStatus.setTextColor(ContextCompat.getColor(this,R.color.red_700));
-            textViewOption.setTextColor(ContextCompat.getColor(this, R.color.red_700));
+            textViewOption.setTextColor(ContextCompat.getColor(this, R.color.red_200));
 
         } else {
             textViewStatus.setText("OFF");

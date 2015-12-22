@@ -10,6 +10,10 @@ import android.preference.Preference;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
+import android.support.v4.content.ContextCompat;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -104,13 +108,16 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
                     PrivacyData privacyData;
                     if (privacyController.isActive()) {
                         privacyData= privacyController.getPrivacyData();
+                        durationSelected=privacyData.getDuration();
+                        privacyTypeSelected=privacyData.getPrivacyTypes();
+
                         privacyData.setStatus(false);
                         PrivacyController.getInstance(getActivity()).insertPrivacyData(privacyData);
                     } else {
                         privacyData=preparePrivacyData();
                         if(privacyData!=null){
                             PrivacyController.getInstance(getActivity()).insertPrivacyData(privacyData);
-                            Toast.makeText(getActivity(),"Data collection stopped temporarily",Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getActivity(), "Data collection stopped temporarily", Toast.LENGTH_SHORT).show();
                         }
                     }
                 } catch (IOException e) {
@@ -148,16 +155,18 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
 
         if (privacyController.isActive()) {
             ((Button)getActivity().findViewById(R.id.button_save)).setText("Stop");
-            preference.setSummary("ON (Remaining Time: " + DateTime.convertTimeToDayTimeStr(privacyController.getRemainingTime()) + ")");
             pcDuration.setEnabled(false);
             pcType.setEnabled(false);
-        }
+            Spannable summary = new SpannableString("ON (" + DateTime.convertTimestampToTimeStr(privacyController.getRemainingTime()) + ")");
+            summary.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getActivity(),R.color.red_700)), 0, summary.length(), 0);
+            preference.setSummary(summary);        }
         else {
             ((Button)getActivity().findViewById(R.id.button_save)).setText("Start");
-            preference.setSummary("OFF");
             pcDuration.setEnabled(true);
             pcType.setEnabled(true);
-
+            Spannable summary = new SpannableString("OFF");
+            summary.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getActivity(), R.color.teal_700)), 0, summary.length(), 0);
+            preference.setSummary(summary);
         }
     }
     Handler mHandler = new Handler();
