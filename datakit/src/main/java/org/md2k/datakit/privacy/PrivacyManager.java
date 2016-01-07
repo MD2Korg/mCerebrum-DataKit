@@ -92,9 +92,10 @@ public class PrivacyManager {
     }
 
     void createPrivacyList() {
+        listDsId.clear();
+        if(active==false) return;
         String dataSourceType;
         String platformType;
-        listDsId.clear();
         int id;
         for (int i = 0; i < lastPrivacyData.privacyTypes.size(); i++) {
             for (int j = 0; j < lastPrivacyData.privacyTypes.get(i).source.size(); j++) {
@@ -110,12 +111,15 @@ public class PrivacyManager {
         listDsId.remove(dsIdPrivacy);
     }
     public DataSourceClient register(DataSource dataSource) {
+        Log.d(TAG,"id="+dataSource.getId()+" type="+dataSource.getType());
         DataSourceClient dataSourceClient = routingManager.register(dataSource);
+        Log.d(TAG,"id1="+dataSourceClient.getDataSource().getId()+" type1="+dataSourceClient.getDataSource().getType());
         createPrivacyList();
         return dataSourceClient;
     }
 
     public void insert(int ds_id, DataType dataType) {
+        if(ds_id==-1 || dataType==null) return;
         if (listDsId.get(ds_id) == null)
             routingManager.insert(ds_id, dataType);
         if(ds_id==dsIdPrivacy){

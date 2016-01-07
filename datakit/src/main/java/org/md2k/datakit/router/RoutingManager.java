@@ -9,6 +9,7 @@ import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
 import org.md2k.datakitapi.status.Status;
 import org.md2k.datakitapi.status.StatusCodes;
+import org.md2k.utilities.Report.Log;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -94,9 +95,10 @@ public class RoutingManager {
         ArrayList<DataSourceClient> dataSourceClients = databaseLogger.find(dataSource);
         if(dataSourceClients.size()>0){
             for(int i=0;i<dataSourceClients.size();i++){
+                Log.d("find", "ds_id=" + dataSourceClients.get(i).getDs_id() + " type=" + dataSourceClients.get(i).getDataSource().getType()+" platformType="+dataSourceClients.get(i).getDataSource().getPlatform().getType());
                 if(publishers.isExist(dataSourceClients.get(i).getDs_id())) {
                     int ds_id=dataSourceClients.get(i).getDs_id();
-                    DataSourceClient dataSourceClient = new DataSourceClient(ds_id,dataSource,new Status(StatusCodes.DATASOURCE_ACTIVE));
+                    DataSourceClient dataSourceClient = new DataSourceClient(ds_id,dataSourceClients.get(i).getDataSource(),new Status(StatusCodes.DATASOURCE_ACTIVE));
                     dataSourceClients.set(i,dataSourceClient);
                 }
             }

@@ -11,6 +11,7 @@ import org.md2k.datakitapi.messagehandler.MessageType;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
 import org.md2k.datakitapi.status.Status;
+import org.md2k.utilities.Report.Log;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -77,6 +78,7 @@ public class MessageController {
             case MessageType.FIND:
                 ArrayList<DataSourceClient> dataSourceClients = privacyManager.find((DataSource) incomingMessage.getData().getSerializable(DataSource.class.getSimpleName()));
                 bundle = new Bundle();
+                Log.d("messagecontroller","find: type="+dataSourceClients.get(0).getDataSource().getType());
                 bundle.putSerializable(DataSourceClient.class.getSimpleName(), dataSourceClients);
                 return prepareMessage(bundle, MessageType.FIND);
             case MessageType.INSERT:
