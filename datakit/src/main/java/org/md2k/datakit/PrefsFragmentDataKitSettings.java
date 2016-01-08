@@ -12,11 +12,14 @@ import android.preference.PreferenceFragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import org.md2k.datakit.logger.DatabaseLogger;
 import org.md2k.datakit.operation.FileManager;
 import org.md2k.utilities.Apps;
+import org.md2k.utilities.UI.AlertDialogs;
 
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -48,7 +51,6 @@ public class PrefsFragmentDataKitSettings extends PreferenceFragment {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        // TODO Auto-generated method stub
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.pref_datakit_general);
         setupPreferences();
@@ -56,23 +58,29 @@ public class PrefsFragmentDataKitSettings extends PreferenceFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Defines the xml file for the fragment
-//        View view = inflater.inflate(R.layout.fragment_foo, container, false);
-        // Setup handles to view objects here
-        // etFoo = (EditText) view.findViewById(R.id.etFoo);
-//        return view;
         View v=super.onCreateView(inflater, container,savedInstanceState);
         ListView lv = (ListView) v.findViewById(android.R.id.list);
         lv.setPadding(0, 0, 0, 0);
 
         return v;
     }
+    private void setBackButton() {
+        final Button button = (Button) getActivity().findViewById(R.id.button_cancel);
+        button.setText("Close");
+        button.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                getActivity().finish();
+            }
+        });
+    }
+
     void setupPreferences() {
         setupDatabaseFile();
         setupDatabaseLocation();
         setupDatabaseClear();
         setupSDCardSpace();
         setupDatabaseSize();
+        setBackButton();
     }
     void setupDatabaseLocation(){
         Preference preference = findPreference("database_location");
@@ -96,29 +104,21 @@ public class PrefsFragmentDataKitSettings extends PreferenceFragment {
         preference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
-                //TODO: verify the path for deletion of the database
-                AlertDialog alertDialog = new AlertDialog.Builder(getActivity()).create();
-                alertDialog.setTitle("Delete All Data");
-                alertDialog.setMessage("Do you want to delete all data? Data can't be recovered after deletion.\n\nSome apps may have problems after this operation. If it is, please restart those apps");
-                alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "Cancel",
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                            }
-                        });
-                alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Yes",
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                handleService(false);
-                                new DatabaseDeleteAsyncTask().execute();
-                            }
-                        });
-                alertDialog.show();
-
+                clearDatabase();
                 return true;
             }
         });
-
+    }
+    void clearDatabase(){
+        AlertDialogs.showAlertDialogConfirm(getActivity(), "Clear Database", "Clear Database?\n\nData can't be recovered after deletion\n\nSome apps may have problems after this operation. If it is, please restart those apps", "Yes", "Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if (which == AlertDialog.BUTTON_POSITIVE) {
+                    handleService(false);
+                    new DatabaseDeleteAsyncTask().execute();
+                }
+            }
+        });
     }
     void handleService(boolean opType) {
         Intent intent = new Intent(getActivity(), ServiceDataKit.class);
@@ -152,9 +152,9 @@ public class PrefsFragmentDataKitSettings extends PreferenceFragment {
         protected String doInBackground(String... strings) {
             try {
                 //TODO: verify then enable
-//                DatabaseLogger databaseLogger = DatabaseLogger.getInstance(getActivity());
-//                assert databaseLogger != null;
-//                databaseLogger.removeAll();
+                DatabaseLogger databaseLogger = DatabaseLogger.getInstance(getActivity());
+                assert databaseLogger != null;
+                databaseLogger.removeAll();
             } catch (Exception e) {
             }
             return null;
