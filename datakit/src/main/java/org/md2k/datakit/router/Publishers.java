@@ -73,6 +73,7 @@ public class Publishers {
     }
 
     public void receivedData(int ds_id, DataType dataType) {
+        if(ds_id<0) return;
         publishers.get(ds_id).receivedData(dataType);
     }
 

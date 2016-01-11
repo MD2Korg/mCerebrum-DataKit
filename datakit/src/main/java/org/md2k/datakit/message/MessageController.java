@@ -43,6 +43,7 @@ import java.util.ArrayList;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 public class MessageController {
+    private static final String TAG = MessageController.class.getSimpleName();
     private static MessageController instance;
     Context context;
     PrivacyManager privacyManager;
@@ -58,6 +59,7 @@ public class MessageController {
         privacyManager=PrivacyManager.getInstance(context);
     }
     public void close(){
+        Log.d(TAG,"close()...");
         privacyManager.close();
         instance=null;
     }

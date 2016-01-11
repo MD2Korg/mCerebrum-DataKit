@@ -1,7 +1,6 @@
 package org.md2k.datakit;
 
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -9,6 +8,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -52,6 +52,7 @@ public class PrefsFragmentDataKitSettings extends PreferenceFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         addPreferencesFromResource(R.xml.pref_datakit_general);
         setupPreferences();
     }
@@ -65,7 +66,7 @@ public class PrefsFragmentDataKitSettings extends PreferenceFragment {
         return v;
     }
     private void setBackButton() {
-        final Button button = (Button) getActivity().findViewById(R.id.button_cancel);
+        final Button button = (Button) getActivity().findViewById(R.id.button_2);
         button.setText("Close");
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -109,28 +110,22 @@ public class PrefsFragmentDataKitSettings extends PreferenceFragment {
             }
         });
     }
+    void sendLocalBroadcast(String str){
+        Intent intent = new Intent("datakit");
+        intent.putExtra("action", str);
+        LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(intent);
+
+    }
     void clearDatabase(){
         AlertDialogs.showAlertDialogConfirm(getActivity(), "Clear Database", "Clear Database?\n\nData can't be recovered after deletion\n\nSome apps may have problems after this operation. If it is, please restart those apps", "Yes", "Cancel", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 if (which == AlertDialog.BUTTON_POSITIVE) {
-                    handleService(false);
+                    sendLocalBroadcast("stop");
                     new DatabaseDeleteAsyncTask().execute();
                 }
             }
         });
-    }
-    void handleService(boolean opType) {
-        Intent intent = new Intent(getActivity(), ServiceDataKit.class);
-        if (!opType) {
-            if (Apps.isServiceRunning(getActivity(), Constants.SERVICE_NAME)) {
-                getActivity().stopService(intent);
-            }
-        }
-        else{
-            getActivity().startService(intent);
-        }
-
     }
 
     class DatabaseDeleteAsyncTask extends AsyncTask<String, String, String> {
@@ -163,11 +158,11 @@ public class PrefsFragmentDataKitSettings extends PreferenceFragment {
         @Override
         protected void onPostExecute(String file_url) {
             // Dismiss the dialog after the Music file was downloaded
+            sendLocalBroadcast("start");
+            setupPreferences();
             if (dialog.isShowing()) {
                 dialog.dismiss();
             }
-//            handleService(true);
-            setupPreferences();
             Toast.makeText(getActivity(), "Database is Deleted", Toast.LENGTH_LONG).show();
         }
     }

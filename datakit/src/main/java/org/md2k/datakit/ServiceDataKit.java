@@ -2,15 +2,19 @@ package org.md2k.datakit;
 
 import android.app.AlertDialog;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.WindowManager;
+
 import org.md2k.datakit.message.MessageController;
 import org.md2k.utilities.Report.Log;
 
@@ -52,16 +56,62 @@ public class ServiceDataKit extends Service {
     public void onCreate() {
         super.onCreate();
         Log.d(TAG, "onCreate()...");
-        try {
-            messageController = MessageController.getInstance(ServiceDataKit.this);
-        } catch (IOException e) {
-            showAlertDialog(this,e.getMessage());
-            e.printStackTrace();
-        }
-        mMessenger = new Messenger(new IncomingHandler());
+        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
+                new IntentFilter("datakit"));
+        start();
         Log.d(TAG, "...onCreate()");
     }
 
+    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String op=intent.getStringExtra("action");
+            Log.d(TAG,"onReceive()..."+op);
+            if("start".equals(op))
+                start();
+            else if("stop".equals(op))
+                stop();
+        }
+    };
+
+    void stop() {
+        messageController.close();
+        mMessenger = null;
+    }
+
+    void start() {
+        Log.d(TAG, "start()...");
+        try {
+            messageController = MessageController.getInstance(ServiceDataKit.this);
+        } catch (IOException e) {
+            showAlertDialog(this, e.getMessage());
+            e.printStackTrace();
+        }
+        mMessenger = new Messenger(new IncomingHandler());
+    }
+
+    /*    @Override
+        public int onStartCommand(Intent intent, int flags, int startId) {
+            Log.d(TAG,"onStartCommand...");
+            if(intent.getBooleanExtra("stop",false)){
+                Log.d(TAG,"onStartCommand...stop");
+                messageController.close();
+                mMessenger=null;
+            }
+            if(intent.getBooleanExtra("restart", false)){
+                Log.d(TAG,"onStartCommand...restart");
+                try {
+                    messageController = MessageController.getInstance(ServiceDataKit.this);
+                } catch (IOException e) {
+                    showAlertDialog(this,e.getMessage());
+                    e.printStackTrace();
+                }
+                mMessenger = new Messenger(new IncomingHandler());
+            }
+
+            return Service.START_STICKY;
+        }
+    */
     @Override
     public boolean onUnbind(Intent intent) {
         Log.d(TAG, "unbind()...package=" + intent.getPackage());

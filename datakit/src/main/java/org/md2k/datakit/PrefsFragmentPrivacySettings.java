@@ -98,8 +98,8 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
     }
 
     void setupButtonSaveCancel() {
-        final Button buttonStartStop = (Button) getActivity().findViewById(R.id.button_save);
-        Button buttonCancel = (Button) getActivity().findViewById(R.id.button_cancel);
+        final Button buttonStartStop = (Button) getActivity().findViewById(R.id.button_1);
+        Button buttonCancel = (Button) getActivity().findViewById(R.id.button_2);
 
         buttonStartStop.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -154,14 +154,14 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
         PreferenceCategory pcType= (PreferenceCategory) findPreference("category_privacy_type");
 
         if (privacyController.isActive()) {
-            ((Button)getActivity().findViewById(R.id.button_save)).setText("Stop");
+            ((Button)getActivity().findViewById(R.id.button_1)).setText("Stop");
             pcDuration.setEnabled(false);
             pcType.setEnabled(false);
             Spannable summary = new SpannableString("ON (" + DateTime.convertTimestampToTimeStr(privacyController.getRemainingTime()) + ")");
             summary.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getActivity(),R.color.red_700)), 0, summary.length(), 0);
             preference.setSummary(summary);        }
         else {
-            ((Button)getActivity().findViewById(R.id.button_save)).setText("Start");
+            ((Button)getActivity().findViewById(R.id.button_1)).setText("Start");
             pcDuration.setEnabled(true);
             pcType.setEnabled(true);
             Spannable summary = new SpannableString("OFF");
