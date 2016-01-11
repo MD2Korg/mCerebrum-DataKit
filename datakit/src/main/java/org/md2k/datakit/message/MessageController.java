@@ -80,7 +80,6 @@ public class MessageController {
             case MessageType.FIND:
                 ArrayList<DataSourceClient> dataSourceClients = privacyManager.find((DataSource) incomingMessage.getData().getSerializable(DataSource.class.getSimpleName()));
                 bundle = new Bundle();
-                Log.d("messagecontroller","find: type="+dataSourceClients.get(0).getDataSource().getType());
                 bundle.putSerializable(DataSourceClient.class.getSimpleName(), dataSourceClients);
                 return prepareMessage(bundle, MessageType.FIND);
             case MessageType.INSERT:
