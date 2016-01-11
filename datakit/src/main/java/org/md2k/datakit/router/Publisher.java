@@ -47,8 +47,10 @@ public class Publisher {
     }
     public void close(){
         ds_id=-1;
-        messageSubscribers.clear();
-        messageSubscribers=null;
+        if(messageSubscribers!=null) {
+            messageSubscribers.clear();
+            messageSubscribers = null;
+        }
         databaseSubscriber=null;
     }
     public void setDatabaseSubscriber(DatabaseSubscriber databaseSubscriber){

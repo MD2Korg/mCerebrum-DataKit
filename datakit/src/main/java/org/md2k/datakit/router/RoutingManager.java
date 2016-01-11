@@ -123,8 +123,10 @@ public class RoutingManager {
         return dataSourceClient;
     }
     public void close(){
-        publishers.close();
-        databaseLogger.close();
-        instance=null;
+        if(instance!=null) {
+            publishers.close();
+            databaseLogger.close();
+            instance = null;
+        }
     }
 }

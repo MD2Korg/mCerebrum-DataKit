@@ -59,9 +59,11 @@ public class MessageController {
         privacyManager=PrivacyManager.getInstance(context);
     }
     public void close(){
-        Log.d(TAG,"close()...");
-        privacyManager.close();
-        instance=null;
+        Log.d(TAG, "close()...");
+        if(instance!=null) {
+            privacyManager.close();
+            instance = null;
+        }
     }
 
     public Message execute(Message incomingMessage) {

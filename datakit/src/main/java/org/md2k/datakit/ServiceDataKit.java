@@ -75,8 +75,10 @@ public class ServiceDataKit extends Service {
     };
 
     void stop() {
-        messageController.close();
-        mMessenger = null;
+        if(mMessenger!=null) {
+            messageController.close();
+            mMessenger = null;
+        }
     }
 
     void start() {
@@ -135,7 +137,7 @@ public class ServiceDataKit extends Service {
 
     @Override
     public void onDestroy() {
-        messageController.close();
+        stop();
         Log.d(TAG, "onDestroy()");
         super.onDestroy();
     }

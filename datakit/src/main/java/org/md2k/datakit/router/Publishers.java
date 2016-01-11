@@ -100,13 +100,15 @@ public class Publishers {
     }
 
     public void close() {
-        Log.d(TAG, "close: publishers size=" + publishers.size());
-        for (int i = 0; i < publishers.size(); i++) {
-            int key = publishers.keyAt(i);
-            publishers.get(key).close();
+        if(instance!=null) {
+            Log.d(TAG, "close: publishers size=" + publishers.size());
+            for (int i = 0; i < publishers.size(); i++) {
+                int key = publishers.keyAt(i);
+                publishers.get(key).close();
+            }
+            publishers.clear();
+            publishers = null;
+            instance = null;
         }
-        publishers.clear();
-        publishers = null;
-        instance = null;
     }
 }

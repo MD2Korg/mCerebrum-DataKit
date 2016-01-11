@@ -66,13 +66,15 @@ public class DatabaseLogger extends SQLiteOpenHelper {
     }
 
     public void close() {
-        Log.d(TAG, "close()");
-        databaseTable_data.commit(db);
-        if (db.isOpen())
-            db.close();
-        super.close();
-        db = null;
-        instance = null;
+        if(instance!=null) {
+            Log.d(TAG, "close()");
+            databaseTable_data.commit(db);
+            if (db.isOpen())
+                db.close();
+            super.close();
+            db = null;
+            instance = null;
+        }
     }
 
     public void insert(int dataSourceId, DataType dataType) {

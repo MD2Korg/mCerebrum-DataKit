@@ -178,9 +178,11 @@ public class PrivacyManager {
     }
 
     public void close() {
-        listDsId.clear();
-        routingManager.close();
-        instance = null;
+        if(instance!=null) {
+            listDsId.clear();
+            routingManager.close();
+            instance = null;
+        }
     }
 
     void activate() {
