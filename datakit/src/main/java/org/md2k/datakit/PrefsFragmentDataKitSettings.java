@@ -66,7 +66,7 @@ public class PrefsFragmentDataKitSettings extends PreferenceFragment {
         return v;
     }
     private void setBackButton() {
-        final Button button = (Button) getActivity().findViewById(R.id.button_2);
+        final Button button = (Button) getActivity().findViewById(R.id.button_1);
         button.setText("Close");
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
