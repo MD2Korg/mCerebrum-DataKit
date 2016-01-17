@@ -137,7 +137,6 @@ public class ServiceDataKit extends Service {
 
     @Override
     public void onDestroy() {
-        stop();
         Log.d(TAG, "onDestroy()");
         super.onDestroy();
     }
