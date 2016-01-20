@@ -77,6 +77,7 @@ public class ServiceDataKit extends Service {
     void stop() {
         if(mMessenger!=null) {
             messageController.close();
+            messageController=null;
             mMessenger = null;
         }
     }

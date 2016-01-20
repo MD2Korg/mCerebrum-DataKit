@@ -72,7 +72,6 @@ public class Publisher {
     public int add(MessageSubscriber subscriber){
         if(isExists(subscriber)) return StatusCodes.ALREADY_SUBSCRIBED;
         messageSubscribers.add(subscriber);
-        Log.d(TAG,"add()... id="+ds_id+" size="+messageSubscribers.size());
         return StatusCodes.SUCCESS;
     }
     public int remove(MessageSubscriber subscriber){
@@ -82,7 +81,6 @@ public class Publisher {
     }
     public void notifyAllObservers(DataType dataType){
         if(messageSubscribers.size()>0)
-            Log.d(TAG, "id="+ds_id+" subscriber=" + messageSubscribers.size());
         if(databaseSubscriber!=null) databaseSubscriber.insert(ds_id, dataType);
         for (Iterator<MessageSubscriber> iterator = messageSubscribers.iterator(); iterator.hasNext();) {
             MessageSubscriber subscriber = iterator.next();
