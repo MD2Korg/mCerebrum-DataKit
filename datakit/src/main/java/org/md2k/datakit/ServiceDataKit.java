@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -16,9 +17,13 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.view.WindowManager;
 
 import org.md2k.datakit.message.MessageController;
+import org.md2k.datakitapi.messagehandler.MessageType;
+import org.md2k.datakitapi.status.Status;
 import org.md2k.utilities.Report.Log;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -51,73 +56,78 @@ public class ServiceDataKit extends Service {
     private static final String TAG = ServiceDataKit.class.getSimpleName();
     MessageController messageController;
     Messenger mMessenger;
+    IncomingHandler incomingHandler;
+    HashMap<String, Messenger> connectedList;
+    HashSet<Messenger> messengers;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.d(TAG, "onCreate()...");
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
                 new IntentFilter("datakit"));
         start();
-        Log.d(TAG, "...onCreate()");
     }
 
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            String op=intent.getStringExtra("action");
-            Log.d(TAG,"onReceive()..."+op);
-            if("start".equals(op))
+            String op = intent.getStringExtra("action");
+            if ("start".equals(op))
                 start();
-            else if("stop".equals(op))
+            else if ("stop".equals(op))
                 stop();
         }
     };
 
     void stop() {
-        if(mMessenger!=null) {
+        Log.d(TAG, "stop()...");
+        if (messageController != null) {
             messageController.close();
-            messageController=null;
-            mMessenger = null;
+            messageController = null;
         }
+        incomingHandler = null;
+        disconnectAll();
+    }
+
+    void disconnectAll() {
+        Messenger replyTo;
+        Message outgoingMessage;
+        Bundle bundle = new Bundle();
+        bundle.putSerializable(Status.class.getSimpleName(), new Status(Status.INTERNAL_ERROR));
+        outgoingMessage = prepareMessage(bundle, MessageType.INTERNAL_ERROR);
+
+        for (String name : connectedList.keySet()) {
+            replyTo = connectedList.get(name);
+            try {
+                replyTo.send(outgoingMessage);
+            } catch (RemoteException ignored) {
+            }
+        }
+        connectedList.clear();
+        messengers.clear();
     }
 
     void start() {
+        incomingHandler = new IncomingHandler();
+        connectedList = new HashMap<>();
+        messengers = new HashSet<>();
         Log.d(TAG, "start()...");
         try {
             messageController = MessageController.getInstance(ServiceDataKit.this);
+            mMessenger = new Messenger(incomingHandler);
         } catch (IOException e) {
             showAlertDialog(this, e.getMessage());
             e.printStackTrace();
         }
-        mMessenger = new Messenger(new IncomingHandler());
     }
 
-    /*    @Override
-        public int onStartCommand(Intent intent, int flags, int startId) {
-            Log.d(TAG,"onStartCommand...");
-            if(intent.getBooleanExtra("stop",false)){
-                Log.d(TAG,"onStartCommand...stop");
-                messageController.close();
-                mMessenger=null;
-            }
-            if(intent.getBooleanExtra("restart", false)){
-                Log.d(TAG,"onStartCommand...restart");
-                try {
-                    messageController = MessageController.getInstance(ServiceDataKit.this);
-                } catch (IOException e) {
-                    showAlertDialog(this,e.getMessage());
-                    e.printStackTrace();
-                }
-                mMessenger = new Messenger(new IncomingHandler());
-            }
-
-            return Service.START_STICKY;
-        }
-    */
     @Override
     public boolean onUnbind(Intent intent) {
-        Log.d(TAG, "unbind()...package=" + intent.getPackage());
+        String pName = intent.getStringExtra("name");
+        Messenger messenger = intent.getParcelableExtra("messenger");
+        connectedList.remove(pName);
+        messengers.remove(messenger);
+        Log.d(TAG, "name=" + pName + " messenger=" + messenger);
         return super.onUnbind(intent);
     }
 
@@ -138,32 +148,54 @@ public class ServiceDataKit extends Service {
 
     @Override
     public void onDestroy() {
-        Log.d(TAG, "onDestroy()");
+        Log.d(TAG, "onDestroy()...");
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+        messengers = null;
+        connectedList = null;
+        if (messageController != null) {
+            messageController.close();
+            messageController = null;
+        }
         super.onDestroy();
     }
 
     @Override
     public IBinder onBind(Intent intent) {
-        Log.d(TAG, "onBind()");
+        String pName = intent.getStringExtra("name");
+        Messenger messenger = intent.getParcelableExtra("messenger");
+        Log.d(TAG, "name=" + pName + " messenger=" + messenger);
+        connectedList.put(pName, messenger);
+        messengers.add(messenger);
         return mMessenger.getBinder();
+    }
+
+    public Message prepareMessage(Bundle bundle, int messageType) {
+        Message message = Message.obtain(null, 0, 0, 0);
+        message.what = messageType;
+        message.setData(bundle);
+        return message;
     }
 
     private class IncomingHandler extends Handler {
         Messenger replyTo;
 
-        IncomingHandler() {
-        }
-
 
         @Override
         public void handleMessage(Message incomingMessage) {
-            Message outgoingMessage = messageController.execute(incomingMessage);
+            Message outgoingMessage;
+            if (messageController == null) {
+                Log.d(TAG, "error...messageController=null");
+                Bundle bundle = new Bundle();
+                bundle.putSerializable(Status.class.getSimpleName(), new Status(Status.INTERNAL_ERROR));
+                outgoingMessage = prepareMessage(bundle, incomingMessage.what);
+            } else
+                outgoingMessage = messageController.execute(incomingMessage);
             if (outgoingMessage != null) {
                 replyTo = incomingMessage.replyTo;
+                Log.d(TAG, "replyto=" + replyTo);
                 try {
                     replyTo.send(outgoingMessage);
-                } catch (RemoteException e) {
-                    e.printStackTrace();
+                } catch (RemoteException ignored) {
                 }
             }
         }

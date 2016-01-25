@@ -2,6 +2,8 @@ package org.md2k.datakit.router;
 
 import org.md2k.datakit.logger.DatabaseLogger;
 import org.md2k.datakitapi.datatype.DataType;
+import org.md2k.datakitapi.status.Status;
+import org.md2k.utilities.Report.Log;
 
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -36,7 +38,7 @@ public class DatabaseSubscriber {
     public DatabaseSubscriber(DatabaseLogger databaseLogger){
         this.databaseLogger=databaseLogger;
     }
-    public void insert(int ds_id, DataType data) {
-        databaseLogger.insert(ds_id, data);
+    public Status insert(int ds_id, DataType data) {
+        return databaseLogger.insert(ds_id, data);
     }
 }

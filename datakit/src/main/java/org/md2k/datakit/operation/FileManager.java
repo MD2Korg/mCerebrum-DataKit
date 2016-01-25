@@ -156,19 +156,17 @@ public class FileManager {
     public static String getStorageSpace(Context context) {
         String sdCard = getValidSDcard(context);
         long available=0, total=0, used=0;
-        String availableStr = "-", totalStr = "-", usedStr="-";
+        String totalStr = "-", usedStr="-";
         if (sdCard.equals(INTERNAL_SDCARD_STR)) {
             available = getAvailableSDCardSize(Environment.getExternalStorageDirectory());
             total = getTotalSDCardSize(Environment.getExternalStorageDirectory());
             used=total-available;
-            availableStr=formatSize(available);
             usedStr=formatSize(used);
             totalStr=formatSize(total);
         } else if (sdCard.equals(EXTERNAL_SDCARD_STR)) {
             available = getAvailableSDCardSize(getExternalSDCardPath(context));
             total = getTotalSDCardSize(getExternalSDCardPath(context));
             used=total-available;
-            availableStr=formatSize(available);
             totalStr=formatSize(total);
             usedStr=formatSize(used);
 
@@ -179,6 +177,7 @@ public class FileManager {
         long fileSize=getFileSize(new File(getFilePath(context)));
         return formatSize(fileSize);
     }
+
     public static long getFileSize(File file){
         long fileSize=0;
         if(file.exists())
@@ -221,6 +220,11 @@ public class FileManager {
 
         if (suffix != null) resultBuffer.append(suffix);
         return resultBuffer.toString();
+    }
+    public static boolean deleteFile(Context context){
+        String filePath=getFilePath(context);
+        File file = new File(filePath);
+        return file.delete();
     }
 
     public static String getDirectory(Context context) {

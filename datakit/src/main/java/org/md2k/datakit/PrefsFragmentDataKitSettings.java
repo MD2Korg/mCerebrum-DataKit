@@ -19,7 +19,10 @@ import android.widget.Toast;
 import org.md2k.datakit.logger.DatabaseLogger;
 import org.md2k.datakit.operation.FileManager;
 import org.md2k.utilities.Apps;
+import org.md2k.utilities.Report.Log;
 import org.md2k.utilities.UI.AlertDialogs;
+
+import java.io.File;
 
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -49,12 +52,19 @@ import org.md2k.utilities.UI.AlertDialogs;
  */
 public class PrefsFragmentDataKitSettings extends PreferenceFragment {
 
+    private static final String TAG = PrefsFragmentDataKitSettings.class.getSimpleName();
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         addPreferencesFromResource(R.xml.pref_datakit_general);
+    }
+    @Override
+    public void onResume(){
+        Log.d(TAG,"onResume()...");
         setupPreferences();
+        super.onResume();
     }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -93,6 +103,7 @@ public class PrefsFragmentDataKitSettings extends PreferenceFragment {
     }
     void setupDatabaseSize(){
         Preference preference = findPreference("database_size");
+        Log.d("MD2K", "filesize=" + FileManager.getFileSize(getActivity()));
         preference.setSummary(FileManager.getFileSize(getActivity()));
     }
 
@@ -147,9 +158,11 @@ public class PrefsFragmentDataKitSettings extends PreferenceFragment {
         protected String doInBackground(String... strings) {
             try {
                 //TODO: verify then enable
-                DatabaseLogger databaseLogger = DatabaseLogger.getInstance(getActivity());
-                assert databaseLogger != null;
-                databaseLogger.removeAll();
+//                DatabaseLogger databaseLogger = DatabaseLogger.getInstance(getActivity());
+//                assert databaseLogger != null;
+//                databaseLogger.removeAll();
+//                databaseLogger.close();
+                FileManager.deleteFile(getActivity());
             } catch (Exception e) {
             }
             return null;

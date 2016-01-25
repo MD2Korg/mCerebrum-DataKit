@@ -8,6 +8,7 @@ import org.md2k.datakit.operation.FileManager;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
+import org.md2k.datakitapi.status.Status;
 import org.md2k.utilities.Report.Log;
 
 import java.io.IOException;
@@ -77,8 +78,8 @@ public class DatabaseLogger extends SQLiteOpenHelper {
         }
     }
 
-    public void insert(int dataSourceId, DataType dataType) {
-        databaseTable_data.insert(db, dataSourceId, dataType);
+    public Status insert(int dataSourceId, DataType dataType) {
+        return databaseTable_data.insert(db, dataSourceId, dataType);
     }
 
     public ArrayList<DataType> query(int ds_id, long startTimestamp, long endTimestamp) {

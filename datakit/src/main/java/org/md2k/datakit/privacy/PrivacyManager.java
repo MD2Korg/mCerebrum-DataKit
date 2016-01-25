@@ -21,7 +21,6 @@ import org.md2k.datakitapi.source.platform.PlatformBuilder;
 import org.md2k.datakitapi.source.platform.PlatformType;
 import org.md2k.datakitapi.status.Status;
 import org.md2k.datakitapi.time.DateTime;
-import org.md2k.utilities.Report.Log;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -53,11 +52,11 @@ import java.util.ArrayList;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 public class PrivacyManager {
-    private static final String TAG = PrivacyManager.class.getSimpleName();
+//    private static final String TAG = PrivacyManager.class.getSimpleName();
     private static PrivacyManager instance;
     Context context;
     RoutingManager routingManager;
-    SparseArray<Boolean> listDsId;
+    SparseArray<Boolean> listPrivacyListDsId;
     int dsIdPrivacy;
     Handler handler;
     PrivacyData lastPrivacyData;
@@ -73,7 +72,7 @@ public class PrivacyManager {
         this.context = context;
         routingManager = RoutingManager.getInstance(context);
         active=false;
-        listDsId = new SparseArray<>();
+        listPrivacyListDsId = new SparseArray<>();
         handler = new Handler();
         processPrivacyData();
     }
@@ -92,8 +91,8 @@ public class PrivacyManager {
     }
 
     void createPrivacyList() {
-        listDsId.clear();
-        if(active==false) return;
+        listPrivacyListDsId.clear();
+        if(!active) return;
         String dataSourceType;
         String platformType;
         int id;
@@ -104,44 +103,44 @@ public class PrivacyManager {
                 ArrayList<DataSourceClient> dataSourceClients = routingManager.find(createDataSource(dataSourceType, platformType));
                 for (int k = 0; k < dataSourceClients.size(); k++) {
                     id = dataSourceClients.get(i).getDs_id();
-                    listDsId.put(id, true);
+                    listPrivacyListDsId.put(id, true);
                 }
             }
         }
-        listDsId.remove(dsIdPrivacy);
+        listPrivacyListDsId.remove(dsIdPrivacy);
     }
     public DataSourceClient register(DataSource dataSource) {
-        Log.d(TAG,"id="+dataSource.getId()+" type="+dataSource.getType());
         DataSourceClient dataSourceClient = routingManager.register(dataSource);
-        Log.d(TAG,"id1="+dataSourceClient.getDataSource().getId()+" type1="+dataSourceClient.getDataSource().getType());
         createPrivacyList();
         return dataSourceClient;
     }
 
-    public void insert(int ds_id, DataType dataType) {
-        if(ds_id==-1 || dataType==null) return;
-        if (listDsId.get(ds_id) == null)
-            routingManager.insert(ds_id, dataType);
+    public Status insert(int ds_id, DataType dataType) {
+        Status status=new Status(Status.SUCCESS);
+        if(ds_id==-1 || dataType==null)
+            return new Status(Status.INTERNAL_ERROR);
+        if (listPrivacyListDsId.get(ds_id) == null) {
+            status = routingManager.insert(ds_id, dataType);
+            if(status.getStatusCode()==Status.INTERNAL_ERROR)
+                return status;
+        }
         if(ds_id==dsIdPrivacy){
             processPrivacyData();
         }
+        return status;
     }
     public long getRemainingTime(){
         long currentTimeStamp = DateTime.getDateTime();
-        Log.d(TAG,"duration="+lastPrivacyData.duration.getValue());
         long endTimeStamp = lastPrivacyData.startTimeStamp + lastPrivacyData.duration.getValue();
         return endTimeStamp-currentTimeStamp;
 
     }
     private void processPrivacyData(){
         lastPrivacyData= queryLastPrivacyData();
-        Log.d(TAG, "lastPrivacyData=" + lastPrivacyData);
         if (lastPrivacyData == null|| !lastPrivacyData.status || getRemainingTime()<=0) {
-            Log.d(TAG, "lastPrivacyData= deactivated");
             deactivate();
         }
         else {
-            Log.d(TAG, "lastPrivacyData= activated");
             createPrivacyList();
             activate();
         }
@@ -179,7 +178,7 @@ public class PrivacyManager {
 
     public void close() {
         if(instance!=null) {
-            listDsId.clear();
+            listPrivacyListDsId.clear();
             routingManager.close();
             instance = null;
         }
@@ -187,7 +186,6 @@ public class PrivacyManager {
 
     void activate() {
         handler.removeCallbacks(timer);
-        Log.d(TAG,"remainingTime="+getRemainingTime());
         active=true;
         handler.postDelayed(timer,getRemainingTime());
     }
@@ -195,20 +193,17 @@ public class PrivacyManager {
         return lastPrivacyData;
     }
     private PrivacyData queryLastPrivacyData() {
-        Log.d(TAG, "queryLastPrivacyData");
         Gson gson = new Gson();
         dsIdPrivacy = routingManager.register(createDataSourcePrivacy()).getDs_id();
-        Log.d(TAG, "ds_id="+dsIdPrivacy);
 
         ArrayList<DataType> dataTypes = routingManager.query(dsIdPrivacy, 1);
-        Log.d(TAG, "DataTypes="+dataTypes+" size="+dataTypes.size());
 
         if (dataTypes == null || dataTypes.size() == 0) return null;
         return gson.fromJson(((DataTypeString) dataTypes.get(0)).getSample(), PrivacyData.class);
     }
 
     void deactivate() {
-        listDsId.clear();
+        listPrivacyListDsId.clear();
         active=false;
         handler.removeCallbacks(timer);
     }

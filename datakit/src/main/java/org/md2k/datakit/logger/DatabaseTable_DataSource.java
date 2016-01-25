@@ -8,7 +8,7 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
 import org.md2k.datakitapi.status.Status;
-import org.md2k.datakitapi.status.StatusCodes;
+import org.md2k.datakitapi.status.Status;
 import org.md2k.datakitapi.time.DateTime;
 
 import java.util.ArrayList;
@@ -142,7 +142,7 @@ public class DatabaseTable_DataSource {
             if (mCursor.moveToFirst()) {
                 do {
                     DataSourceClient dataSourceClient = new DataSourceClient(mCursor.getInt(mCursor.getColumnIndex(C_DS_ID)),
-                            DataSource.fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_DATASOURCE))), new Status(StatusCodes.DATASOURCE_EXIST));
+                            DataSource.fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_DATASOURCE))), new Status(Status.DATASOURCE_EXIST));
                     dataSourceClients.add(dataSourceClient);
                 } while (mCursor.moveToNext());
             }
@@ -162,8 +162,8 @@ public class DatabaseTable_DataSource {
         int newRowId;
         newRowId = (int) db.insert(TABLE_NAME, null, cValues);
         if (newRowId == -1) {
-            return new DataSourceClient(-1, dataSource, new Status(StatusCodes.INTERNAL_ERROR));
-        } else return new DataSourceClient(newRowId, dataSource, new Status(StatusCodes.SUCCESS));
+            return new DataSourceClient(-1, dataSource, new Status(Status.INTERNAL_ERROR));
+        } else return new DataSourceClient(newRowId, dataSource, new Status(Status.SUCCESS));
     }
 
     public ContentValues prepareDataSource(DataSource dataSource) {

@@ -6,6 +6,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 
 import org.md2k.datakitapi.datatype.DataType;
+import org.md2k.datakitapi.status.Status;
+import org.md2k.datakitapi.status.Status;
 
 import java.util.ArrayList;
 
@@ -61,28 +63,36 @@ public class DatabaseTable_Data {
     public void createIfNotExists(SQLiteDatabase db) {
         db.execSQL(SQL_CREATE_DATA);
     }
-    private void insertDB(SQLiteDatabase db){
-
-        if(cValues.size()==0) return;
-//        if(!db.isOpen()) return;
-        db.beginTransaction();
-        for (int i = 0; i < cValues.size(); i++)
-            db.insert(TABLE_NAME, null, cValues.get(i));
-        cValues.clear();
+    private Status insertDB(SQLiteDatabase db){
         try {
-            db.setTransactionSuccessful();
-        }finally {
-            db.endTransaction();
+
+            if (cValues.size() == 0)         return new Status(Status.SUCCESS);
+
+//        if(!db.isOpen()) return;
+            db.beginTransaction();
+            for (int i = 0; i < cValues.size(); i++)
+                db.insert(TABLE_NAME, null, cValues.get(i));
+            cValues.clear();
+            try {
+                db.setTransactionSuccessful();
+            } finally {
+                db.endTransaction();
+            }
+        }catch (Exception e){
+            return new Status(Status.INTERNAL_ERROR);
         }
+        return new Status(Status.SUCCESS);
     }
 
-    public void insert(SQLiteDatabase db, int dataSourceId, DataType dataType) {
+    public Status insert(SQLiteDatabase db, int dataSourceId, DataType dataType) {
+        Status status = new Status(Status.SUCCESS);
         ContentValues contentValues=prepareData(dataSourceId, dataType);
         cValues.add(contentValues);
         if (dataType.getDateTime() - lastUnlock >= WAITTIME) {
-            insertDB(db);
+            status=insertDB(db);
             lastUnlock=dataType.getDateTime();
         }
+        return status;
     }
     private String[] prepareSelectionArgs(int ds_id,long starttimestamp,long endtimestamp) {
         ArrayList<String> selectionArgs = new ArrayList<>();

@@ -1,8 +1,8 @@
 package org.md2k.datakit.router;
 
 import org.md2k.datakitapi.datatype.DataType;
-import org.md2k.datakitapi.status.StatusCodes;
-import org.md2k.utilities.Report.Log;
+import org.md2k.datakitapi.status.Status;
+import org.md2k.datakitapi.status.Status;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -46,7 +46,6 @@ public class Publisher {
         messageSubscribers =new ArrayList<>();
     }
     public void close(){
-        ds_id=-1;
         if(messageSubscribers!=null) {
             messageSubscribers.clear();
             messageSubscribers = null;
@@ -56,8 +55,8 @@ public class Publisher {
     public void setDatabaseSubscriber(DatabaseSubscriber databaseSubscriber){
         this.databaseSubscriber=databaseSubscriber;
     }
-    public void receivedData(DataType dataType) {
-            notifyAllObservers(dataType);
+    public Status receivedData(DataType dataType) {
+            return notifyAllObservers(dataType);
     }
     boolean isExists(MessageSubscriber subscriber){
         return get(subscriber) != -1;
@@ -70,22 +69,23 @@ public class Publisher {
     }
 
     public int add(MessageSubscriber subscriber){
-        if(isExists(subscriber)) return StatusCodes.ALREADY_SUBSCRIBED;
+        if(isExists(subscriber)) return Status.ALREADY_SUBSCRIBED;
         messageSubscribers.add(subscriber);
-        return StatusCodes.SUCCESS;
+        return Status.SUCCESS;
     }
     public int remove(MessageSubscriber subscriber){
-        if(!isExists(subscriber)) return StatusCodes.DATASOURCE_NOT_EXIST;
+        if(!isExists(subscriber)) return Status.DATASOURCE_NOT_EXIST;
         messageSubscribers.remove(get(subscriber));
-        return StatusCodes.SUCCESS;
+        return Status.SUCCESS;
     }
-    public void notifyAllObservers(DataType dataType){
-        if(messageSubscribers.size()>0)
-        if(databaseSubscriber!=null) databaseSubscriber.insert(ds_id, dataType);
+    public Status notifyAllObservers(DataType dataType){
+        Status status=new Status(Status.SUCCESS);
+        if(databaseSubscriber!=null) status=databaseSubscriber.insert(ds_id, dataType);
         for (Iterator<MessageSubscriber> iterator = messageSubscribers.iterator(); iterator.hasNext();) {
             MessageSubscriber subscriber = iterator.next();
             if(!subscriber.update(ds_id,dataType))
                 iterator.remove();
         }
+        return status;
     }
 }

@@ -4,7 +4,6 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Message;
 
-import org.md2k.datakit.operation.DataManager;
 import org.md2k.datakit.privacy.PrivacyManager;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.messagehandler.MessageType;
@@ -59,7 +58,7 @@ public class MessageController {
         privacyManager=PrivacyManager.getInstance(context);
     }
     public void close(){
-        Log.d(TAG, "close()...");
+        Log.d(TAG, "messageController ... close()...instance=" + instance);
         if(instance!=null) {
             privacyManager.close();
             instance = null;
@@ -68,14 +67,16 @@ public class MessageController {
 
     public Message execute(Message incomingMessage) {
         Bundle bundle;
+        Status status;
         switch (incomingMessage.what) {
             case MessageType.REGISTER:
                 DataSourceClient dataSourceClient = privacyManager.register((DataSource) incomingMessage.getData().getSerializable(DataSource.class.getSimpleName()));
                 bundle = new Bundle();
                 bundle.putSerializable(DataSourceClient.class.getSimpleName(), dataSourceClient);
+                bundle.putSerializable(Status.class.getSimpleName(),dataSourceClient.getStatus());
                 return prepareMessage(bundle, MessageType.REGISTER);
             case MessageType.UNREGISTER:
-                Status status = privacyManager.unregister(incomingMessage.getData().getInt("ds_id"));
+                status = privacyManager.unregister(incomingMessage.getData().getInt("ds_id"));
                 bundle = new Bundle();
                 bundle.putSerializable(Status.class.getSimpleName(), status);
                 return prepareMessage(bundle, MessageType.UNREGISTER);
@@ -83,10 +84,15 @@ public class MessageController {
                 ArrayList<DataSourceClient> dataSourceClients = privacyManager.find((DataSource) incomingMessage.getData().getSerializable(DataSource.class.getSimpleName()));
                 bundle = new Bundle();
                 bundle.putSerializable(DataSourceClient.class.getSimpleName(), dataSourceClients);
+                bundle.putSerializable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
                 return prepareMessage(bundle, MessageType.FIND);
             case MessageType.INSERT:
+//                status = privacyManager.insert(incomingMessage.getData().getInt("ds_id"), (DataType) incomingMessage.getData().getSerializable(DataType.class.getSimpleName()));
                 privacyManager.insert(incomingMessage.getData().getInt("ds_id"), (DataType) incomingMessage.getData().getSerializable(DataType.class.getSimpleName()));
+                //                bundle = new Bundle();
+//                bundle.putSerializable(Status.class.getSimpleName(), status);
                 return null;
+//                return prepareMessage(bundle,MessageType.INSERT);
             case MessageType.QUERY:
                 ArrayList<DataType> dataTypes;
                 if (incomingMessage.getData().containsKey("starttimestamp"))
@@ -95,6 +101,7 @@ public class MessageController {
                     dataTypes = privacyManager.query(incomingMessage.getData().getInt("ds_id"), incomingMessage.getData().getInt("last_n_sample"));
                 bundle = new Bundle();
                 bundle.putSerializable(DataType.class.getSimpleName(), dataTypes);
+                bundle.putSerializable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
                 return prepareMessage(bundle, MessageType.QUERY);
             case MessageType.SUBSCRIBE:
                 Status statusSubscribe = privacyManager.subscribe(incomingMessage.getData().getInt("ds_id"), incomingMessage.replyTo);

@@ -5,8 +5,7 @@ import android.util.SparseArray;
 
 import org.md2k.datakit.logger.DatabaseLogger;
 import org.md2k.datakitapi.datatype.DataType;
-import org.md2k.datakitapi.status.StatusCodes;
-import org.md2k.utilities.Report.Log;
+import org.md2k.datakitapi.status.Status;
 
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -35,15 +34,9 @@ import org.md2k.utilities.Report.Log;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 public class Publishers {
-    private static final String TAG = Publishers.class.getSimpleName();
-    SparseArray<Publisher> publishers;
-    private static Publishers instance = null;
+//    private static final String TAG = Publishers.class.getSimpleName();
+    private SparseArray<Publisher> publishers;
 
-    public static Publishers getInstance() {
-        if (instance == null)
-            instance = new Publishers();
-        return instance;
-    }
 
     Publishers() {
         publishers = new SparseArray<>();
@@ -51,64 +44,65 @@ public class Publishers {
 
     public int addPublisher(int ds_id, DatabaseLogger databaseLogger) {
         int status = addPublisher(ds_id);
-        if (status == StatusCodes.SUCCESS)
+        if (status == Status.SUCCESS)
             publishers.get(ds_id).setDatabaseSubscriber(new DatabaseSubscriber(databaseLogger));
-        return StatusCodes.SUCCESS;
+        return Status.SUCCESS;
     }
 
     public int addPublisher(int ds_id) {
-        if (ds_id == -1) return StatusCodes.DATASOURCE_INVALID;
+        if (ds_id == -1) return Status.DATASOURCE_INVALID;
         if (publishers.indexOfKey(ds_id) < 0) {
             publishers.put(ds_id, new Publisher(ds_id));
         }
-        return StatusCodes.SUCCESS;
+        return Status.SUCCESS;
     }
 
     public int addSubscriber(int ds_id) {
-        if (ds_id == -1) return StatusCodes.DATASOURCE_INVALID;
+        if (ds_id == -1) return Status.DATASOURCE_INVALID;
         if (publishers.indexOfKey(ds_id) < 0) {
             publishers.put(ds_id, new Publisher(ds_id));
         }
-        return StatusCodes.SUCCESS;
+        return Status.SUCCESS;
     }
 
-    public void receivedData(int ds_id, DataType dataType) {
-        publishers.get(ds_id).receivedData(dataType);
+    public Status receivedData(int ds_id, DataType dataType) {
+        if (publishers.get(ds_id) != null)
+            return publishers.get(ds_id).receivedData(dataType);
+        else return new Status(Status.INTERNAL_ERROR);
     }
 
     public int remove(int ds_id) {
         if (!isExist(ds_id))
-            return StatusCodes.DATASOURCE_NOT_EXIST;
+            return Status.DATASOURCE_NOT_EXIST;
         publishers.get(ds_id).setDatabaseSubscriber(null);
-        return StatusCodes.SUCCESS;
+        return Status.SUCCESS;
     }
+
     public boolean isExist(int ds_id) {
         return publishers.indexOfKey(ds_id) >= 0;
     }
 
     public int subscribe(int ds_id, Messenger reply) {
         int status = addSubscriber(ds_id);
-        if (status == StatusCodes.SUCCESS)
+        if (status == Status.SUCCESS)
             status = publishers.get(ds_id).add(new MessageSubscriber(reply));
+
         return status;
     }
 
     public int unsubscribe(int ds_id, Messenger reply) {
         if (!isExist(ds_id))
-            return StatusCodes.DATASOURCE_NOT_EXIST;
+            return Status.DATASOURCE_NOT_EXIST;
+
         return publishers.get(ds_id).remove(new MessageSubscriber(reply));
     }
 
     public void close() {
-        if(instance!=null) {
-            Log.d(TAG, "close: publishers size=" + publishers.size());
-            for (int i = 0; i < publishers.size(); i++) {
-                int key = publishers.keyAt(i);
-                publishers.get(key).close();
-            }
-            publishers.clear();
-            publishers = null;
-            instance = null;
+        for (int i = 0; i < publishers.size(); i++) {
+            int key = publishers.keyAt(i);
+            publishers.get(key).close();
         }
+        publishers.clear();
+        publishers = null;
     }
 }
