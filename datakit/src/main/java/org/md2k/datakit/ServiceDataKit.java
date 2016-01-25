@@ -123,6 +123,7 @@ public class ServiceDataKit extends Service {
 
     @Override
     public boolean onUnbind(Intent intent) {
+        Log.d(TAG,"onUnbind()...");
         String pName = intent.getStringExtra("name");
         Messenger messenger = intent.getParcelableExtra("messenger");
         connectedList.remove(pName);
@@ -161,6 +162,7 @@ public class ServiceDataKit extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
+        Log.d(TAG,"onBind()...");
         String pName = intent.getStringExtra("name");
         Messenger messenger = intent.getParcelableExtra("messenger");
         Log.d(TAG, "name=" + pName + " messenger=" + messenger);
