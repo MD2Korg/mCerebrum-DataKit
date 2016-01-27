@@ -6,6 +6,7 @@ import android.util.SparseArray;
 import org.md2k.datakit.logger.DatabaseLogger;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.status.Status;
+import org.md2k.utilities.Report.Log;
 
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -34,7 +35,8 @@ import org.md2k.datakitapi.status.Status;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 public class Publishers {
-//    private static final String TAG = Publishers.class.getSimpleName();
+    private static final String TAG = Publishers.class.getSimpleName();
+    //    private static final String TAG = Publishers.class.getSimpleName();
     private SparseArray<Publisher> publishers;
 
 
@@ -66,6 +68,7 @@ public class Publishers {
     }
 
     public Status receivedData(int ds_id, DataType dataType) {
+        Log.d(TAG, "publishers="+publishers+" ds_id=" + ds_id);
         if (publishers.get(ds_id) != null)
             return publishers.get(ds_id).receivedData(dataType);
         else return new Status(Status.INTERNAL_ERROR);
@@ -98,6 +101,7 @@ public class Publishers {
     }
 
     public void close() {
+        Log.d(TAG,"close()...");
         for (int i = 0; i < publishers.size(); i++) {
             int key = publishers.keyAt(i);
             publishers.get(key).close();

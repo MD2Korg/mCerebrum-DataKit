@@ -21,6 +21,7 @@ import org.md2k.datakitapi.source.platform.PlatformBuilder;
 import org.md2k.datakitapi.source.platform.PlatformType;
 import org.md2k.datakitapi.status.Status;
 import org.md2k.datakitapi.time.DateTime;
+import org.md2k.utilities.Report.Log;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -52,7 +53,8 @@ import java.util.ArrayList;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 public class PrivacyManager {
-//    private static final String TAG = PrivacyManager.class.getSimpleName();
+    private static final String TAG = PrivacyManager.class.getSimpleName();
+    //    private static final String TAG = PrivacyManager.class.getSimpleName();
     private static PrivacyManager instance;
     Context context;
     RoutingManager routingManager;
@@ -125,6 +127,7 @@ public class PrivacyManager {
                 return status;
         }
         if(ds_id==dsIdPrivacy){
+            Log.d(TAG,"privacy data...process start...");
             processPrivacyData();
         }
         return status;
@@ -132,15 +135,21 @@ public class PrivacyManager {
     public long getRemainingTime(){
         long currentTimeStamp = DateTime.getDateTime();
         long endTimeStamp = lastPrivacyData.startTimeStamp + lastPrivacyData.duration.getValue();
+        Log.d(TAG,"remainging time = "+(endTimeStamp-currentTimeStamp));
         return endTimeStamp-currentTimeStamp;
 
     }
     private void processPrivacyData(){
+        Log.d(TAG, "processPrivacyData()...");
         lastPrivacyData= queryLastPrivacyData();
+        Log.d(TAG,"lastPrivacyData="+lastPrivacyData);
         if (lastPrivacyData == null|| !lastPrivacyData.status || getRemainingTime()<=0) {
+            Log.d(TAG,"deactivate");
             deactivate();
         }
         else {
+            Log.d(TAG,"activate");
+            Log.d(TAG,"lastPrivacyData="+lastPrivacyData.startTimeStamp+" "+lastPrivacyData.status+" "+lastPrivacyData.duration.getValue());
             createPrivacyList();
             activate();
         }

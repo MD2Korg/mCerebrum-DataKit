@@ -117,7 +117,7 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
                         privacyData=preparePrivacyData();
                         if(privacyData!=null){
                             PrivacyController.getInstance(getActivity()).insertPrivacyData(privacyData);
-                            Toast.makeText(getActivity(), "Data collection stopped temporarily", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getActivity(), "Data collection stopped temporarily...", Toast.LENGTH_SHORT).show();
                         }
                     }
                 } catch (IOException e) {
@@ -125,7 +125,7 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
                 }
             }
         });
-        buttonCancel.setText("Cancel");
+        buttonCancel.setText("Close");
         buttonCancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
