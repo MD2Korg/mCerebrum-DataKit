@@ -8,6 +8,7 @@ import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
 import org.md2k.datakitapi.status.Status;
+import org.md2k.utilities.Report.Log;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,6 +40,7 @@ import java.util.ArrayList;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 public class RoutingManager {
+    private static final String TAG = RoutingManager.class.getSimpleName();
     private static RoutingManager instance;
     Context context;
     DatabaseLogger databaseLogger;
@@ -50,6 +52,7 @@ public class RoutingManager {
         return instance;
     }
     private RoutingManager(Context context) throws IOException {
+        Log.d(TAG, "RoutingManager()....constructor()");
         this.context=context;
         databaseLogger=DatabaseLogger.getInstance(context);
         publishers=new Publishers();
@@ -120,6 +123,7 @@ public class RoutingManager {
         return dataSourceClient;
     }
     public void close(){
+        Log.d(TAG,"RoutingManager()...close()...");
         if(instance!=null) {
             publishers.close();
             databaseLogger.close();

@@ -113,7 +113,7 @@ public class ServiceDataKit extends Service {
         messengers = new HashSet<>();
         Log.d(TAG, "start()...");
         try {
-            messageController = MessageController.getInstance(ServiceDataKit.this);
+            messageController = MessageController.getInstance(getApplicationContext());
             mMessenger = new Messenger(incomingHandler);
         } catch (IOException e) {
             showAlertDialog(this, e.getMessage());

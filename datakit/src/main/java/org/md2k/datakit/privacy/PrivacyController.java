@@ -47,6 +47,7 @@ public class PrivacyController {
         return instance;
     }
     PrivacyController(Context context) throws IOException {
+        Log.d(TAG,"PrivacyController()...constructor()...");
         this.context=context;
         privacyManager=PrivacyManager.getInstance(context);
         privacyConfiguration = PrivacyConfiguration.getInstance(context);

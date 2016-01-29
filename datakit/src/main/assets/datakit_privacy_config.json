@@ -28,7 +28,6 @@
       "summary": "GPS",
       "source": [
         {
-          "platform_type": "PHONE",
           "datasource_type": "LOCATION"
         }
       ]
@@ -39,16 +38,31 @@
       "summary": "GPS, Accelerometer, Gyroscope",
       "source": [
         {
-          "platform_type": "PHONE",
           "datasource_type": "LOCATION"
         },
         {
-          "platform_type": "PHONE",
           "datasource_type": "ACCELEROMETER"
         },
         {
-          "platform_type": "PHONE",
           "datasource_type": "GYROSCOPE"
+        },
+        {
+          "datasource_type": "ACCELEROMETER_X"
+        },
+        {
+          "datasource_type": "ACCELEROMETER_Y"
+        },
+        {
+          "datasource_type": "ACCELEROMETER_Z"
+        },
+        {
+          "datasource_type": "GYROSCOPE_X"
+        },
+        {
+          "datasource_type": "GYROSCOPE_Y"
+        },
+        {
+          "datasource_type": "GYROSCOPE_Z"
         }
       ]
     },
@@ -58,16 +72,7 @@
       "summary": "",
       "source": [
         {
-          "platform_type": "AUTOSENSE_CHEST",
-          "datasource_type": "RESPIRATION"
-        },
-        {
-          "platform_type": "AUTOSENSE_CHEST",
-          "datasource_type": "ECG"
-        },
-        {
-          "platform_type": "AUTOSENSE_CHEST",
-          "datasource_type": "RESPIRATION"
+          "platform_type": "AUTOSENSE_CHEST"
         }
       ]
     },
@@ -77,16 +82,7 @@
       "summary": "",
       "source": [
         {
-          "platform_type": "AUTOSENSE_CHEST",
-          "datasource_type": "RESPIRATION"
-        },
-        {
-          "platform_type": "AUTOSENSE_CHEST",
-          "datasource_type": "ECG"
-        },
-        {
-          "platform_type": "AUTOSENSE_CHEST",
-          "datasource_type": "RESPIRATION"
+          "platform_type": "AUTOSENSE_WRIST"
         }
       ]
     },
@@ -96,16 +92,7 @@
       "summary": "",
       "source": [
         {
-          "platform_type": "AUTOSENSE_CHEST",
-          "datasource_type": "RESPIRATION"
-        },
-        {
-          "platform_type": "AUTOSENSE_CHEST",
-          "datasource_type": "ECG"
-        },
-        {
-          "platform_type": "AUTOSENSE_CHEST",
-          "datasource_type": "RESPIRATION"
+          "datasource_type": "SURVEY"
         }
       ]
     }

@@ -1,6 +1,7 @@
 package org.md2k.datakit;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
@@ -74,17 +75,25 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
         SharedPreferences.Editor editor = sharedPrefs.edit();
         editor.clear();
         editor.commit();
+        addPreferencesFromResource(R.xml.pref_privacy);
+    }
+    @Override
+    public void onStart(){
         try {
-            privacyController = PrivacyController.getInstance(getActivity());
+            privacyController = PrivacyController.getInstance(getActivity().getApplicationContext());
             if(!privacyController.isAvailable()) getActivity().finish();
         } catch (IOException e) {
             //TODO: show alert dialog
             getActivity().finish();
         }
         handler = new Handler();
-        addPreferencesFromResource(R.xml.pref_privacy);
         setupPreferences();
         setupButtonSaveCancel();
+        super.onStart();
+    }
+    @Override
+    public void onStop(){
+        super.onStop();
     }
 
     @Override
@@ -104,24 +113,23 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
         buttonStartStop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                try {
-                    PrivacyData privacyData;
-                    if (privacyController.isActive()) {
-                        privacyData= privacyController.getPrivacyData();
-                        durationSelected=privacyData.getDuration();
-                        privacyTypeSelected=privacyData.getPrivacyTypes();
+                PrivacyData privacyData;
+                Log.d(TAG,"button clicked..privacy="+privacyController.isActive());
+                if (privacyController.isActive()) {
+                    privacyData= privacyController.getPrivacyData();
+                    durationSelected=privacyData.getDuration();
+                    privacyTypeSelected=privacyData.getPrivacyTypes();
 
-                        privacyData.setStatus(false);
-                        PrivacyController.getInstance(getActivity()).insertPrivacyData(privacyData);
-                    } else {
-                        privacyData=preparePrivacyData();
-                        if(privacyData!=null){
-                            PrivacyController.getInstance(getActivity()).insertPrivacyData(privacyData);
-                            Toast.makeText(getActivity(), "Data collection stopped temporarily...", Toast.LENGTH_SHORT).show();
-                        }
+                    privacyData.setStatus(false);
+                    privacyController.insertPrivacyData(privacyData);
+                    Toast.makeText(getActivity(), "Sensors are activated...", Toast.LENGTH_SHORT).show();
+
+                } else {
+                    privacyData=preparePrivacyData();
+                    if(privacyData!=null){
+                        privacyController.insertPrivacyData(privacyData);
+                        Toast.makeText(getActivity(), "Sensors are deactivated temporarily...", Toast.LENGTH_SHORT).show();
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
             }
         });
@@ -152,6 +160,7 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
         Preference preference=findPreference("status");
         PreferenceCategory pcDuration= (PreferenceCategory) findPreference("category_duration");
         PreferenceCategory pcType= (PreferenceCategory) findPreference("category_privacy_type");
+        Log.d(TAG,"privacy="+privacyController.isActive());
 
         if (privacyController.isActive()) {
             ((Button)getActivity().findViewById(R.id.button_1)).setText("Stop");
@@ -169,26 +178,25 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
             preference.setSummary(summary);
         }
     }
-    Handler mHandler = new Handler();
     Runnable runnable = new Runnable() {
         @Override
         public void run() {
             {
                 updateUI();
-                mHandler.postDelayed(this, 1000);
+                handler.postDelayed(this, 1000);
             }
         }
     };
 
     @Override
     public void onResume() {
-        mHandler.post(runnable);
+        handler.post(runnable);
         super.onResume();
     }
 
     @Override
     public void onPause() {
-        mHandler.removeCallbacks(runnable);
+        handler.removeCallbacks(runnable);
         super.onPause();
     }
 

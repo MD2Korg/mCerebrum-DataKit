@@ -71,6 +71,7 @@ public class PrivacyManager {
     }
 
     private PrivacyManager(Context context) throws IOException {
+        Log.d(TAG,"PrivacyManager()..constructor()..");
         this.context = context;
         routingManager = RoutingManager.getInstance(context);
         active=false;
@@ -93,8 +94,8 @@ public class PrivacyManager {
     }
 
     void createPrivacyList() {
+        Log.d(TAG,"createPrivacyList()...");
         listPrivacyListDsId.clear();
-        if(!active) return;
         String dataSourceType;
         String platformType;
         int id;
@@ -102,9 +103,11 @@ public class PrivacyManager {
             for (int j = 0; j < lastPrivacyData.privacyTypes.get(i).source.size(); j++) {
                 dataSourceType = lastPrivacyData.privacyTypes.get(i).source.get(j).datasource_type;
                 platformType = lastPrivacyData.privacyTypes.get(i).source.get(j).platform_type;
+                Log.d(TAG,"search...dataSourceType="+dataSourceType+" platformType="+platformType);
                 ArrayList<DataSourceClient> dataSourceClients = routingManager.find(createDataSource(dataSourceType, platformType));
                 for (int k = 0; k < dataSourceClients.size(); k++) {
-                    id = dataSourceClients.get(i).getDs_id();
+                    Log.d(TAG,"id="+dataSourceClients.get(k).getDs_id());
+                    id = dataSourceClients.get(k).getDs_id();
                     listPrivacyListDsId.put(id, true);
                 }
             }
@@ -186,6 +189,7 @@ public class PrivacyManager {
     }
 
     public void close() {
+        Log.d(TAG,"PrivacyManager()..close()..instance="+instance);
         if(instance!=null) {
             listPrivacyListDsId.clear();
             routingManager.close();
@@ -195,6 +199,7 @@ public class PrivacyManager {
 
     void activate() {
         handler.removeCallbacks(timer);
+        Log.d(TAG, "privacy activated...");
         active=true;
         handler.postDelayed(timer,getRemainingTime());
     }
@@ -212,6 +217,7 @@ public class PrivacyManager {
     }
 
     void deactivate() {
+        Log.d(TAG, "privacy deactivated...");
         listPrivacyListDsId.clear();
         active=false;
         handler.removeCallbacks(timer);

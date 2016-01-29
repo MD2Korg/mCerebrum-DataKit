@@ -121,6 +121,7 @@ public class DatabaseTable_Data {
     }
 
     public ArrayList<DataType> query(SQLiteDatabase db, int ds_id, long starttimestamp,long endtimestamp){
+        insertDB(db);
         ArrayList<DataType> dataTypes = new ArrayList<>();
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
         queryBuilder.setTables(TABLE_NAME);
@@ -140,6 +141,7 @@ public class DatabaseTable_Data {
         return dataTypes;
     }
     public ArrayList<DataType> query(SQLiteDatabase db, int ds_id, int last_n_sample){
+        insertDB(db);
         ArrayList<DataType> dataTypes = new ArrayList<>();
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
         queryBuilder.setTables(TABLE_NAME);

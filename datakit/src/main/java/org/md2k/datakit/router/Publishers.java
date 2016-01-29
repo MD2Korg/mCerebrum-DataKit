@@ -36,11 +36,11 @@ import org.md2k.utilities.Report.Log;
  */
 public class Publishers {
     private static final String TAG = Publishers.class.getSimpleName();
-    //    private static final String TAG = Publishers.class.getSimpleName();
     private SparseArray<Publisher> publishers;
 
 
     Publishers() {
+        Log.d(TAG,"Publishers()...Constructor()...");
         publishers = new SparseArray<>();
     }
 
@@ -68,7 +68,6 @@ public class Publishers {
     }
 
     public Status receivedData(int ds_id, DataType dataType) {
-        Log.d(TAG, "publishers="+publishers+" ds_id=" + ds_id);
         if (publishers.get(ds_id) != null)
             return publishers.get(ds_id).receivedData(dataType);
         else return new Status(Status.INTERNAL_ERROR);
@@ -101,7 +100,7 @@ public class Publishers {
     }
 
     public void close() {
-        Log.d(TAG,"close()...");
+        Log.d(TAG,"Publishers()...close()...");
         for (int i = 0; i < publishers.size(); i++) {
             int key = publishers.keyAt(i);
             publishers.get(key).close();
