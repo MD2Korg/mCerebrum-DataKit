@@ -95,6 +95,7 @@ public class PrivacyManager {
 
     void createPrivacyList() {
         Log.d(TAG,"createPrivacyList()...");
+        if(lastPrivacyData==null || lastPrivacyData.privacyTypes==null) return;
         listPrivacyListDsId.clear();
         String dataSourceType;
         String platformType;
