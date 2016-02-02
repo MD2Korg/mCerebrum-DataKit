@@ -15,6 +15,7 @@
         tools:replace="android:theme">
         <activity
             android:name=".ActivityMain"
+            android:screenOrientation="portrait"
             android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -25,11 +26,13 @@
             android:name=".ActivityDataKitSettings"
             android:enabled="true"
             android:exported="true"
+            android:screenOrientation="portrait"
             android:label="Settings"/>
         <activity
             android:name=".ActivityPrivacy"
             android:enabled="true"
             android:exported="true"
+            android:screenOrientation="portrait"
             android:label="Privacy Control Settings"/>
 
         <service
