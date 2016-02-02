@@ -46,22 +46,25 @@ public class DatabaseTable_Data {
     private static String C_SAMPLE="sample";
     ArrayList<ContentValues> cValues = new ArrayList<ContentValues>();
     long lastUnlock=0;
-    private static long WAITTIME = 2 * 1000L; // 2 second;
+    private static long WAITTIME = 5 * 1000L; // 5 second;
 
     private static final String SQL_CREATE_DATA = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" + C_ID + " INTEGER PRIMARY KEY autoincrement, " +
             C_DATASOURCE_ID + " TEXT, " + C_DATETIME + " LONG, " +
             C_SAMPLE + " BLOB not null);";
+    private static final String SQL_CREATE_DATA_INDEX = "CREATE INDEX index_datasource_id on " + TABLE_NAME + " (" + C_DATASOURCE_ID+");";
 
 
     DatabaseTable_Data(SQLiteDatabase db) {
         createIfNotExists(db);
     }
     public void removeAll(SQLiteDatabase db){
+        db.execSQL("DROP INDEX index_datasource_id");
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
     }
 
     public void createIfNotExists(SQLiteDatabase db) {
         db.execSQL(SQL_CREATE_DATA);
+        db.execSQL(SQL_CREATE_DATA_INDEX);
     }
     private Status insertDB(SQLiteDatabase db){
         try {
