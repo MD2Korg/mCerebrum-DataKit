@@ -11,9 +11,10 @@ import org.md2k.datakitapi.status.Status;
 
 import java.util.ArrayList;
 
-/**
+/*
  * Copyright (c) 2015, The University of Memphis, MD2K Center
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
+ * - Timothy W. Hnat <twhnat@memphis.edu>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,6 +38,7 @@ import java.util.ArrayList;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 public class DatabaseTable_Data {
     private static final String TAG = DatabaseTable_Data.class.getSimpleName();
     private static String TABLE_NAME = "data";
@@ -112,6 +114,14 @@ public class DatabaseTable_Data {
         return stringArray;
     }
 
+    private String[] prepareLastKeySelectionArgs(int ds_id, long last_key) {
+        ArrayList<String> selectionArgs = new ArrayList<>();
+        selectionArgs.add(String.valueOf(ds_id));
+        selectionArgs.add(String.valueOf(last_key));
+        String[] stringArray = selectionArgs.toArray(new String[selectionArgs.size()]);
+        return stringArray;
+    }
+
     private String prepareSelection() {
         String selection = "";
         selection=C_DATASOURCE_ID+"=? AND "+C_DATETIME+" >=? AND "+C_DATETIME+" <=?";
@@ -122,7 +132,12 @@ public class DatabaseTable_Data {
         selection=C_DATASOURCE_ID+"=?";
         return selection;
     }
-
+    private String prepareSelectionLastKey() {
+        String selection = "";
+        selection+=C_ID+">=? AND";
+        selection+=C_DATASOURCE_ID+">=?";
+        return selection;
+    }
     public ArrayList<DataType> query(SQLiteDatabase db, int ds_id, long starttimestamp,long endtimestamp){
         insertDB(db);
         ArrayList<DataType> dataTypes = new ArrayList<>();
@@ -152,6 +167,26 @@ public class DatabaseTable_Data {
         String selection = prepareSelectionLastSamples();
         String[] selectionArgs = prepareSelectionArgs(ds_id);
         Cursor mCursor = db.query(TABLE_NAME, columns, selection, selectionArgs, null, null,"_id DESC", String.valueOf(last_n_sample));
+        if (mCursor.moveToFirst()) {
+            do {
+                dataTypes.add(DataType.fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE))));
+            } while (mCursor.moveToNext());
+        }
+        if (!mCursor.isClosed()) {
+            mCursor.close();
+        }
+        return dataTypes;
+    }
+
+    public ArrayList<DataType> query(SQLiteDatabase db, int ds_id, long last_key){
+        insertDB(db);
+        ArrayList<DataType> dataTypes = new ArrayList<>();
+        SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
+        queryBuilder.setTables(TABLE_NAME);
+        String[] columns = new String[]{C_SAMPLE};
+        String selection = prepareSelectionLastKey();
+        String[] selectionArgs = prepareLastKeySelectionArgs(ds_id, last_key);
+        Cursor mCursor = db.query(TABLE_NAME, columns, selection, selectionArgs, null, null, null);
         if (mCursor.moveToFirst()) {
             do {
                 dataTypes.add(DataType.fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE))));
