@@ -95,7 +95,7 @@ public class MessageController {
                 return null;
 //                return prepareMessage(bundle,MessageType.INSERT);
             case MessageType.QUERY:
-                ArrayList<DataType> dataTypes;
+                ArrayList<DataType> dataTypes=null;
                 if (incomingMessage.getData().containsKey("starttimestamp"))
                     dataTypes = privacyManager.query(incomingMessage.getData().getInt("ds_id"), incomingMessage.getData().getLong("starttimestamp"), incomingMessage.getData().getLong("endtimestamp"));
                 else if (incomingMessage.getData().containsKey("last_n_sample"))

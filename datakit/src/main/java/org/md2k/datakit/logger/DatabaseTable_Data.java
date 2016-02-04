@@ -53,7 +53,7 @@ public class DatabaseTable_Data {
     private static final String SQL_CREATE_DATA = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" + C_ID + " INTEGER PRIMARY KEY autoincrement, " +
             C_DATASOURCE_ID + " TEXT, " + C_DATETIME + " LONG, " +
             C_SAMPLE + " BLOB not null);";
-    private static final String SQL_CREATE_DATA_INDEX = "CREATE INDEX index_datasource_id on " + TABLE_NAME + " (" + C_DATASOURCE_ID+");";
+    private static final String SQL_CREATE_DATA_INDEX = "CREATE INDEX IF NOT EXISTS index_datasource_id on " + TABLE_NAME + " (" + C_DATASOURCE_ID+");";
 
 
     DatabaseTable_Data(SQLiteDatabase db) {
