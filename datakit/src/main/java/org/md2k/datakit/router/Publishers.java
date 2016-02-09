@@ -5,6 +5,7 @@ import android.util.SparseArray;
 
 import org.md2k.datakit.logger.DatabaseLogger;
 import org.md2k.datakitapi.datatype.DataType;
+import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
 import org.md2k.datakitapi.status.Status;
 import org.md2k.utilities.Report.Log;
 
@@ -70,6 +71,12 @@ public class Publishers {
     public Status receivedData(int ds_id, DataType dataType) {
         if (publishers.get(ds_id) != null)
             return publishers.get(ds_id).receivedData(dataType);
+        else return new Status(Status.INTERNAL_ERROR);
+    }
+
+    public Status receivedDataHF(int ds_id, DataTypeDoubleArray dataType) {
+        if (publishers.get(ds_id) != null)
+            return publishers.get(ds_id).receivedDataHF(dataType);
         else return new Status(Status.INTERNAL_ERROR);
     }
 

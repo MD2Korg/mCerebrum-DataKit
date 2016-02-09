@@ -6,6 +6,7 @@ import android.os.Message;
 
 import org.md2k.datakit.privacy.PrivacyManager;
 import org.md2k.datakitapi.datatype.DataType;
+import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
 import org.md2k.datakitapi.datatype.RowObject;
 import org.md2k.datakitapi.messagehandler.MessageType;
 import org.md2k.datakitapi.source.datasource.DataSource;
@@ -49,16 +50,17 @@ public class MessageController {
     Context context;
     PrivacyManager privacyManager;
 
+    MessageController(Context context) throws IOException {
+        this.context = context;
+        privacyManager = PrivacyManager.getInstance(context);
+    }
+
     public static MessageController getInstance(Context context) throws IOException {
         if (instance == null)
             instance = new MessageController(context);
         return instance;
     }
 
-    MessageController(Context context) throws IOException {
-        this.context = context;
-        privacyManager=PrivacyManager.getInstance(context);
-    }
     public void close(){
         Log.d(TAG, "messageController ... close()...instance=" + instance);
         if(instance!=null) {
@@ -89,12 +91,11 @@ public class MessageController {
                 bundle.putSerializable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
                 return prepareMessage(bundle, MessageType.FIND);
             case MessageType.INSERT:
-//                status = privacyManager.insert(incomingMessage.getData().getInt("ds_id"), (DataType) incomingMessage.getData().getSerializable(DataType.class.getSimpleName()));
                 privacyManager.insert(incomingMessage.getData().getInt("ds_id"), (DataType) incomingMessage.getData().getSerializable(DataType.class.getSimpleName()));
-                //                bundle = new Bundle();
-//                bundle.putSerializable(Status.class.getSimpleName(), status);
                 return null;
-//                return prepareMessage(bundle,MessageType.INSERT);
+            case MessageType.INSERT_HIGH_FREQUENCY:
+                privacyManager.insertHF(incomingMessage.getData().getInt("ds_id"), (DataTypeDoubleArray) incomingMessage.getData().getSerializable(DataType.class.getSimpleName()));
+                return null;
             case MessageType.QUERY:
                 ArrayList<DataType> dataTypes=null;
                 if (incomingMessage.getData().containsKey("starttimestamp"))

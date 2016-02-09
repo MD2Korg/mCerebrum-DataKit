@@ -1,7 +1,7 @@
 package org.md2k.datakit.router;
 
 import org.md2k.datakitapi.datatype.DataType;
-import org.md2k.datakitapi.status.Status;
+import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
 import org.md2k.datakitapi.status.Status;
 
 import java.util.ArrayList;
@@ -56,8 +56,13 @@ public class Publisher {
         this.databaseSubscriber=databaseSubscriber;
     }
     public Status receivedData(DataType dataType) {
-            return notifyAllObservers(dataType);
+        return notifyAllObservers(dataType, false);
     }
+
+    public Status receivedDataHF(DataTypeDoubleArray dataType) {
+        return notifyAllObservers(dataType, true);
+    }
+
     boolean isExists(MessageSubscriber subscriber){
         return get(subscriber) != -1;
     }
@@ -78,9 +83,17 @@ public class Publisher {
         messageSubscribers.remove(get(subscriber));
         return Status.SUCCESS;
     }
-    public Status notifyAllObservers(DataType dataType){
+
+    public Status notifyAllObservers(DataType dataType, boolean highFrequency) {
         Status status=new Status(Status.SUCCESS);
-        if(databaseSubscriber!=null) status=databaseSubscriber.insert(ds_id, dataType);
+        if (databaseSubscriber != null) {
+            if (highFrequency) {
+                status = databaseSubscriber.insertHF(ds_id, (DataTypeDoubleArray) dataType);
+            } else {
+                status = databaseSubscriber.insert(ds_id, dataType);
+            }
+        }
+
         for (Iterator<MessageSubscriber> iterator = messageSubscribers.iterator(); iterator.hasNext();) {
             MessageSubscriber subscriber = iterator.next();
             if(!subscriber.update(ds_id,dataType))

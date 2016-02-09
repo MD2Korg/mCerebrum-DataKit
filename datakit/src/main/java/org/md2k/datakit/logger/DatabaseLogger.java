@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import org.md2k.datakit.operation.FileManager;
 import org.md2k.datakitapi.datatype.DataType;
+import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
 import org.md2k.datakitapi.datatype.RowObject;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
@@ -45,16 +46,17 @@ import java.util.ArrayList;
 
 public class DatabaseLogger extends SQLiteOpenHelper {
     private static final String TAG = DatabaseLogger.class.getSimpleName();
+    private static DatabaseLogger instance = null;
     DatabaseTable_DataSource databaseTable_dataSource = null;
     DatabaseTable_Data databaseTable_data = null;
     SQLiteDatabase db = null;
 
-    private static DatabaseLogger instance = null;
-
-    public void removeAll() {
-        //TODO: need to check crashes
-        databaseTable_data.removeAll(db);
-        databaseTable_dataSource.removeAll(db);
+    public DatabaseLogger(Context context) {
+        super(context, FileManager.getFilePath(context), null, FileManager.VERSION);
+        db = this.getWritableDatabase();
+        Log.d(TAG, "DataBaseLogger() db isopen=" + db.isOpen() + " readonly=" + db.isReadOnly() + " isWriteAheadLoggingEnabled=" + db.isWriteAheadLoggingEnabled());
+        databaseTable_dataSource = new DatabaseTable_DataSource(db);
+        databaseTable_data = new DatabaseTable_Data(db);
     }
 
     public static DatabaseLogger getInstance(Context context) throws IOException {
@@ -66,6 +68,12 @@ public class DatabaseLogger extends SQLiteOpenHelper {
             else throw new IOException("Database directory not found");
         }
         return instance;
+    }
+
+    public void removeAll() {
+        //TODO: need to check crashes
+        databaseTable_data.removeAll(db);
+        databaseTable_dataSource.removeAll(db);
     }
 
     public void close() {
@@ -84,6 +92,10 @@ public class DatabaseLogger extends SQLiteOpenHelper {
         return databaseTable_data.insert(db, dataSourceId, dataType);
     }
 
+    public Status insertHF(int dataSourceId, DataTypeDoubleArray dataType) {
+        return databaseTable_data.insertHF(db, dataSourceId, dataType);
+    }
+
     public ArrayList<DataType> query(int ds_id, long startTimestamp, long endTimestamp) {
         return databaseTable_data.query(db, ds_id, startTimestamp, endTimestamp);
     }
@@ -91,6 +103,7 @@ public class DatabaseLogger extends SQLiteOpenHelper {
     public ArrayList<DataType> query(int ds_id, int last_n_sample) {
         return databaseTable_data.query(db, ds_id, last_n_sample);
     }
+
     public ArrayList<RowObject> queryLastKey(int ds_id, long last_key, int limit) {
         return databaseTable_data.queryLastKey(db, ds_id, last_key, limit);
     }
@@ -101,14 +114,6 @@ public class DatabaseLogger extends SQLiteOpenHelper {
 
     public ArrayList<DataSourceClient> find(DataSource dataSource) {
         return databaseTable_dataSource.findDataSource(db, dataSource);
-    }
-
-    public DatabaseLogger(Context context) {
-        super(context, FileManager.getFilePath(context), null, FileManager.VERSION);
-        db = this.getWritableDatabase();
-        Log.d(TAG, "DataBaseLogger() db isopen=" + db.isOpen() + " readonly=" + db.isReadOnly() + " isWriteAheadLoggingEnabled=" + db.isWriteAheadLoggingEnabled());
-        databaseTable_dataSource = new DatabaseTable_DataSource(db);
-        databaseTable_data = new DatabaseTable_Data(db);
     }
 
     @Override
