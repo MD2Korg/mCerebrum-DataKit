@@ -6,6 +6,7 @@ import android.os.Message;
 
 import org.md2k.datakit.privacy.PrivacyManager;
 import org.md2k.datakitapi.datatype.DataType;
+import org.md2k.datakitapi.datatype.RowObject;
 import org.md2k.datakitapi.messagehandler.MessageType;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
@@ -100,12 +101,17 @@ public class MessageController {
                     dataTypes = privacyManager.query(incomingMessage.getData().getInt("ds_id"), incomingMessage.getData().getLong("starttimestamp"), incomingMessage.getData().getLong("endtimestamp"));
                 else if (incomingMessage.getData().containsKey("last_n_sample"))
                     dataTypes = privacyManager.query(incomingMessage.getData().getInt("ds_id"), incomingMessage.getData().getInt("last_n_sample"));
-                else if (incomingMessage.getData().containsKey("last_key"))
-                    dataTypes = privacyManager.query(incomingMessage.getData().getInt("ds_id"), incomingMessage.getData().getLong("last_key"));
                 bundle = new Bundle();
                 bundle.putSerializable(DataType.class.getSimpleName(), dataTypes);
                 bundle.putSerializable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
                 return prepareMessage(bundle, MessageType.QUERY);
+            case MessageType.QUERYPRIMARYKEY:
+                ArrayList<RowObject> objectTypes=null;
+                objectTypes = privacyManager.queryLastKey(incomingMessage.getData().getInt("ds_id"), incomingMessage.getData().getLong("last_key"), incomingMessage.getData().getInt("limit"));
+                bundle = new Bundle();
+                bundle.putSerializable(DataType.class.getSimpleName(), objectTypes);
+                bundle.putSerializable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
+                return prepareMessage(bundle, MessageType.QUERYPRIMARYKEY);
             case MessageType.SUBSCRIBE:
                 Status statusSubscribe = privacyManager.subscribe(incomingMessage.getData().getInt("ds_id"), incomingMessage.replyTo);
                 bundle = new Bundle();

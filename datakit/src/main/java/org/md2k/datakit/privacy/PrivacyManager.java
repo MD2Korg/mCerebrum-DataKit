@@ -10,6 +10,7 @@ import com.google.gson.Gson;
 import org.md2k.datakit.router.RoutingManager;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.datatype.DataTypeString;
+import org.md2k.datakitapi.datatype.RowObject;
 import org.md2k.datakitapi.source.application.Application;
 import org.md2k.datakitapi.source.application.ApplicationBuilder;
 import org.md2k.datakitapi.source.datasource.DataSource;
@@ -168,8 +169,8 @@ public class PrivacyManager {
         return routingManager.query(ds_id, last_n_sample);
     }
 
-    public ArrayList<DataType> query(int ds_id, long last_key) {
-        return routingManager.query(ds_id, last_key);
+    public ArrayList<RowObject> queryLastKey(int ds_id, long last_key, int limit) {
+        return routingManager.queryLastKey(ds_id, last_key, limit);
     }
 
     public Status unregister(int ds_id) {

@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 
 import org.md2k.datakitapi.datatype.DataType;
+import org.md2k.datakitapi.datatype.RowObject;
 import org.md2k.datakitapi.status.Status;
 import org.md2k.datakitapi.status.Status;
 
@@ -178,24 +179,25 @@ public class DatabaseTable_Data {
         return dataTypes;
     }
 
-    public ArrayList<DataType> query(SQLiteDatabase db, int ds_id, long last_key){
+    public ArrayList<RowObject> queryLastKey(SQLiteDatabase db, int ds_id, long last_key, int limit){
         insertDB(db);
-        ArrayList<DataType> dataTypes = new ArrayList<>();
+        ArrayList<RowObject> rowObjects = new ArrayList<>();
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
         queryBuilder.setTables(TABLE_NAME);
-        String[] columns = new String[]{C_SAMPLE};
+        String[] columns = new String[]{C_ID, C_SAMPLE};
         String selection = prepareSelectionLastKey();
         String[] selectionArgs = prepareLastKeySelectionArgs(ds_id, last_key);
-        Cursor mCursor = db.query(TABLE_NAME, columns, selection, selectionArgs, null, null, null);
+        Cursor mCursor = db.query(TABLE_NAME, columns, selection, selectionArgs, null, null, Integer.toString(limit));
         if (mCursor.moveToFirst()) {
             do {
-                dataTypes.add(DataType.fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE))));
+                DataType dt = DataType.fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE)));
+                rowObjects.add(new RowObject(mCursor.getLong(mCursor.getColumnIndex(C_ID)), dt));
             } while (mCursor.moveToNext());
         }
         if (!mCursor.isClosed()) {
             mCursor.close();
         }
-        return dataTypes;
+        return rowObjects;
     }
 
     public ContentValues prepareData(int dataSourceId, DataType dataType) {
