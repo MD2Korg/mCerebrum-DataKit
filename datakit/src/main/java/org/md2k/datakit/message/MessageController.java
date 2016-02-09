@@ -94,7 +94,7 @@ public class MessageController {
                 privacyManager.insert(incomingMessage.getData().getInt("ds_id"), (DataType) incomingMessage.getData().getSerializable(DataType.class.getSimpleName()));
                 return null;
             case MessageType.INSERT_HIGH_FREQUENCY:
-                privacyManager.insertHF(incomingMessage.getData().getInt("ds_id"), (DataTypeDoubleArray) incomingMessage.getData().getSerializable(DataType.class.getSimpleName()));
+                privacyManager.insertHF(incomingMessage.getData().getInt("ds_id"), (DataTypeDoubleArray) incomingMessage.getData().getSerializable(DataTypeDoubleArray.class.getSimpleName()));
                 return null;
             case MessageType.QUERY:
                 ArrayList<DataType> dataTypes=null;

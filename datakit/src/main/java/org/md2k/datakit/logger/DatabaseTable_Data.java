@@ -238,7 +238,7 @@ public class DatabaseTable_Data {
 
     public ContentValues prepareDataHF(int dataSourceId, DataTypeDoubleArray dataType) {
         ContentValues contentValues = new ContentValues();
-        byte[] dataTypeArray = dataType.toBytes();
+        byte[] dataTypeArray = dataType.toRawBytes();
 
         contentValues.put(C_DATASOURCE_ID, dataSourceId);
         contentValues.put(C_DATETIME, dataType.getDateTime());
