@@ -6,10 +6,12 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 
 import org.md2k.datakitapi.datatype.DataType;
-import org.md2k.datakitapi.status.Status;
+import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
+import org.md2k.datakitapi.datatype.RowObject;
 import org.md2k.datakitapi.status.Status;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /*
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -41,19 +43,26 @@ import java.util.ArrayList;
 
 public class DatabaseTable_Data {
     private static final String TAG = DatabaseTable_Data.class.getSimpleName();
+
     private static String TABLE_NAME = "data";
+    private static String HIGHFREQ_TABLE_NAME = "rawdata";
     private static String C_ID = "_id";
     private static String C_DATASOURCE_ID = "datasource_id";
+    private static final String SQL_CREATE_DATA_INDEX = "CREATE INDEX IF NOT EXISTS index_datasource_id on " + TABLE_NAME + " (" + C_DATASOURCE_ID + ");";
+    private static final String SQL_CREATE_HIGHFREQ_DATA_INDEX = "CREATE INDEX IF NOT EXISTS index_hf_datasource_id on " + HIGHFREQ_TABLE_NAME + " (" + C_DATASOURCE_ID + ");";
     private static String C_DATETIME = "datetime";
     private static String C_SAMPLE="sample";
-    ArrayList<ContentValues> cValues = new ArrayList<ContentValues>();
-    long lastUnlock=0;
-    private static long WAITTIME = 5 * 1000L; // 5 second;
-
     private static final String SQL_CREATE_DATA = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" + C_ID + " INTEGER PRIMARY KEY autoincrement, " +
             C_DATASOURCE_ID + " TEXT, " + C_DATETIME + " LONG, " +
             C_SAMPLE + " BLOB not null);";
-    private static final String SQL_CREATE_DATA_INDEX = "CREATE INDEX IF NOT EXISTS index_datasource_id on " + TABLE_NAME + " (" + C_DATASOURCE_ID+");";
+    private static final String SQL_CREATE_HIGHFREQ_DATA = "CREATE TABLE IF NOT EXISTS " + HIGHFREQ_TABLE_NAME + " (" + C_ID + " INTEGER PRIMARY KEY autoincrement, " +
+            C_DATASOURCE_ID + " TEXT, " + C_DATETIME + " LONG, " +
+            C_SAMPLE + " BLOB not null);";
+    private static long WAITTIME = 5 * 1000L; // 5 second;
+    ArrayList<ContentValues> cValues = new ArrayList<ContentValues>();
+    ArrayList<ContentValues> hfValues = new ArrayList<ContentValues>();
+    long lastUnlock = 0;
+
 
 
     DatabaseTable_Data(SQLiteDatabase db) {
@@ -62,22 +71,27 @@ public class DatabaseTable_Data {
     public void removeAll(SQLiteDatabase db){
         db.execSQL("DROP INDEX index_datasource_id");
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
+        db.execSQL("DROP INDEX index_hf_datasource_id");
+        db.execSQL("DROP TABLE IF EXISTS " + HIGHFREQ_TABLE_NAME);
     }
 
     public void createIfNotExists(SQLiteDatabase db) {
         db.execSQL(SQL_CREATE_DATA);
         db.execSQL(SQL_CREATE_DATA_INDEX);
+        db.execSQL(SQL_CREATE_HIGHFREQ_DATA);
+        db.execSQL(SQL_CREATE_HIGHFREQ_DATA_INDEX);
     }
-    private Status insertDB(SQLiteDatabase db){
+
+    private Status insertDB(SQLiteDatabase db, String tableName, List<ContentValues> data) {
         try {
 
-            if (cValues.size() == 0)         return new Status(Status.SUCCESS);
+            if (data.size() == 0)
+                return new Status(Status.SUCCESS);
 
-//        if(!db.isOpen()) return;
             db.beginTransaction();
-            for (int i = 0; i < cValues.size(); i++)
-                db.insert(TABLE_NAME, null, cValues.get(i));
-            cValues.clear();
+            for (int i = 0; i < data.size(); i++)
+                db.insert(tableName, null, data.get(i));
+            data.clear();
             try {
                 db.setTransactionSuccessful();
             } finally {
@@ -89,16 +103,29 @@ public class DatabaseTable_Data {
         return new Status(Status.SUCCESS);
     }
 
+
     public Status insert(SQLiteDatabase db, int dataSourceId, DataType dataType) {
         Status status = new Status(Status.SUCCESS);
         ContentValues contentValues=prepareData(dataSourceId, dataType);
         cValues.add(contentValues);
         if (dataType.getDateTime() - lastUnlock >= WAITTIME) {
-            status=insertDB(db);
+            status = insertDB(db, TABLE_NAME, cValues);
             lastUnlock=dataType.getDateTime();
         }
         return status;
     }
+
+    public Status insertHF(SQLiteDatabase db, int dataSourceId, DataTypeDoubleArray dataType) {
+        Status status = new Status(Status.SUCCESS);
+        ContentValues contentValues = prepareDataHF(dataSourceId, dataType);
+        hfValues.add(contentValues);
+        if (dataType.getDateTime() - lastUnlock >= WAITTIME) {
+            status = insertDB(db, HIGHFREQ_TABLE_NAME, hfValues);
+            lastUnlock = dataType.getDateTime();
+        }
+        return status;
+    }
+
     private String[] prepareSelectionArgs(int ds_id,long starttimestamp,long endtimestamp) {
         ArrayList<String> selectionArgs = new ArrayList<>();
         selectionArgs.add(String.valueOf(ds_id));
@@ -139,7 +166,7 @@ public class DatabaseTable_Data {
         return selection;
     }
     public ArrayList<DataType> query(SQLiteDatabase db, int ds_id, long starttimestamp,long endtimestamp){
-        insertDB(db);
+        insertDB(db, TABLE_NAME, cValues);
         ArrayList<DataType> dataTypes = new ArrayList<>();
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
         queryBuilder.setTables(TABLE_NAME);
@@ -159,7 +186,7 @@ public class DatabaseTable_Data {
         return dataTypes;
     }
     public ArrayList<DataType> query(SQLiteDatabase db, int ds_id, int last_n_sample){
-        insertDB(db);
+        insertDB(db, TABLE_NAME, cValues);
         ArrayList<DataType> dataTypes = new ArrayList<>();
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
         queryBuilder.setTables(TABLE_NAME);
@@ -178,24 +205,25 @@ public class DatabaseTable_Data {
         return dataTypes;
     }
 
-    public ArrayList<DataType> query(SQLiteDatabase db, int ds_id, long last_key){
-        insertDB(db);
-        ArrayList<DataType> dataTypes = new ArrayList<>();
+    public ArrayList<RowObject> queryLastKey(SQLiteDatabase db, int ds_id, long last_key, int limit){
+        insertDB(db, TABLE_NAME, cValues);
+        ArrayList<RowObject> rowObjects = new ArrayList<>();
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
         queryBuilder.setTables(TABLE_NAME);
-        String[] columns = new String[]{C_SAMPLE};
+        String[] columns = new String[]{C_ID, C_SAMPLE};
         String selection = prepareSelectionLastKey();
         String[] selectionArgs = prepareLastKeySelectionArgs(ds_id, last_key);
-        Cursor mCursor = db.query(TABLE_NAME, columns, selection, selectionArgs, null, null, null);
+        Cursor mCursor = db.query(TABLE_NAME, columns, selection, selectionArgs, null, null, Integer.toString(limit));
         if (mCursor.moveToFirst()) {
             do {
-                dataTypes.add(DataType.fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE))));
+                DataType dt = DataType.fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE)));
+                rowObjects.add(new RowObject(mCursor.getLong(mCursor.getColumnIndex(C_ID)), dt));
             } while (mCursor.moveToNext());
         }
         if (!mCursor.isClosed()) {
             mCursor.close();
         }
-        return dataTypes;
+        return rowObjects;
     }
 
     public ContentValues prepareData(int dataSourceId, DataType dataType) {
@@ -207,7 +235,19 @@ public class DatabaseTable_Data {
         contentValues.put(C_SAMPLE, dataTypeArray);
         return contentValues;
     }
+
+    public ContentValues prepareDataHF(int dataSourceId, DataTypeDoubleArray dataType) {
+        ContentValues contentValues = new ContentValues();
+        byte[] dataTypeArray = dataType.toRawBytes();
+
+        contentValues.put(C_DATASOURCE_ID, dataSourceId);
+        contentValues.put(C_DATETIME, dataType.getDateTime());
+        contentValues.put(C_SAMPLE, dataTypeArray);
+        return contentValues;
+    }
+
     public void commit(SQLiteDatabase db){
-        insertDB(db);
+        insertDB(db, TABLE_NAME, cValues);
+        insertDB(db, HIGHFREQ_TABLE_NAME, hfValues);
     }
 }

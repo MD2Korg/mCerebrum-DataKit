@@ -222,7 +222,7 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     ((CheckBoxPreference) preference).setChecked((Boolean) newValue);
                     Log.d(TAG, "newvalue=" + newValue.toString());
-                    if (newValue == true) {
+                    if ((Boolean) newValue) {
                         privacyTypeSelected.add(privacyTypes.get(finalI));
                     } else {
                         privacyTypeSelected.remove(privacyTypes.get(finalI));

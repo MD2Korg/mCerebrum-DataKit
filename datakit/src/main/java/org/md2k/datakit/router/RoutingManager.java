@@ -5,6 +5,8 @@ import android.os.Messenger;
 
 import org.md2k.datakit.logger.DatabaseLogger;
 import org.md2k.datakitapi.datatype.DataType;
+import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
+import org.md2k.datakitapi.datatype.RowObject;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
 import org.md2k.datakitapi.status.Status;
@@ -49,17 +51,19 @@ public class RoutingManager {
     DatabaseLogger databaseLogger;
     Publishers publishers;
 
-    public static RoutingManager getInstance(Context context) throws IOException {
-        if(instance==null)
-            instance=new RoutingManager(context);
-        return instance;
-    }
     private RoutingManager(Context context) throws IOException {
         Log.d(TAG, "RoutingManager()....constructor()");
         this.context=context;
         databaseLogger=DatabaseLogger.getInstance(context);
         publishers=new Publishers();
     }
+
+    public static RoutingManager getInstance(Context context) throws IOException {
+        if (instance == null)
+            instance = new RoutingManager(context);
+        return instance;
+    }
+
     public DataSourceClient register(DataSource dataSource) {
         DataSourceClient dataSourceClient = registerDataSource(dataSource);
         if(dataSource.isPersistent()) {
@@ -73,14 +77,18 @@ public class RoutingManager {
     public Status insert(int ds_id, DataType dataType){
         return publishers.receivedData(ds_id, dataType);
     }
+
+    public Status insertHF(int ds_id, DataTypeDoubleArray dataType) {
+        return publishers.receivedDataHF(ds_id, dataType);
+    }
     public ArrayList<DataType> query(int ds_id,long starttimestamp, long endtimestamp){
         return databaseLogger.query(ds_id, starttimestamp, endtimestamp);
     }
     public ArrayList<DataType> query(int ds_id,int last_n_sample){
         return databaseLogger.query(ds_id, last_n_sample);
     }
-    public ArrayList<DataType> query(int ds_id,long last_key){
-        return databaseLogger.query(ds_id, last_key);
+    public ArrayList<RowObject> queryLastKey(int ds_id,long last_key, int limit){
+        return databaseLogger.queryLastKey(ds_id, last_key, limit);
     }
 
     public Status unregister(int ds_id) {

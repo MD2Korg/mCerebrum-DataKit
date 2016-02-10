@@ -9,7 +9,9 @@ import com.google.gson.Gson;
 
 import org.md2k.datakit.router.RoutingManager;
 import org.md2k.datakitapi.datatype.DataType;
+import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
 import org.md2k.datakitapi.datatype.DataTypeString;
+import org.md2k.datakitapi.datatype.RowObject;
 import org.md2k.datakitapi.source.application.Application;
 import org.md2k.datakitapi.source.application.ApplicationBuilder;
 import org.md2k.datakitapi.source.datasource.DataSource;
@@ -64,12 +66,12 @@ public class PrivacyManager {
     Handler handler;
     PrivacyData lastPrivacyData;
     boolean active;
-
-    public static PrivacyManager getInstance(Context context) throws IOException {
-        if (instance == null)
-            instance = new PrivacyManager(context);
-        return instance;
-    }
+    Runnable timer = new Runnable() {
+        @Override
+        public void run() {
+            deactivate();
+        }
+    };
 
     private PrivacyManager(Context context) throws IOException {
         Log.d(TAG,"PrivacyManager()..constructor()..");
@@ -80,6 +82,13 @@ public class PrivacyManager {
         handler = new Handler();
         processPrivacyData();
     }
+
+    public static PrivacyManager getInstance(Context context) throws IOException {
+        if (instance == null)
+            instance = new PrivacyManager(context);
+        return instance;
+    }
+
     public boolean isActive(){
         return active;
     }
@@ -116,6 +125,7 @@ public class PrivacyManager {
         }
         listPrivacyListDsId.remove(dsIdPrivacy);
     }
+
     public DataSourceClient register(DataSource dataSource) {
         DataSourceClient dataSourceClient = routingManager.register(dataSource);
         createPrivacyList();
@@ -137,6 +147,23 @@ public class PrivacyManager {
         }
         return status;
     }
+
+    public Status insertHF(int ds_id, DataTypeDoubleArray dataType) {
+        Status status = new Status(Status.SUCCESS);
+        if (ds_id == -1 || dataType == null)
+            return new Status(Status.INTERNAL_ERROR);
+        if (listPrivacyListDsId.get(ds_id) == null) {
+            status = routingManager.insertHF(ds_id, dataType);
+            if (status.getStatusCode() == Status.INTERNAL_ERROR)
+                return status;
+        }
+        if (ds_id == dsIdPrivacy) {
+            Log.d(TAG, "privacy data...process start...");
+            processPrivacyData();
+        }
+        return status;
+    }
+
     public long getRemainingTime(){
         long currentTimeStamp = DateTime.getDateTime();
         long endTimeStamp = lastPrivacyData.startTimeStamp + lastPrivacyData.duration.getValue();
@@ -144,6 +171,7 @@ public class PrivacyManager {
         return endTimeStamp-currentTimeStamp;
 
     }
+
     private void processPrivacyData(){
         Log.d(TAG, "processPrivacyData()...");
         lastPrivacyData= queryLastPrivacyData();
@@ -168,8 +196,8 @@ public class PrivacyManager {
         return routingManager.query(ds_id, last_n_sample);
     }
 
-    public ArrayList<DataType> query(int ds_id, long last_key) {
-        return routingManager.query(ds_id, last_key);
+    public ArrayList<RowObject> queryLastKey(int ds_id, long last_key, int limit) {
+        return routingManager.queryLastKey(ds_id, last_key, limit);
     }
 
     public Status unregister(int ds_id) {
@@ -209,9 +237,11 @@ public class PrivacyManager {
         active=true;
         handler.postDelayed(timer,getRemainingTime());
     }
+
     public PrivacyData getLastPrivacyData(){
         return lastPrivacyData;
     }
+
     private PrivacyData queryLastPrivacyData() {
         Gson gson = new Gson();
         dsIdPrivacy = routingManager.register(createDataSourcePrivacy()).getDs_id();
@@ -228,10 +258,4 @@ public class PrivacyManager {
         active=false;
         handler.removeCallbacks(timer);
     }
-    Runnable timer = new Runnable() {
-        @Override
-        public void run() {
-            deactivate();
-        }
-    };
 }
