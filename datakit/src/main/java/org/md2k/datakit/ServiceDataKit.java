@@ -93,7 +93,7 @@ public class ServiceDataKit extends Service {
         Messenger replyTo;
         Message outgoingMessage;
         Bundle bundle = new Bundle();
-        bundle.putSerializable(Status.class.getSimpleName(), new Status(Status.INTERNAL_ERROR));
+        bundle.putParcelable(Status.class.getSimpleName(), new Status(Status.INTERNAL_ERROR));
         outgoingMessage = prepareMessage(bundle, MessageType.INTERNAL_ERROR);
 
         for (String name : connectedList.keySet()) {
@@ -181,14 +181,13 @@ public class ServiceDataKit extends Service {
     private class IncomingHandler extends Handler {
         Messenger replyTo;
 
-
         @Override
         public void handleMessage(Message incomingMessage) {
             Message outgoingMessage;
             if (messageController == null) {
                 Log.d(TAG, "error...messageController=null");
                 Bundle bundle = new Bundle();
-                bundle.putSerializable(Status.class.getSimpleName(), new Status(Status.INTERNAL_ERROR));
+                bundle.putParcelable(Status.class.getSimpleName(), new Status(Status.INTERNAL_ERROR));
                 outgoingMessage = prepareMessage(bundle, incomingMessage.what);
             } else
                 outgoingMessage = messageController.execute(incomingMessage);

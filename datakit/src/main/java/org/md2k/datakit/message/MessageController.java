@@ -74,27 +74,31 @@ public class MessageController {
         Status status;
         switch (incomingMessage.what) {
             case MessageType.REGISTER:
-                DataSourceClient dataSourceClient = privacyManager.register((DataSource) incomingMessage.getData().getSerializable(DataSource.class.getSimpleName()));
+                incomingMessage.getData().setClassLoader(DataSource.class.getClassLoader());
+                DataSourceClient dataSourceClient = privacyManager.register((DataSource) incomingMessage.getData().getParcelable(DataSource.class.getSimpleName()));
                 bundle = new Bundle();
-                bundle.putSerializable(DataSourceClient.class.getSimpleName(), dataSourceClient);
-                bundle.putSerializable(Status.class.getSimpleName(),dataSourceClient.getStatus());
+                bundle.putParcelable(DataSourceClient.class.getSimpleName(), dataSourceClient);
+                bundle.putParcelable(Status.class.getSimpleName(),dataSourceClient.getStatus());
                 return prepareMessage(bundle, MessageType.REGISTER);
             case MessageType.UNREGISTER:
                 status = privacyManager.unregister(incomingMessage.getData().getInt("ds_id"));
                 bundle = new Bundle();
-                bundle.putSerializable(Status.class.getSimpleName(), status);
+                bundle.putParcelable(Status.class.getSimpleName(), status);
                 return prepareMessage(bundle, MessageType.UNREGISTER);
             case MessageType.FIND:
-                ArrayList<DataSourceClient> dataSourceClients = privacyManager.find((DataSource) incomingMessage.getData().getSerializable(DataSource.class.getSimpleName()));
+                incomingMessage.getData().setClassLoader(DataSource.class.getClassLoader());
+                ArrayList<DataSourceClient> dataSourceClients = privacyManager.find((DataSource) incomingMessage.getData().getParcelable(DataSource.class.getSimpleName()));
                 bundle = new Bundle();
-                bundle.putSerializable(DataSourceClient.class.getSimpleName(), dataSourceClients);
-                bundle.putSerializable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
+                bundle.putParcelableArrayList(DataSourceClient.class.getSimpleName(), dataSourceClients);
+                bundle.putParcelable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
                 return prepareMessage(bundle, MessageType.FIND);
             case MessageType.INSERT:
-                privacyManager.insert(incomingMessage.getData().getInt("ds_id"), (DataType) incomingMessage.getData().getSerializable(DataType.class.getSimpleName()));
+                incomingMessage.getData().setClassLoader(DataType.class.getClassLoader());
+                privacyManager.insert(incomingMessage.getData().getInt("ds_id"), (DataType) incomingMessage.getData().getParcelable(DataType.class.getSimpleName()));
                 return null;
             case MessageType.INSERT_HIGH_FREQUENCY:
-                privacyManager.insertHF(incomingMessage.getData().getInt("ds_id"), (DataTypeDoubleArray) incomingMessage.getData().getSerializable(DataTypeDoubleArray.class.getSimpleName()));
+                incomingMessage.getData().setClassLoader(DataTypeDoubleArray.class.getClassLoader());
+                privacyManager.insertHF(incomingMessage.getData().getInt("ds_id"), (DataTypeDoubleArray) incomingMessage.getData().getParcelable(DataTypeDoubleArray.class.getSimpleName()));
                 return null;
             case MessageType.QUERY:
                 ArrayList<DataType> dataTypes=null;
@@ -103,25 +107,25 @@ public class MessageController {
                 else if (incomingMessage.getData().containsKey("last_n_sample"))
                     dataTypes = privacyManager.query(incomingMessage.getData().getInt("ds_id"), incomingMessage.getData().getInt("last_n_sample"));
                 bundle = new Bundle();
-                bundle.putSerializable(DataType.class.getSimpleName(), dataTypes);
-                bundle.putSerializable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
+                bundle.putParcelableArrayList(DataType.class.getSimpleName(), dataTypes);
+                bundle.putParcelable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
                 return prepareMessage(bundle, MessageType.QUERY);
             case MessageType.QUERYPRIMARYKEY:
                 ArrayList<RowObject> objectTypes=null;
                 objectTypes = privacyManager.queryLastKey(incomingMessage.getData().getInt("ds_id"), incomingMessage.getData().getLong("last_key"), incomingMessage.getData().getInt("limit"));
                 bundle = new Bundle();
-                bundle.putSerializable(DataType.class.getSimpleName(), objectTypes);
-                bundle.putSerializable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
+                bundle.putParcelableArrayList(DataType.class.getSimpleName(), objectTypes);
+                bundle.putParcelable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
                 return prepareMessage(bundle, MessageType.QUERYPRIMARYKEY);
             case MessageType.SUBSCRIBE:
                 Status statusSubscribe = privacyManager.subscribe(incomingMessage.getData().getInt("ds_id"), incomingMessage.replyTo);
                 bundle = new Bundle();
-                bundle.putSerializable(Status.class.getSimpleName(), statusSubscribe);
+                bundle.putParcelable(Status.class.getSimpleName(), statusSubscribe);
                 return prepareMessage(bundle, MessageType.SUBSCRIBE);
             case MessageType.UNSUBSCRIBE:
                 Status statusUnsubscribe = privacyManager.unsubscribe(incomingMessage.getData().getInt("ds_id"), incomingMessage.replyTo);
                 bundle = new Bundle();
-                bundle.putSerializable(Status.class.getSimpleName(), statusUnsubscribe);
+                bundle.putParcelable(Status.class.getSimpleName(), statusUnsubscribe);
                 return prepareMessage(bundle, MessageType.UNSUBSCRIBE);
         }
         return null;

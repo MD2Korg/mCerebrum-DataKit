@@ -228,6 +228,7 @@ public class DatabaseTable_Data {
 
     public ContentValues prepareData(int dataSourceId, DataType dataType) {
         ContentValues contentValues=new ContentValues();
+
         byte[] dataTypeArray = dataType.toBytes();
 
         contentValues.put(C_DATASOURCE_ID, dataSourceId);
