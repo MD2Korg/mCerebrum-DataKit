@@ -5,11 +5,21 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
+import org.md2k.datakitapi.datatype.DataTypeString;
+import org.md2k.datakitapi.datatype.DataTypeStringArray;
 import org.md2k.datakitapi.datatype.RowObject;
+import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.status.Status;
+import org.md2k.utilities.Report.Log;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,7 +61,7 @@ public class DatabaseTable_Data {
     private static final String SQL_CREATE_DATA_INDEX = "CREATE INDEX IF NOT EXISTS index_datasource_id on " + TABLE_NAME + " (" + C_DATASOURCE_ID + ");";
     private static final String SQL_CREATE_HIGHFREQ_DATA_INDEX = "CREATE INDEX IF NOT EXISTS index_hf_datasource_id on " + HIGHFREQ_TABLE_NAME + " (" + C_DATASOURCE_ID + ");";
     private static String C_DATETIME = "datetime";
-    private static String C_SAMPLE="sample";
+    private static String C_SAMPLE = "sample";
     private static final String SQL_CREATE_DATA = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" + C_ID + " INTEGER PRIMARY KEY autoincrement, " +
             C_DATASOURCE_ID + " TEXT, " + C_DATETIME + " LONG, " +
             C_SAMPLE + " BLOB not null);";
@@ -62,13 +72,15 @@ public class DatabaseTable_Data {
     ArrayList<ContentValues> cValues = new ArrayList<ContentValues>();
     ArrayList<ContentValues> hfValues = new ArrayList<ContentValues>();
     long lastUnlock = 0;
-
+    Kryo kryo;
 
 
     DatabaseTable_Data(SQLiteDatabase db) {
+        kryo = new Kryo();
         createIfNotExists(db);
     }
-    public void removeAll(SQLiteDatabase db){
+
+    public void removeAll(SQLiteDatabase db) {
         db.execSQL("DROP INDEX index_datasource_id");
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
         db.execSQL("DROP INDEX index_hf_datasource_id");
@@ -97,7 +109,7 @@ public class DatabaseTable_Data {
             } finally {
                 db.endTransaction();
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             return new Status(Status.INTERNAL_ERROR);
         }
         return new Status(Status.SUCCESS);
@@ -106,11 +118,11 @@ public class DatabaseTable_Data {
 
     public Status insert(SQLiteDatabase db, int dataSourceId, DataType dataType) {
         Status status = new Status(Status.SUCCESS);
-        ContentValues contentValues=prepareData(dataSourceId, dataType);
+        ContentValues contentValues = prepareData(dataSourceId, dataType);
         cValues.add(contentValues);
         if (dataType.getDateTime() - lastUnlock >= WAITTIME) {
             status = insertDB(db, TABLE_NAME, cValues);
-            lastUnlock=dataType.getDateTime();
+            lastUnlock = dataType.getDateTime();
         }
         return status;
     }
@@ -126,7 +138,7 @@ public class DatabaseTable_Data {
         return status;
     }
 
-    private String[] prepareSelectionArgs(int ds_id,long starttimestamp,long endtimestamp) {
+    private String[] prepareSelectionArgs(int ds_id, long starttimestamp, long endtimestamp) {
         ArrayList<String> selectionArgs = new ArrayList<>();
         selectionArgs.add(String.valueOf(ds_id));
         selectionArgs.add(String.valueOf(starttimestamp));
@@ -134,6 +146,7 @@ public class DatabaseTable_Data {
         String[] stringArray = selectionArgs.toArray(new String[selectionArgs.size()]);
         return stringArray;
     }
+
     private String[] prepareSelectionArgs(int ds_id) {
         ArrayList<String> selectionArgs = new ArrayList<>();
         selectionArgs.add(String.valueOf(ds_id));
@@ -151,33 +164,36 @@ public class DatabaseTable_Data {
 
     private String prepareSelection() {
         String selection = "";
-        selection=C_DATASOURCE_ID+"=? AND "+C_DATETIME+" >=? AND "+C_DATETIME+" <=?";
+        selection = C_DATASOURCE_ID + "=? AND " + C_DATETIME + " >=? AND " + C_DATETIME + " <=?";
         return selection;
     }
+
     private String prepareSelectionLastSamples() {
         String selection = "";
-        selection=C_DATASOURCE_ID+"=?";
+        selection = C_DATASOURCE_ID + "=?";
         return selection;
     }
+
     private String prepareSelectionLastKey() {
         String selection = "";
-        selection+=C_ID+">=? AND";
-        selection+=C_DATASOURCE_ID+">=?";
+        selection += C_ID + ">=? AND";
+        selection += C_DATASOURCE_ID + ">=?";
         return selection;
     }
-    public ArrayList<DataType> query(SQLiteDatabase db, int ds_id, long starttimestamp,long endtimestamp){
+
+    public ArrayList<DataType> query(SQLiteDatabase db, int ds_id, long starttimestamp, long endtimestamp) {
         insertDB(db, TABLE_NAME, cValues);
         ArrayList<DataType> dataTypes = new ArrayList<>();
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
         queryBuilder.setTables(TABLE_NAME);
         String[] columns = new String[]{C_SAMPLE};
         String selection = prepareSelection();
-        String[] selectionArgs = prepareSelectionArgs(ds_id,starttimestamp,endtimestamp);
+        String[] selectionArgs = prepareSelectionArgs(ds_id, starttimestamp, endtimestamp);
         Cursor mCursor = db.query(TABLE_NAME,
                 columns, selection, selectionArgs, null, null, null);
         if (mCursor.moveToFirst()) {
             do {
-                dataTypes.add(DataType.fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE))));
+                dataTypes.add(fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE))));
             } while (mCursor.moveToNext());
         }
         if (mCursor != null && !mCursor.isClosed()) {
@@ -185,7 +201,8 @@ public class DatabaseTable_Data {
         }
         return dataTypes;
     }
-    public ArrayList<DataType> query(SQLiteDatabase db, int ds_id, int last_n_sample){
+
+    public ArrayList<DataType> query(SQLiteDatabase db, int ds_id, int last_n_sample) {
         insertDB(db, TABLE_NAME, cValues);
         ArrayList<DataType> dataTypes = new ArrayList<>();
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
@@ -193,10 +210,10 @@ public class DatabaseTable_Data {
         String[] columns = new String[]{C_SAMPLE};
         String selection = prepareSelectionLastSamples();
         String[] selectionArgs = prepareSelectionArgs(ds_id);
-        Cursor mCursor = db.query(TABLE_NAME, columns, selection, selectionArgs, null, null,"_id DESC", String.valueOf(last_n_sample));
+        Cursor mCursor = db.query(TABLE_NAME, columns, selection, selectionArgs, null, null, "_id DESC", String.valueOf(last_n_sample));
         if (mCursor.moveToFirst()) {
             do {
-                dataTypes.add(DataType.fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE))));
+                dataTypes.add(fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE))));
             } while (mCursor.moveToNext());
         }
         if (!mCursor.isClosed()) {
@@ -205,7 +222,7 @@ public class DatabaseTable_Data {
         return dataTypes;
     }
 
-    public ArrayList<RowObject> queryLastKey(SQLiteDatabase db, int ds_id, long last_key, int limit){
+    public ArrayList<RowObject> queryLastKey(SQLiteDatabase db, int ds_id, long last_key, int limit) {
         insertDB(db, TABLE_NAME, cValues);
         ArrayList<RowObject> rowObjects = new ArrayList<>();
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
@@ -216,7 +233,7 @@ public class DatabaseTable_Data {
         Cursor mCursor = db.query(TABLE_NAME, columns, selection, selectionArgs, null, null, Integer.toString(limit));
         if (mCursor.moveToFirst()) {
             do {
-                DataType dt = DataType.fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE)));
+                DataType dt = fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE)));
                 rowObjects.add(new RowObject(mCursor.getLong(mCursor.getColumnIndex(C_ID)), dt));
             } while (mCursor.moveToNext());
         }
@@ -227,9 +244,9 @@ public class DatabaseTable_Data {
     }
 
     public ContentValues prepareData(int dataSourceId, DataType dataType) {
-        ContentValues contentValues=new ContentValues();
+        ContentValues contentValues = new ContentValues();
 
-        byte[] dataTypeArray = dataType.toBytes();
+        byte[] dataTypeArray = toBytes(dataType);
 
         contentValues.put(C_DATASOURCE_ID, dataSourceId);
         contentValues.put(C_DATETIME, dataType.getDateTime());
@@ -247,8 +264,26 @@ public class DatabaseTable_Data {
         return contentValues;
     }
 
-    public void commit(SQLiteDatabase db){
+    public void commit(SQLiteDatabase db) {
         insertDB(db, TABLE_NAME, cValues);
         insertDB(db, HIGHFREQ_TABLE_NAME, hfValues);
     }
+
+    byte[] toBytes(DataType dataType) {
+        byte[] bytes;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        Output output = new Output(baos);
+        kryo.writeClassAndObject(output, dataType);
+        output.close();
+        bytes = baos.toByteArray();
+        return bytes;
+    }
+
+    DataType fromBytes(byte[] bytes) {
+        Input input = new Input(new ByteArrayInputStream(bytes));
+        DataType dataType = (DataType) kryo.readClassAndObject(input);
+        input.close();
+        return dataType;
+    }
+
 }

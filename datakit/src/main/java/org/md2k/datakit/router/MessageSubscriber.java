@@ -42,7 +42,7 @@ public class MessageSubscriber{
     }
     public boolean update(int ds_id,DataType data) {
         Bundle bundle=new Bundle();
-        bundle.putSerializable(DataType.class.getSimpleName(), data);
+        bundle.putParcelable(DataType.class.getSimpleName(), data);
         bundle.putInt("ds_id",ds_id);
         Message message=prepareMessage(bundle, MessageType.SUBSCRIBED_DATA);
         try {

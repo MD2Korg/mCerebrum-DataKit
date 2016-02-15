@@ -5,12 +5,19 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
 import org.md2k.datakitapi.status.Status;
 import org.md2k.datakitapi.status.Status;
 import org.md2k.datakitapi.time.DateTime;
+import org.md2k.utilities.Report.Log;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 
 /**
@@ -53,6 +60,7 @@ public class DatabaseTable_DataSource {
     private static String C_APPLICATION_TYPE = "application_type";
     private static String C_CREATEDATETIME = "create_datetime";
     private static String C_DATASOURCE = "datasource";
+    Kryo kryo;
 
     private static final String SQL_CREATE_DATASOURCE = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" + C_DS_ID + " INTEGER PRIMARY KEY autoincrement, " +
             C_DATASOURCE_ID + " TEXT, " + C_DATASOURCE_TYPE + " TEXT, " +
@@ -62,6 +70,7 @@ public class DatabaseTable_DataSource {
             C_CREATEDATETIME + " LONG, " + C_DATASOURCE + " BLOB not null);";
 
     DatabaseTable_DataSource(SQLiteDatabase db) {
+        kryo=new Kryo();
         createIfNotExists(db);
     }
 
@@ -141,8 +150,11 @@ public class DatabaseTable_DataSource {
                     columns, selection, selectionArgs, null, null, null);
             if (mCursor.moveToFirst()) {
                 do {
+                    DataSource curDataSource=fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_DATASOURCE)));
                     DataSourceClient dataSourceClient = new DataSourceClient(mCursor.getInt(mCursor.getColumnIndex(C_DS_ID)),
-                            DataSource.fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_DATASOURCE))), new Status(Status.DATASOURCE_EXIST));
+                            curDataSource, new Status(Status.DATASOURCE_EXIST));
+//                    DataSourceClient dataSourceClient = new DataSourceClient(mCursor.getInt(mCursor.getColumnIndex(C_DS_ID)),
+//                            DataSource.fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_DATASOURCE))), new Status(Status.DATASOURCE_EXIST));
                     dataSourceClients.add(dataSourceClient);
                 } while (mCursor.moveToNext());
             }
@@ -167,7 +179,9 @@ public class DatabaseTable_DataSource {
     }
 
     public ContentValues prepareDataSource(DataSource dataSource) {
-        byte[] dataSourceArray = dataSource.toBytes();
+//        byte[] dataSourceArray = dataSource.toBytes();
+        byte[] dataSourceArray = toBytes(dataSource);
+
         long curTime = DateTime.getDateTime();
         ContentValues cValues = new ContentValues();
         if (dataSource.getId() != null) cValues.put(C_DATASOURCE_ID, dataSource.getId());
@@ -188,4 +202,21 @@ public class DatabaseTable_DataSource {
         cValues.put(C_DATASOURCE, dataSourceArray);
         return cValues;
     }
+    byte[] toBytes(DataSource dataSource){
+        byte[] bytes;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        Output output = new Output(baos);
+        kryo.writeObject(output, dataSource);
+        output.close();
+        bytes=baos.toByteArray();
+        Log.d(TAG, "datasource_bytes: size=" + bytes.length + " content=" + bytes.toString());
+        return bytes;
+    }
+    DataSource fromBytes(byte[] bytes){
+        Input input = new Input(new ByteArrayInputStream(bytes));
+        DataSource curDataSource=kryo.readObject(input,DataSource.class);
+        input.close();
+        return curDataSource;
+    }
+
 }

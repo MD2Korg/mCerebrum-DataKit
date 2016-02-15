@@ -249,7 +249,7 @@ public class PrivacyManager {
         ArrayList<DataType> dataTypes = routingManager.query(dsIdPrivacy, 1);
 
         if (dataTypes == null || dataTypes.size() == 0) return null;
-        return gson.fromJson(((DataTypeString) dataTypes.get(0)).getSample(), PrivacyData.class);
+        return gson.fromJson((((DataTypeString) dataTypes.get(0))).getSample(), PrivacyData.class);
     }
 
     void deactivate() {
