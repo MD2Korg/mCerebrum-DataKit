@@ -11,12 +11,8 @@ import com.esotericsoftware.kryo.io.Output;
 
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
-import org.md2k.datakitapi.datatype.DataTypeString;
-import org.md2k.datakitapi.datatype.DataTypeStringArray;
 import org.md2k.datakitapi.datatype.RowObject;
-import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.status.Status;
-import org.md2k.utilities.Report.Log;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -143,23 +139,20 @@ public class DatabaseTable_Data {
         selectionArgs.add(String.valueOf(ds_id));
         selectionArgs.add(String.valueOf(starttimestamp));
         selectionArgs.add(String.valueOf(endtimestamp));
-        String[] stringArray = selectionArgs.toArray(new String[selectionArgs.size()]);
-        return stringArray;
+        return selectionArgs.toArray(new String[selectionArgs.size()]);
     }
 
     private String[] prepareSelectionArgs(int ds_id) {
         ArrayList<String> selectionArgs = new ArrayList<>();
         selectionArgs.add(String.valueOf(ds_id));
-        String[] stringArray = selectionArgs.toArray(new String[selectionArgs.size()]);
-        return stringArray;
+        return selectionArgs.toArray(new String[selectionArgs.size()]);
     }
 
     private String[] prepareLastKeySelectionArgs(int ds_id, long last_key) {
         ArrayList<String> selectionArgs = new ArrayList<>();
         selectionArgs.add(String.valueOf(ds_id));
         selectionArgs.add(String.valueOf(last_key));
-        String[] stringArray = selectionArgs.toArray(new String[selectionArgs.size()]);
-        return stringArray;
+        return selectionArgs.toArray(new String[selectionArgs.size()]);
     }
 
     private String prepareSelection() {
