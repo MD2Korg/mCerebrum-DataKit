@@ -3,7 +3,6 @@ package org.md2k.datakit.logger;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteQueryBuilder;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
@@ -169,16 +168,14 @@ public class DatabaseTable_Data {
 
     private String prepareSelectionLastKey() {
         String selection = "";
-        selection += C_ID + ">=? AND";
-        selection += C_DATASOURCE_ID + ">=?";
+        selection += C_ID + ">? AND ";
+        selection += C_DATASOURCE_ID + "=?";
         return selection;
     }
 
     public ArrayList<DataType> query(SQLiteDatabase db, int ds_id, long starttimestamp, long endtimestamp) {
         insertDB(db, TABLE_NAME, cValues);
         ArrayList<DataType> dataTypes = new ArrayList<>();
-        SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
-        queryBuilder.setTables(TABLE_NAME);
         String[] columns = new String[]{C_SAMPLE};
         String selection = prepareSelection();
         String[] selectionArgs = prepareSelectionArgs(ds_id, starttimestamp, endtimestamp);
@@ -198,8 +195,6 @@ public class DatabaseTable_Data {
     public ArrayList<DataType> query(SQLiteDatabase db, int ds_id, int last_n_sample) {
         insertDB(db, TABLE_NAME, cValues);
         ArrayList<DataType> dataTypes = new ArrayList<>();
-        SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
-        queryBuilder.setTables(TABLE_NAME);
         String[] columns = new String[]{C_SAMPLE};
         String selection = prepareSelectionLastSamples();
         String[] selectionArgs = prepareSelectionArgs(ds_id);
@@ -218,12 +213,10 @@ public class DatabaseTable_Data {
     public ArrayList<RowObject> queryLastKey(SQLiteDatabase db, int ds_id, long last_key, int limit) {
         insertDB(db, TABLE_NAME, cValues);
         ArrayList<RowObject> rowObjects = new ArrayList<>();
-        SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
-        queryBuilder.setTables(TABLE_NAME);
         String[] columns = new String[]{C_ID, C_SAMPLE};
         String selection = prepareSelectionLastKey();
         String[] selectionArgs = prepareLastKeySelectionArgs(ds_id, last_key);
-        Cursor mCursor = db.query(TABLE_NAME, columns, selection, selectionArgs, null, null, Integer.toString(limit));
+        Cursor mCursor = db.query(TABLE_NAME, columns, selection, selectionArgs, null, null, null, Integer.toString(limit));
         if (mCursor.moveToFirst()) {
             do {
                 DataType dt = fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE)));
