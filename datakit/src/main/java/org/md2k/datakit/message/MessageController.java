@@ -114,7 +114,7 @@ public class MessageController {
                 ArrayList<RowObject> objectTypes=null;
                 objectTypes = privacyManager.queryLastKey(incomingMessage.getData().getInt("ds_id"), incomingMessage.getData().getLong("last_key"), incomingMessage.getData().getInt("limit"));
                 bundle = new Bundle();
-                bundle.putParcelableArrayList(DataType.class.getSimpleName(), objectTypes);
+                bundle.putParcelableArrayList(RowObject.class.getSimpleName(), objectTypes);
                 bundle.putParcelable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
                 return prepareMessage(bundle, MessageType.QUERYPRIMARYKEY);
             case MessageType.SUBSCRIBE:
