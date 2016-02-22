@@ -12,7 +12,6 @@ import com.esotericsoftware.kryo.io.Output;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
 import org.md2k.datakitapi.status.Status;
-import org.md2k.datakitapi.status.Status;
 import org.md2k.datakitapi.time.DateTime;
 import org.md2k.utilities.Report.Log;
 
@@ -60,14 +59,13 @@ public class DatabaseTable_DataSource {
     private static String C_APPLICATION_TYPE = "application_type";
     private static String C_CREATEDATETIME = "create_datetime";
     private static String C_DATASOURCE = "datasource";
-    Kryo kryo;
-
     private static final String SQL_CREATE_DATASOURCE = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" + C_DS_ID + " INTEGER PRIMARY KEY autoincrement, " +
             C_DATASOURCE_ID + " TEXT, " + C_DATASOURCE_TYPE + " TEXT, " +
             C_PLATFORM_ID + " TEXT, " + C_PLATFROM_TYPE + " TEXT," +
             C_PLATFORMAPP_ID + " TEXT, " + C_PLATFROMAPP_TYPE + " TEXT," +
             C_APPLICATION_ID + " TEXT, " + C_APPLICATION_TYPE + " TEXT," +
             C_CREATEDATETIME + " LONG, " + C_DATASOURCE + " BLOB not null);";
+    Kryo kryo;
 
     DatabaseTable_DataSource(SQLiteDatabase db) {
         kryo=new Kryo();
@@ -206,7 +204,7 @@ public class DatabaseTable_DataSource {
         byte[] bytes;
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         Output output = new Output(baos);
-        kryo.writeObject(output, dataSource);
+        kryo.writeClassAndObject(output, dataSource);
         output.close();
         bytes=baos.toByteArray();
         Log.d(TAG, "datasource_bytes: size=" + bytes.length + " content=" + bytes.toString());
@@ -214,7 +212,7 @@ public class DatabaseTable_DataSource {
     }
     DataSource fromBytes(byte[] bytes){
         Input input = new Input(new ByteArrayInputStream(bytes));
-        DataSource curDataSource=kryo.readObject(input,DataSource.class);
+        DataSource curDataSource = (DataSource) kryo.readClassAndObject(input);
         input.close();
         return curDataSource;
     }
