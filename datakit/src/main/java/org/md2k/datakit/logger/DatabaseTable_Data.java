@@ -213,7 +213,7 @@ public class DatabaseTable_Data {
     public ArrayList<RowObject> queryLastKey(SQLiteDatabase db, int ds_id, long last_key, int limit) {
         insertDB(db, TABLE_NAME, cValues);
         ArrayList<RowObject> rowObjects = new ArrayList<>();
-        String sql = "select _id, sample from data where _id>" + Long.toString(last_key) + " and datasource_id=" + Integer.toString(ds_id) + " LIMIT 100";
+        String sql = "select _id, sample from data where _id>" + Long.toString(last_key) + " and datasource_id=" + Integer.toString(ds_id) + " LIMIT " + Integer.toString(limit);
         Cursor mCursor = db.rawQuery(sql, null);
         if (mCursor.moveToFirst()) {
             do {
