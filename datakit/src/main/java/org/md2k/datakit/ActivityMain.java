@@ -2,7 +2,6 @@ package org.md2k.datakit;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.content.ContextCompat;
@@ -14,16 +13,19 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.crashlytics.android.Crashlytics;
+
 import org.md2k.datakit.operation.FileManager;
 import org.md2k.datakit.privacy.PrivacyController;
 import org.md2k.datakitapi.time.DateTime;
 import org.md2k.utilities.Apps;
-import org.md2k.utilities.Report.Log;
 import org.md2k.utilities.UI.ActivityAbout;
 import org.md2k.utilities.UI.ActivityCopyright;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+
+import io.fabric.sdk.android.Fabric;
 
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -55,11 +57,35 @@ import java.lang.reflect.Method;
 public class ActivityMain extends AppCompatActivity {
     private static final String TAG = ActivityMain.class.getSimpleName();
     PrivacyController privacyController;
+    Handler mHandler = new Handler();
+    Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+            {
+                long time = Apps.serviceRunningTime(getApplicationContext(), Constants.SERVICE_NAME);
+                if (time < 0) {
+                    ((Button) findViewById(R.id.button_app_status)).setText(R.string.inactive);
+                    findViewById(R.id.button_app_status).setBackground(ContextCompat.getDrawable(ActivityMain.this, R.drawable.button_status_off));
+                } else {
+                    long runtime = time / 1000;
+                    int second = (int) (runtime % 60);
+                    runtime /= 60;
+                    int minute = (int) (runtime % 60);
+                    runtime /= 60;
+                    int hour = (int) runtime;
+                    ((Button) findViewById(R.id.button_app_status)).setText(String.format("%02d:%02d:%02d", hour, minute, second));
+                }
+                updateUI();
+                mHandler.postDelayed(this, 1000);
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         try {
             super.onCreate(savedInstanceState);
+            Fabric.with(this, new Crashlytics());
             setContentView(R.layout.activity_main);
             configureAppStatus();
             setupPrivacyUI();
@@ -93,6 +119,7 @@ public class ActivityMain extends AppCompatActivity {
             });
         }
     }
+
     public void updateUI(){
         if (!privacyController.isAvailable()) return;
         TextView textViewStatus=((TextView) findViewById(R.id.textViewPrivacyStatus));
@@ -191,30 +218,6 @@ public class ActivityMain extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
-
-    Handler mHandler = new Handler();
-    Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-            {
-                long time = Apps.serviceRunningTime(getApplicationContext(), Constants.SERVICE_NAME);
-                if (time < 0) {
-                    ((Button) findViewById(R.id.button_app_status)).setText(R.string.inactive);
-                    findViewById(R.id.button_app_status).setBackground(ContextCompat.getDrawable(ActivityMain.this, R.drawable.button_status_off));
-                } else {
-                    long runtime = time / 1000;
-                    int second = (int) (runtime % 60);
-                    runtime /= 60;
-                    int minute = (int) (runtime % 60);
-                    runtime /= 60;
-                    int hour = (int) runtime;
-                    ((Button) findViewById(R.id.button_app_status)).setText(String.format("%02d:%02d:%02d", hour, minute, second));
-                }
-                updateUI();
-                mHandler.postDelayed(this, 1000);
-            }
-        }
-    };
 
 
 }
