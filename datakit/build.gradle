@@ -23,8 +23,6 @@ android {
         targetSdkVersion 21
         versionCode 14
         versionName '0.6.1'
-        // Enabling multidex support.
-        multiDexEnabled true
     }
     buildTypes {
         release {
@@ -44,7 +42,6 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile project(':datakitapi')
     compile project(':utilities')
-    compile 'com.android.support:multidex:1.0.0'
     compile 'com.android.support:appcompat-v7:23.1.1'
     compile 'com.esotericsoftware:kryo:3.0.3'
     compile('com.crashlytics.sdk.android:crashlytics:2.5.5@aar') {
