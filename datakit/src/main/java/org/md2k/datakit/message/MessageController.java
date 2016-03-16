@@ -7,6 +7,7 @@ import android.os.Message;
 import org.md2k.datakit.privacy.PrivacyManager;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
+import org.md2k.datakitapi.datatype.DataTypeLong;
 import org.md2k.datakitapi.datatype.RowObject;
 import org.md2k.datakitapi.messagehandler.MessageType;
 import org.md2k.datakitapi.source.datasource.DataSource;
@@ -100,6 +101,13 @@ public class MessageController {
                 incomingMessage.getData().setClassLoader(DataTypeDoubleArray.class.getClassLoader());
                 privacyManager.insertHF(incomingMessage.getData().getInt("ds_id"), (DataTypeDoubleArray) incomingMessage.getData().getParcelable(DataTypeDoubleArray.class.getSimpleName()));
                 return null;
+            case MessageType.QUERYSIZE:
+                DataTypeLong object = null;
+                object = privacyManager.querySize();
+                bundle = new Bundle();
+                bundle.putParcelable(DataTypeLong.class.getSimpleName(), object);
+                bundle.putParcelable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
+                return prepareMessage(bundle, MessageType.QUERYSIZE);
             case MessageType.QUERY:
                 ArrayList<DataType> dataTypes=null;
                 if (incomingMessage.getData().containsKey("starttimestamp"))

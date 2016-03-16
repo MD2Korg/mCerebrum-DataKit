@@ -6,6 +6,7 @@ import android.os.Messenger;
 import org.md2k.datakit.logger.DatabaseLogger;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
+import org.md2k.datakitapi.datatype.DataTypeLong;
 import org.md2k.datakitapi.datatype.RowObject;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
@@ -89,6 +90,10 @@ public class RoutingManager {
     }
     public ArrayList<RowObject> queryLastKey(int ds_id,long last_key, int limit){
         return databaseLogger.queryLastKey(ds_id, last_key, limit);
+    }
+
+    public DataTypeLong querySize() {
+        return databaseLogger.querySize();
     }
 
     public Status unregister(int ds_id) {

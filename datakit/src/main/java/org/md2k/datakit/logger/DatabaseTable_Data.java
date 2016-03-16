@@ -10,6 +10,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
+import org.md2k.datakitapi.datatype.DataTypeLong;
 import org.md2k.datakitapi.datatype.RowObject;
 import org.md2k.datakitapi.status.Status;
 
@@ -63,6 +64,7 @@ public class DatabaseTable_Data {
     private static final String SQL_CREATE_HIGHFREQ_DATA = "CREATE TABLE IF NOT EXISTS " + HIGHFREQ_TABLE_NAME + " (" + C_ID + " INTEGER PRIMARY KEY autoincrement, " +
             C_DATASOURCE_ID + " TEXT, " + C_DATETIME + " LONG, " +
             C_SAMPLE + " BLOB not null);";
+    private static String C_COUNT = "c";
     private static long WAITTIME = 5 * 1000L; // 5 second;
     ArrayList<ContentValues> cValues = new ArrayList<ContentValues>();
     ArrayList<ContentValues> hfValues = new ArrayList<ContentValues>();
@@ -225,6 +227,22 @@ public class DatabaseTable_Data {
             mCursor.close();
         }
         return rowObjects;
+    }
+
+    public DataTypeLong querySize(SQLiteDatabase db) {
+        insertDB(db, TABLE_NAME, cValues);
+        String sql = "select count(_id)as c from data";
+        Cursor mCursor = db.rawQuery(sql, null);
+        DataTypeLong count = null;
+        if (mCursor.moveToFirst()) {
+            do {
+                count = new DataTypeLong(0L, mCursor.getLong(mCursor.getColumnIndex(C_COUNT)));
+            } while (mCursor.moveToNext());
+        }
+        if (!mCursor.isClosed()) {
+            mCursor.close();
+        }
+        return count;
     }
 
     public ContentValues prepareData(int dataSourceId, DataType dataType) {

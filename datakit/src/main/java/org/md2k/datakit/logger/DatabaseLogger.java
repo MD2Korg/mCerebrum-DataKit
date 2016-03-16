@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import org.md2k.datakit.operation.FileManager;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
+import org.md2k.datakitapi.datatype.DataTypeLong;
 import org.md2k.datakitapi.datatype.RowObject;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
@@ -106,6 +107,10 @@ public class DatabaseLogger extends SQLiteOpenHelper {
 
     public ArrayList<RowObject> queryLastKey(int ds_id, long last_key, int limit) {
         return databaseTable_data.queryLastKey(db, ds_id, last_key, limit);
+    }
+
+    public DataTypeLong querySize() {
+        return databaseTable_data.querySize(db);
     }
 
     public DataSourceClient register(DataSource dataSource) {
