@@ -125,6 +125,15 @@ public class MessageController {
                 bundle.putParcelableArrayList(RowObject.class.getSimpleName(), objectTypes);
                 bundle.putParcelable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
                 return prepareMessage(bundle, MessageType.QUERYPRIMARYKEY);
+
+            case MessageType.QUERYHFPRIMARYKEY:
+                ArrayList<RowObject> objectHFTypes = null;
+                objectHFTypes = privacyManager.queryHFLastKey(incomingMessage.getData().getInt("ds_id"), incomingMessage.getData().getLong("last_key"), incomingMessage.getData().getInt("limit"));
+                bundle = new Bundle();
+                bundle.putParcelableArrayList(RowObject.class.getSimpleName(), objectHFTypes);
+                bundle.putParcelable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
+                return prepareMessage(bundle, MessageType.QUERYHFPRIMARYKEY);
+
             case MessageType.SUBSCRIBE:
                 Status statusSubscribe = privacyManager.subscribe(incomingMessage.getData().getInt("ds_id"), incomingMessage.replyTo);
                 bundle = new Bundle();

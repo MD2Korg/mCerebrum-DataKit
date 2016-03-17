@@ -92,6 +92,10 @@ public class RoutingManager {
         return databaseLogger.queryLastKey(ds_id, last_key, limit);
     }
 
+    public ArrayList<RowObject> queryHFLastKey(int ds_id, long last_key, int limit) {
+        return databaseLogger.queryHFLastKey(ds_id, last_key, limit);
+    }
+
     public DataTypeLong querySize() {
         return databaseLogger.querySize();
     }

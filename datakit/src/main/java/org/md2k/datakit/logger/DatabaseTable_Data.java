@@ -229,11 +229,29 @@ public class DatabaseTable_Data {
         return rowObjects;
     }
 
+    public ArrayList<RowObject> queryHFLastKey(SQLiteDatabase db, int ds_id, long last_key, int limit) {
+        insertDB(db, HIGHFREQ_TABLE_NAME, cValues);
+        ArrayList<RowObject> rowObjects = new ArrayList<>();
+        String sql = "select _id, datetime, sample from rawdata where _id>" + Long.toString(last_key) + " and datasource_id=" + Integer.toString(ds_id) + " LIMIT " + Integer.toString(limit);
+        Cursor mCursor = db.rawQuery(sql, null);
+        if (mCursor.moveToFirst()) {
+            do {
+                byte[] data = mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE));
+                DataTypeDoubleArray dt = DataTypeDoubleArray.fromRawBytes(mCursor.getLong(mCursor.getColumnIndex(C_DATETIME)), data);
+                rowObjects.add(new RowObject(mCursor.getLong(mCursor.getColumnIndex(C_ID)), dt));
+            } while (mCursor.moveToNext());
+        }
+        if (!mCursor.isClosed()) {
+            mCursor.close();
+        }
+        return rowObjects;
+    }
+
     public DataTypeLong querySize(SQLiteDatabase db) {
         insertDB(db, TABLE_NAME, cValues);
         String sql = "select count(_id)as c from data";
         Cursor mCursor = db.rawQuery(sql, null);
-        DataTypeLong count = null;
+        DataTypeLong count = new DataTypeLong(0L, 0L);
         if (mCursor.moveToFirst()) {
             do {
                 count = new DataTypeLong(0L, mCursor.getLong(mCursor.getColumnIndex(C_COUNT)));
