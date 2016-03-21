@@ -4,8 +4,10 @@ import android.content.Context;
 import android.os.Handler;
 
 import org.md2k.datakit.cerebralcortex.config.Config;
+import org.md2k.datakit.cerebralcortex.config.ConfigManager;
 import org.md2k.datakitapi.DataKitAPI;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 
@@ -37,7 +39,7 @@ import java.io.IOException;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 public class CerebralCortexManager {
-    private static CerebralCortexManager instance;
+    private static CerebralCortexManager instance = null;
     private Context context;
     private DataKitAPI dataKitAPI;
     private boolean active;
@@ -52,16 +54,20 @@ public class CerebralCortexManager {
         }
     };
 
-    CerebralCortexManager(Context context, Config config) {
+    CerebralCortexManager(Context context) {
         this.context = context;
-        this.config = config;
         dataKitAPI = DataKitAPI.getInstance(context);
         handler = new Handler();
         active = false;
+
+        try {
+            this.config = ConfigManager.readConfig();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     public static CerebralCortexManager getInstance(Context context) throws IOException {
-        CerebralCortexManager instance;
         if (instance == null)
             instance = new CerebralCortexManager(context);
         return instance;
@@ -80,5 +86,9 @@ public class CerebralCortexManager {
     void stop() {
         active = false;
         handler.removeCallbacks(publishData);
+    }
+
+    public boolean isAvailable() {
+        return (this.config != null);
     }
 }

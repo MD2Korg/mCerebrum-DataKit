@@ -2,7 +2,6 @@ package org.md2k.datakit.cerebralcortex;
 
 import android.content.Context;
 
-import org.md2k.datakit.cerebralcortex.config.ConfigManager;
 import org.md2k.utilities.Report.Log;
 
 import java.io.IOException;
@@ -37,16 +36,14 @@ import java.io.IOException;
 public class CerebralCortexController {
     private static final String TAG = CerebralCortexController.class.getSimpleName();
     private static CerebralCortexController instance = null;
-    Context context;
 
+    Context context;
     CerebralCortexManager cerebralCortexManager;
-    ConfigManager configManager;
 
     CerebralCortexController(Context context) throws IOException {
         Log.d(TAG, "CerebralCortexController()...constructor()...");
         this.context = context;
         cerebralCortexManager = CerebralCortexManager.getInstance(context);
-        configManager = ConfigManager.getInstance(context);
     }
 
     public static CerebralCortexController getInstance(Context context) throws IOException {
@@ -54,12 +51,11 @@ public class CerebralCortexController {
         return instance;
     }
 
-    public boolean isAvailable() {
-        return configManager.isAvailable();
-    }
-
     public boolean isActive() {
         return cerebralCortexManager.isActive();
     }
 
+    public boolean isAvailable() {
+        return cerebralCortexManager.isAvailable();
+    }
 }

@@ -5,15 +5,11 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.widget.Toast;
 
-import org.md2k.datakit.cerebralcortex.config.Config;
-import org.md2k.datakit.cerebralcortex.config.ConfigManager;
 import org.md2k.datakitapi.DataKitAPI;
 import org.md2k.datakitapi.messagehandler.OnConnectionListener;
 import org.md2k.datakitapi.messagehandler.OnExceptionListener;
 import org.md2k.datakitapi.status.Status;
 import org.md2k.utilities.Report.Log;
-
-import java.io.FileNotFoundException;
 
 /*
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -47,18 +43,11 @@ public class ServiceCerebralCortex extends Service {
     private static final String TAG = ServiceCerebralCortex.class.getSimpleName();
     DataKitAPI dataKitAPI;
     CerebralCortexManager cerebralCortexManager;
-    Config config;
 
     public void onCreate() {
         super.onCreate();
         Log.d(TAG, "onCreate()");
-        try {
-            config = ConfigManager.readConfig();
-            connectDataKit();
-        } catch (FileNotFoundException e) {
-            Toast.makeText(ServiceCerebralCortex.this, "ERROR: CerebralCortex is not configured properly...Please go to \"Settings\"", Toast.LENGTH_LONG).show();
-            stopSelf();
-        }
+        connectDataKit();
     }
 
     private void connectDataKit() {
@@ -69,7 +58,7 @@ public class ServiceCerebralCortex extends Service {
             @Override
             public void onConnected() {
                 Log.d(TAG, "onConnected()...");
-                cerebralCortexManager = new CerebralCortexManager(ServiceCerebralCortex.this, config);
+                cerebralCortexManager = new CerebralCortexManager(ServiceCerebralCortex.this);
                 cerebralCortexManager.start();
             }
         }, new OnExceptionListener() {

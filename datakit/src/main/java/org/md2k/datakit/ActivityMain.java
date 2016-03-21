@@ -15,7 +15,9 @@ import android.widget.TextView;
 
 import com.crashlytics.android.Crashlytics;
 
+import org.md2k.datakit.cerebralcortex.ActivityCerebralCortexSettings;
 import org.md2k.datakit.cerebralcortex.CerebralCortexController;
+import org.md2k.datakit.cerebralcortex.ServiceCerebralCortex;
 import org.md2k.datakit.operation.FileManager;
 import org.md2k.datakit.privacy.PrivacyController;
 import org.md2k.datakitapi.time.DateTime;
@@ -121,7 +123,7 @@ public class ActivityMain extends AppCompatActivity {
             button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Intent intent = new Intent(ActivityMain.this, ActivityCerebralCortexMain.class);
+                    Intent intent = new Intent(ActivityMain.this, ServiceCerebralCortex.class);
                     startActivity(intent);
                 }
             });
@@ -150,24 +152,14 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     public void updateCCUI() {
-
         TextView textViewStatus = ((TextView) findViewById(R.id.textViewcerebralcortexStatus));
-
-        if (privacyController.isActive()) {
-            textViewStatus.setText("ON (" + DateTime.convertTimestampToTimeStr(privacyController.getRemainingTime()) + ")");
-            textViewOption.setText(privacyController.getActiveList());
-            textViewStatus.setTextColor(ContextCompat.getColor(this, R.color.red_700));
-            textViewOption.setTextColor(ContextCompat.getColor(this, R.color.red_200));
-
+        if (cerebralCortexController.isActive()) {
+            textViewStatus.setText("ON (Running)");
+            textViewStatus.setTextColor(ContextCompat.getColor(this, R.color.teal_700));
         } else {
             textViewStatus.setText("OFF");
-            textViewOption.setText("");
-            textViewStatus.setTextColor(ContextCompat.getColor(this, R.color.teal_700));
-            textViewOption.setVisibility(View.GONE);
-            findViewById(R.id.textViewPrivacyOptionTitle).setVisibility(View.GONE);
-
+            textViewStatus.setTextColor(ContextCompat.getColor(this, R.color.red_700));
         }
-
     }
 
     public void updateUI(){
