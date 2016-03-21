@@ -1,7 +1,17 @@
 package org.md2k.datakit;
 
-/**
+import android.content.Context;
+import android.os.Handler;
+
+import org.md2k.cerebralcortex.config.Config;
+import org.md2k.datakitapi.DataKitAPI;
+
+//import md2k.mCerebrum.CSVDataPoint;
+//import md2k.mCerebrum.cStress.StreamConstants;
+
+/*
  * Copyright (c) 2015, The University of Memphis, MD2K Center
+ * - Timothy Hnat <twhnat@memphis.edu>
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
  * All rights reserved.
  *
@@ -26,16 +36,43 @@ package org.md2k.datakit;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public class Constants {
-    public static final int ASSET=0;
-    public static final int INTERNAL_SDCARD=1;
-    public static final int EXTERNAL_SDCARD=2;
-    public static final int FILE_LOCATION=ASSET;
-    public static final String CONFIG_FILENAME = "datakit_privacy_config.json";
-    // Cerebral Cortex
-    public static final String CC_SERVICE_NAME = "org.md2k.cerebralcortex.ServiceDataExporter";
-    public static final String KEYHASHMAP = "DataExporterHashMap.json";
-    public static final int DATA_BLOCK_SIZE_LIMIT = 1000;
-    public static String SERVICE_NAME = "org.md2k.datakit.ServiceDataKit";
+public class DataKitManager {
+    private Context context;
+    private DataKitAPI dataKitAPI;
+    private boolean active;
+    private Config config;
+    private Handler handler;
+    private CerebralCortexWrapper task;
+
+    Runnable publishData = new Runnable() {
+        @Override
+        public void run() {
+            task.execute();
+            handler.postDelayed(publishData, config.getUpload_interval());
+        }
+    };
+
+    DataKitManager(Context context, Config config) {
+        this.context = context;
+        this.config = config;
+        dataKitAPI = DataKitAPI.getInstance(context);
+        handler = new Handler();
+        active = false;
+    }
+
+    void start() {
+        active = true;
+        task = new CerebralCortexWrapper(context, dataKitAPI, config.getUrl(), config.getRestricted_datasource());
+        handler.post(publishData);
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    void stop() {
+        active = false;
+        handler.removeCallbacks(publishData);
+    }
 
 }

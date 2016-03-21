@@ -1,19 +1,19 @@
-package org.md2k.datakit;
+package org.md2k.datakit.cerebralcortex.communication;
 
-/**
- * Copyright (c) 2015, The University of Memphis, MD2K Center
- * - Syed Monowar Hossain <monowar.hossain@gmail.com>
+/*
+ * Copyright (c) 2016, The University of Memphis, MD2K Center
+ * - Timothy Hnat <twhnat@memphis.edu>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
  * * Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer.
+ *   list of conditions and the following disclaimer.
  *
  * * Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -26,16 +26,26 @@ package org.md2k.datakit;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public class Constants {
-    public static final int ASSET=0;
-    public static final int INTERNAL_SDCARD=1;
-    public static final int EXTERNAL_SDCARD=2;
-    public static final int FILE_LOCATION=ASSET;
-    public static final String CONFIG_FILENAME = "datakit_privacy_config.json";
-    // Cerebral Cortex
-    public static final String CC_SERVICE_NAME = "org.md2k.cerebralcortex.ServiceDataExporter";
-    public static final String KEYHASHMAP = "DataExporterHashMap.json";
-    public static final int DATA_BLOCK_SIZE_LIMIT = 1000;
-    public static String SERVICE_NAME = "org.md2k.datakit.ServiceDataKit";
 
+import com.bluelinelabs.logansquare.annotation.JsonField;
+import com.bluelinelabs.logansquare.annotation.JsonObject;
+
+/**
+ * Container for JSON representation of datastreams
+ */
+@JsonObject(serializeNullObjects = true)
+public class CerebralCortexDataSourceResponse {
+
+    @JsonField
+    public String status;
+
+    @JsonField
+    public String message;
+
+    @JsonField
+    public long datastream_id;
+
+    public CerebralCortexDataSourceResponse() {
+
+    }
 }
