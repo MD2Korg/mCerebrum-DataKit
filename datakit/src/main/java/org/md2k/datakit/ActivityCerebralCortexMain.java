@@ -4,8 +4,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
-import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.content.ContextCompat;
@@ -15,21 +13,15 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TableLayout;
-import android.widget.TableRow;
 import android.widget.TextView;
 
 import com.crashlytics.android.Crashlytics;
 
+import org.md2k.datakit.cerebralcortex.ServiceCerebralCortex;
 import org.md2k.datakitapi.time.DateTime;
 import org.md2k.utilities.Apps;
-import org.md2k.utilities.Report.Log;
-import org.md2k.utilities.UI.ActivityAbout;
-import org.md2k.utilities.UI.ActivityCopyright;
 
-import java.sql.Timestamp;
 import java.util.HashMap;
-import java.util.Map;
 
 import io.fabric.sdk.android.Fabric;
 
@@ -62,7 +54,7 @@ import io.fabric.sdk.android.Fabric;
  */
 
 public class ActivityCerebralCortexMain extends AppCompatActivity {
-    private static final String TAG = ActivityMain.class.getSimpleName();
+    private static final String TAG = ActivityCerebralCortexMain.class.getSimpleName();
     static HashMap<Integer, Long> currentData = new HashMap<>();
     static HashMap<Integer, String> timeData = new HashMap<>();
     Handler mHandler = new Handler();
@@ -71,13 +63,13 @@ public class ActivityCerebralCortexMain extends AppCompatActivity {
         @Override
         public void run() {
             {
-                long time = Apps.serviceRunningTime(ActivityMain.this, Constants.SERVICE_NAME);
+                long time = Apps.serviceRunningTime(ActivityCerebralCortexMain.this, Constants.CC_SERVICE_NAME);
                 if (time < 0) {
                     ((Button) findViewById(R.id.button_app_status)).setText("START");
-                    findViewById(R.id.button_app_status).setBackground(ContextCompat.getDrawable(ActivityMain.this, R.drawable.button_status_off));
+                    findViewById(R.id.button_app_status).setBackground(ContextCompat.getDrawable(ActivityCerebralCortexMain.this, R.drawable.button_status_off));
 
                 } else {
-                    findViewById(R.id.button_app_status).setBackground(ContextCompat.getDrawable(ActivityMain.this, R.drawable.button_status_on));
+                    findViewById(R.id.button_app_status).setBackground(ContextCompat.getDrawable(ActivityCerebralCortexMain.this, R.drawable.button_status_on));
                     ((Button) findViewById(R.id.button_app_status)).setText(DateTime.convertTimestampToTimeStr(time));
 
                 }
@@ -89,42 +81,42 @@ public class ActivityCerebralCortexMain extends AppCompatActivity {
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            updateTable(intent);
+//            updateTable(intent);
         }
     };
 
-    private void updateTable(Intent intent) {
-        try {
-            int streamID = intent.getIntExtra("streamID", -1);
-            long dataIndex = intent.getLongExtra("index", -1);
-
-            if (!currentData.containsKey(streamID)) {
-                currentData.put(streamID, dataIndex);
-            }
-            if (!timeData.containsKey(streamID)) {
-                if (dataIndex > 0)
-                    timeData.put(streamID, new Timestamp(System.currentTimeMillis()).toString());
-            }
-            if (!hashMapData.containsKey(streamID + "_index")) {
-                prepareTable(streamID + 1);
-                for (Map.Entry<Integer, Long> entry : currentData.entrySet()) {
-                    hashMapData.get(entry.getKey() + "_index").setText(entry.getValue().toString());
-                }
-                for (Map.Entry<Integer, String> entry : timeData.entrySet()) {
-                    if (dataIndex > 0)
-                        hashMapData.get(entry.getKey() + "_update").setText(entry.getValue());
-                }
-
-            }
-
-            hashMapData.get(streamID + "_index").setText(Long.toString(dataIndex));
-            if (dataIndex > 0)
-                hashMapData.get(streamID + "_update").setText(new Timestamp(System.currentTimeMillis()).toString());
-        } catch (NullPointerException e) {
-            Log.d("CerebralCortex", "Null pointer in update table");
-            Crashlytics.logException(e);
-        }
-    }
+//    private void updateTable(Intent intent) {
+//        try {
+//            int streamID = intent.getIntExtra("streamID", -1);
+//            long dataIndex = intent.getLongExtra("index", -1);
+//
+//            if (!currentData.containsKey(streamID)) {
+//                currentData.put(streamID, dataIndex);
+//            }
+//            if (!timeData.containsKey(streamID)) {
+//                if (dataIndex > 0)
+//                    timeData.put(streamID, new Timestamp(System.currentTimeMillis()).toString());
+//            }
+//            if (!hashMapData.containsKey(streamID + "_index")) {
+//                prepareTable(streamID + 1);
+//                for (Map.Entry<Integer, Long> entry : currentData.entrySet()) {
+//                    hashMapData.get(entry.getKey() + "_index").setText(entry.getValue().toString());
+//                }
+//                for (Map.Entry<Integer, String> entry : timeData.entrySet()) {
+//                    if (dataIndex > 0)
+//                        hashMapData.get(entry.getKey() + "_update").setText(entry.getValue());
+//                }
+//
+//            }
+//
+//            hashMapData.get(streamID + "_index").setText(Long.toString(dataIndex));
+//            if (dataIndex > 0)
+//                hashMapData.get(streamID + "_update").setText(new Timestamp(System.currentTimeMillis()).toString());
+//        } catch (NullPointerException e) {
+//            Log.d("CerebralCortex", "Null pointer in update table");
+//            Crashlytics.logException(e);
+//        }
+//    }
 
 
     @Override
@@ -137,8 +129,8 @@ public class ActivityCerebralCortexMain extends AppCompatActivity {
         buttonService.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getApplicationContext(), ServiceDataExporter.class);
-                if (Apps.isServiceRunning(getBaseContext(), Constants.SERVICE_NAME)) {
+                Intent intent = new Intent(getApplicationContext(), ServiceCerebralCortex.class);
+                if (Apps.isServiceRunning(getBaseContext(), Constants.CC_SERVICE_NAME)) {
                     stopService(intent);
                 } else {
                     startService(intent);
@@ -167,22 +159,8 @@ public class ActivityCerebralCortexMain extends AppCompatActivity {
             case android.R.id.home:
                 finish();
                 break;
-            case R.id.action_settings:
-                intent = new Intent(this, ActivityDataExporterSettings.class);
-                startActivity(intent);
-                break;
-            case R.id.action_about:
-                intent = new Intent(this, ActivityAbout.class);
-                try {
-                    intent.putExtra(org.md2k.utilities.Constants.VERSION_CODE, String.valueOf(this.getPackageManager().getPackageInfo(getPackageName(), 0).versionCode));
-                    intent.putExtra(org.md2k.utilities.Constants.VERSION_NAME, this.getPackageManager().getPackageInfo(getPackageName(), 0).versionName);
-                } catch (PackageManager.NameNotFoundException e) {
-                    e.printStackTrace();
-                }
-                startActivity(intent);
-                break;
-            case R.id.action_copyright:
-                intent = new Intent(this, ActivityCopyright.class);
+            case R.id.action_cerebralcortex_settings:
+                intent = new Intent(this, ActivityCerebralCortexSettings.class);
                 startActivity(intent);
                 break;
         }
@@ -198,61 +176,61 @@ public class ActivityCerebralCortexMain extends AppCompatActivity {
         super.onResume();
     }
 
-    TableRow createDefaultRow() {
-        TableRow row = new TableRow(this);
-        TextView tvSensor = new TextView(this);
-        tvSensor.setText("Stream");
-        tvSensor.setTypeface(null, Typeface.BOLD);
-        tvSensor.setTextColor(getResources().getColor(R.color.teal_700));
-        TextView tvindex = new TextView(this);
-        tvindex.setText("Last Table Index");
-        tvindex.setTypeface(null, Typeface.BOLD);
-        tvindex.setTextColor(getResources().getColor(R.color.teal_700));
-
-        TextView tvUpdate = new TextView(this);
-        tvUpdate.setText("Last Update");
-        tvUpdate.setTypeface(null, Typeface.BOLD);
-        tvUpdate.setTextColor(getResources().getColor(R.color.teal_700));
-
-        row.addView(tvSensor);
-        row.addView(tvindex);
-        row.addView(tvUpdate);
-        return row;
-    }
+//    TableRow createDefaultRow() {
+//        TableRow row = new TableRow(this);
+//        TextView tvSensor = new TextView(this);
+//        tvSensor.setText("Stream");
+//        tvSensor.setTypeface(null, Typeface.BOLD);
+//        tvSensor.setTextColor(getResources().getColor(R.color.teal_700));
+//        TextView tvindex = new TextView(this);
+//        tvindex.setText("Last Table Index");
+//        tvindex.setTypeface(null, Typeface.BOLD);
+//        tvindex.setTextColor(getResources().getColor(R.color.teal_700));
+//
+//        TextView tvUpdate = new TextView(this);
+//        tvUpdate.setText("Last Update");
+//        tvUpdate.setTypeface(null, Typeface.BOLD);
+//        tvUpdate.setTextColor(getResources().getColor(R.color.teal_700));
+//
+//        row.addView(tvSensor);
+//        row.addView(tvindex);
+//        row.addView(tvUpdate);
+//        return row;
+//    }
 
     private void prepareTable(int streams) {
-        TableLayout ll = (TableLayout) findViewById(R.id.tableLayout);
-        ll.removeAllViews();
-        ll.addView(createDefaultRow());
-        for (int i = 1; i <= streams; i++) {
-            TableRow row = new TableRow(this);
-            TableRow.LayoutParams lp = new TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT);
-            row.setLayoutParams(lp);
-            TextView tvStream = new TextView(this);
-            tvStream.setText("" + i);
-
-            TextView tvIndex = new TextView(this);
-
-            if (currentData.containsKey(i)) {
-                tvIndex.setText(currentData.get(i).toString());
-            } else {
-                tvIndex.setText("");
-            }
-            hashMapData.put(i + "_index", tvIndex);
-
-            TextView tvUpdate = new TextView(this);
-            if (timeData.containsKey(i)) {
-                tvUpdate.setText(timeData.get(i).toString());
-            } else {
-                tvUpdate.setText("");
-            }
-            hashMapData.put(i + "_update", tvUpdate);
-
-            row.addView(tvStream);
-            row.addView(tvIndex);
-            row.addView(tvUpdate);
-            ll.addView(row);
-        }
+//        TableLayout ll = (TableLayout) findViewById(R.id.tableLayout);
+//        ll.removeAllViews();
+//        ll.addView(createDefaultRow());
+//        for (int i = 1; i <= streams; i++) {
+//            TableRow row = new TableRow(this);
+//            TableRow.LayoutParams lp = new TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT);
+//            row.setLayoutParams(lp);
+//            TextView tvStream = new TextView(this);
+//            tvStream.setText("" + i);
+//
+//            TextView tvIndex = new TextView(this);
+//
+//            if (currentData.containsKey(i)) {
+//                tvIndex.setText(currentData.get(i).toString());
+//            } else {
+//                tvIndex.setText("");
+//            }
+//            hashMapData.put(i + "_index", tvIndex);
+//
+//            TextView tvUpdate = new TextView(this);
+//            if (timeData.containsKey(i)) {
+//                tvUpdate.setText(timeData.get(i).toString());
+//            } else {
+//                tvUpdate.setText("");
+//            }
+//            hashMapData.put(i + "_update", tvUpdate);
+//
+//            row.addView(tvStream);
+//            row.addView(tvIndex);
+//            row.addView(tvUpdate);
+//            ll.addView(row);
+//        }
     }
 
     @Override

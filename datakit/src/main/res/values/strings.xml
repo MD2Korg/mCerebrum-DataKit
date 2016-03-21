@@ -9,4 +9,7 @@
     <string name="configure">Configure</string>
     <string name="privacy_status">Status:</string>
     <string name="privacy_option">Deactivated:</string>
+
+    <string name="title_cerebralcortex">Cerebral Cortex</string>
+    <string name="cerebralcortex_status">Status:</string>
 </resources>

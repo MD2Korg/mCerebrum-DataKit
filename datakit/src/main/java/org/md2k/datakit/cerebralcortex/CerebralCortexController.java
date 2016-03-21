@@ -1,18 +1,16 @@
-package org.md2k.datakit;
+package org.md2k.datakit.cerebralcortex;
 
 import android.content.Context;
-import android.os.Handler;
 
-import org.md2k.cerebralcortex.config.Config;
-import org.md2k.datakitapi.DataKitAPI;
+import org.md2k.datakit.cerebralcortex.config.ConfigManager;
+import org.md2k.utilities.Report.Log;
 
-//import md2k.mCerebrum.CSVDataPoint;
-//import md2k.mCerebrum.cStress.StreamConstants;
+import java.io.IOException;
 
 /*
  * Copyright (c) 2015, The University of Memphis, MD2K Center
- * - Timothy Hnat <twhnat@memphis.edu>
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
+ * - Timothy Hnat <twhnat@memphis.edu>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,43 +34,32 @@ import org.md2k.datakitapi.DataKitAPI;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public class DataKitManager {
-    private Context context;
-    private DataKitAPI dataKitAPI;
-    private boolean active;
-    private Config config;
-    private Handler handler;
-    private CerebralCortexWrapper task;
+public class CerebralCortexController {
+    private static final String TAG = CerebralCortexController.class.getSimpleName();
+    private static CerebralCortexController instance = null;
+    Context context;
 
-    Runnable publishData = new Runnable() {
-        @Override
-        public void run() {
-            task.execute();
-            handler.postDelayed(publishData, config.getUpload_interval());
-        }
-    };
+    CerebralCortexManager cerebralCortexManager;
+    ConfigManager configManager;
 
-    DataKitManager(Context context, Config config) {
+    CerebralCortexController(Context context) throws IOException {
+        Log.d(TAG, "CerebralCortexController()...constructor()...");
         this.context = context;
-        this.config = config;
-        dataKitAPI = DataKitAPI.getInstance(context);
-        handler = new Handler();
-        active = false;
+        cerebralCortexManager = CerebralCortexManager.getInstance(context);
+        configManager = ConfigManager.getInstance(context);
     }
 
-    void start() {
-        active = true;
-        task = new CerebralCortexWrapper(context, dataKitAPI, config.getUrl(), config.getRestricted_datasource());
-        handler.post(publishData);
+    public static CerebralCortexController getInstance(Context context) throws IOException {
+        if (instance == null) instance = new CerebralCortexController(context);
+        return instance;
+    }
+
+    public boolean isAvailable() {
+        return configManager.isAvailable();
     }
 
     public boolean isActive() {
-        return active;
-    }
-
-    void stop() {
-        active = false;
-        handler.removeCallbacks(publishData);
+        return cerebralCortexManager.isActive();
     }
 
 }

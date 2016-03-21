@@ -1,12 +1,12 @@
-package org.md2k.datakit;
+package org.md2k.datakit.cerebralcortex;
 
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 import android.widget.Toast;
 
-import org.md2k.cerebralcortex.config.Config;
-import org.md2k.cerebralcortex.config.ConfigManager;
+import org.md2k.datakit.cerebralcortex.config.Config;
+import org.md2k.datakit.cerebralcortex.config.ConfigManager;
 import org.md2k.datakitapi.DataKitAPI;
 import org.md2k.datakitapi.messagehandler.OnConnectionListener;
 import org.md2k.datakitapi.messagehandler.OnExceptionListener;
@@ -15,21 +15,22 @@ import org.md2k.utilities.Report.Log;
 
 import java.io.FileNotFoundException;
 
-/**
+/*
  * Copyright (c) 2015, The University of Memphis, MD2K Center
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
+ * - Timothy Hnat <twhnat@memphis.edu>
  * All rights reserved.
- * <p/>
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * <p/>
+ *
  * * Redistributions of source code must retain the above copyright notice, this
  * list of conditions and the following disclaimer.
- * <p/>
+ *
  * * Redistributions in binary form must reproduce the above copyright notice,
  * this list of conditions and the following disclaimer in the documentation
  * and/or other materials provided with the distribution.
- * <p/>
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -42,10 +43,10 @@ import java.io.FileNotFoundException;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-public class ServiceDataExporter extends Service {
-    private static final String TAG = ServiceDataExporter.class.getSimpleName();
+public class ServiceCerebralCortex extends Service {
+    private static final String TAG = ServiceCerebralCortex.class.getSimpleName();
     DataKitAPI dataKitAPI;
-    DataKitManager dataKitManager;
+    CerebralCortexManager cerebralCortexManager;
     Config config;
 
     public void onCreate() {
@@ -55,7 +56,7 @@ public class ServiceDataExporter extends Service {
             config = ConfigManager.readConfig();
             connectDataKit();
         } catch (FileNotFoundException e) {
-            Toast.makeText(ServiceDataExporter.this, "ERROR: CerebralCortex is not configured properly...Please go to \"Settings\"", Toast.LENGTH_LONG).show();
+            Toast.makeText(ServiceCerebralCortex.this, "ERROR: CerebralCortex is not configured properly...Please go to \"Settings\"", Toast.LENGTH_LONG).show();
             stopSelf();
         }
     }
@@ -68,15 +69,15 @@ public class ServiceDataExporter extends Service {
             @Override
             public void onConnected() {
                 Log.d(TAG, "onConnected()...");
-                dataKitManager = new DataKitManager(ServiceDataExporter.this, config);
-                dataKitManager.start();
+                cerebralCortexManager = new CerebralCortexManager(ServiceCerebralCortex.this, config);
+                cerebralCortexManager.start();
             }
         }, new OnExceptionListener() {
             @Override
             public void onException(Status status) {
-                if (dataKitManager.isActive())
-                    dataKitManager.stop();
-                Toast.makeText(ServiceDataExporter.this, "CerebralCortex Stopped. Error: " + status.getStatusMessage(), Toast.LENGTH_LONG).show();
+                if (cerebralCortexManager.isActive())
+                    cerebralCortexManager.stop();
+                Toast.makeText(ServiceCerebralCortex.this, "CerebralCortex Stopped. Error: " + status.getStatusMessage(), Toast.LENGTH_LONG).show();
                 stopSelf();
             }
         });
@@ -84,8 +85,8 @@ public class ServiceDataExporter extends Service {
 
     @Override
     public void onDestroy() {
-        if (dataKitManager != null && dataKitManager.isActive())
-            dataKitManager.stop();
+        if (cerebralCortexManager != null && cerebralCortexManager.isActive())
+            cerebralCortexManager.stop();
         if (dataKitAPI != null && dataKitAPI.isConnected()) dataKitAPI.disconnect();
         if (dataKitAPI != null)
             dataKitAPI.close();

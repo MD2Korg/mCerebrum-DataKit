@@ -1,4 +1,4 @@
-package org.md2k.datakit.config;
+package org.md2k.datakit.cerebralcortex.config;
 
 import android.os.Environment;
 

@@ -1,4 +1,4 @@
-package org.md2k.datakit;
+package org.md2k.datakit.cerebralcortex;
 
 import android.content.Context;
 import android.content.Intent;
@@ -11,18 +11,18 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
-import org.md2k.cerebralcortex.dataexporter.DataExport;
-import org.md2k.cerebralcortex.dataexporter.cerebralcortex.CerebralCortexData;
-import org.md2k.cerebralcortex.dataexporter.cerebralcortex.CerebralCortexDataResponse;
-import org.md2k.cerebralcortex.dataexporter.cerebralcortex.CerebralCortexDataSource;
-import org.md2k.cerebralcortex.dataexporter.cerebralcortex.CerebralCortexDataSourceResponse;
-import org.md2k.cerebralcortex.dataexporter.cerebralcortex.ParticipantRegistration;
-import org.md2k.cerebralcortex.dataexporter.cerebralcortex.StudyInfo;
-import org.md2k.cerebralcortex.dataexporter.cerebralcortex.StudyInfoCC;
-import org.md2k.cerebralcortex.dataexporter.cerebralcortex.StudyInfoCCResponse;
-import org.md2k.cerebralcortex.dataexporter.cerebralcortex.UserInfo;
-import org.md2k.cerebralcortex.dataexporter.cerebralcortex.UserInfoCC;
-import org.md2k.cerebralcortex.dataexporter.cerebralcortex.UserInfoCCResponse;
+import org.md2k.datakit.Constants;
+import org.md2k.datakit.cerebralcortex.communication.CerebralCortexData;
+import org.md2k.datakit.cerebralcortex.communication.CerebralCortexDataResponse;
+import org.md2k.datakit.cerebralcortex.communication.CerebralCortexDataSource;
+import org.md2k.datakit.cerebralcortex.communication.CerebralCortexDataSourceResponse;
+import org.md2k.datakit.cerebralcortex.communication.ParticipantRegistration;
+import org.md2k.datakit.cerebralcortex.communication.StudyInfo;
+import org.md2k.datakit.cerebralcortex.communication.StudyInfoCC;
+import org.md2k.datakit.cerebralcortex.communication.StudyInfoCCResponse;
+import org.md2k.datakit.cerebralcortex.communication.UserInfo;
+import org.md2k.datakit.cerebralcortex.communication.UserInfoCC;
+import org.md2k.datakit.cerebralcortex.communication.UserInfoCCResponse;
 import org.md2k.datakitapi.DataKitAPI;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.datatype.DataTypeLong;
