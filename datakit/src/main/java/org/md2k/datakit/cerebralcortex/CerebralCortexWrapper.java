@@ -22,7 +22,7 @@ import org.md2k.datakit.cerebralcortex.communication.StudyInfoCCResponse;
 import org.md2k.datakit.cerebralcortex.communication.UserInfo;
 import org.md2k.datakit.cerebralcortex.communication.UserInfoCC;
 import org.md2k.datakit.cerebralcortex.communication.UserInfoCCResponse;
-import org.md2k.datakitapi.DataKitAPI;
+import org.md2k.datakit.logger.DatabaseLogger;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.datatype.DataTypeLong;
 import org.md2k.datakitapi.datatype.DataTypeString;
@@ -76,24 +76,24 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
     private static final String TAG = CerebralCortexWrapper.class.getSimpleName();
     private static final Integer COUNT_INDEX = -1;
     HashMap<Integer, Long> keySyncState = new HashMap<Integer, Long>();
+    DatabaseLogger dbLogger = null;
     private Context context;
     private DataExport dataExport;
     private String requestURL;
-    private DataKitAPI dataKitAPI;
     private List<DataSource> restricted;
 
-    public CerebralCortexWrapper(Context context, DataKitAPI dataKitAPI, String url, List<DataSource> restricted) {
+    public CerebralCortexWrapper(Context context, String url, List<DataSource> restricted) throws IOException {
         this.context = context;
-        this.dataKitAPI = dataKitAPI;
         this.requestURL = url;
         this.restricted = restricted;
         dataExport = new DataExport();
+        dbLogger = DatabaseLogger.getInstance(context);
     }
 
     private void saveHashMap(HashMap<Integer, Long> keys) {
 
         //Record size of database for future reference
-        DataTypeLong count = dataKitAPI.querySize();
+        DataTypeLong count = dbLogger.querySize();
         keys.put(COUNT_INDEX, count.getSample());
 
         Gson gson = new GsonBuilder().create();
@@ -121,7 +121,6 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
             inputStreamReader.close();
             in.close();
         } catch (IOException e) {
-
             e.printStackTrace();
         }
 
@@ -132,7 +131,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         if (result == null)
             return new HashMap<Integer, Long>();
 
-        DataTypeLong count = dataKitAPI.querySize();
+        DataTypeLong count = dbLogger.querySize();
         if (result.containsKey(COUNT_INDEX) && result.get(COUNT_INDEX) > count.getSample()) {
             //Reset DB tracking pointers
             return new HashMap<Integer, Long>();
@@ -147,10 +146,10 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
 
         DataSourceBuilder userInfoBuilder = new DataSourceBuilder();
         userInfoBuilder.setType(DataSourceType.USER_INFO);
-        List<DataSourceClient> userInfoClients = dataKitAPI.find(userInfoBuilder);
+        List<DataSourceClient> userInfoClients = dbLogger.find(userInfoBuilder.build());
         DataType ui = null;
         for (DataSourceClient dsc : userInfoClients) {
-            List<DataType> userInfo = dataKitAPI.query(dsc, 1);
+            List<DataType> userInfo = dbLogger.query(dsc.getDs_id(), 1);
             for (DataType dt : userInfo) {
                 ui = dt;
             }
@@ -158,10 +157,10 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
 
         DataSourceBuilder studyinfoBuilder = new DataSourceBuilder();
         studyinfoBuilder.setType(DataSourceType.STUDY_INFO);
-        List<DataSourceClient> studyInfoClients = dataKitAPI.find(studyinfoBuilder);
+        List<DataSourceClient> studyInfoClients = dbLogger.find(studyinfoBuilder.build());
         DataType si = null;
         for (DataSourceClient dsc : studyInfoClients) {
-            List<DataType> studyInfo = dataKitAPI.query(dsc, 1);
+            List<DataType> studyInfo = dbLogger.query(dsc.getDs_id(), 1);
             for (DataType dt : studyInfo) {
                 si = dt;
             }
@@ -244,7 +243,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
 
 
         DataSourceBuilder dataSourceBuilder = new DataSourceBuilder();
-        List<DataSourceClient> dataSourceClients = dataKitAPI.find(dataSourceBuilder);
+        List<DataSourceClient> dataSourceClients = dbLogger.find(dataSourceBuilder.build());
 
 
         for (DataSourceClient dsc : dataSourceClients) {
@@ -273,7 +272,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                         CerebralCortexData ccdata = new CerebralCortexData(ccdpResponse.datastream_id);
 
                         //Computed Data Store
-                        List<RowObject> objects = dataKitAPI.queryFromPrimaryKey(dsc, keySyncState.get(dsc.getDs_id()), Constants.DATA_BLOCK_SIZE_LIMIT);
+                        List<RowObject> objects = dbLogger.queryHFLastKey(dsc.getDs_id(), keySyncState.get(dsc.getDs_id()), Constants.DATA_BLOCK_SIZE_LIMIT);
 
 
                         if (objects.size() > 0) {
@@ -308,7 +307,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                             for (int i = 0; i < 100; i++) {
                                 //RAW Data Store
 
-                                objects = dataKitAPI.queryHFFromPrimaryKey(dsc, keySyncState.get(dsc.getDs_id()), Constants.DATA_BLOCK_SIZE_LIMIT);
+                                objects = dbLogger.queryHFLastKey(dsc.getDs_id(), keySyncState.get(dsc.getDs_id()), Constants.DATA_BLOCK_SIZE_LIMIT);
                                 //TODO Fix this
                                 if (objects.size() > 0) {
                                     Log.d("CerebralCortex", "Offloading HF data for " + dsc.getDs_id() + ' ' + objects.size() + ' ' + i);

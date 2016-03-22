@@ -5,10 +5,11 @@ import android.os.Handler;
 
 import org.md2k.datakit.cerebralcortex.config.Config;
 import org.md2k.datakit.cerebralcortex.config.ConfigManager;
-import org.md2k.datakitapi.DataKitAPI;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+
+import static org.md2k.utilities.UI.AlertDialogs.showAlertDialog;
 
 
 /*
@@ -41,7 +42,6 @@ import java.io.IOException;
 public class CerebralCortexManager {
     private static CerebralCortexManager instance = null;
     private Context context;
-    private DataKitAPI dataKitAPI;
     private boolean active;
     private Config config;
     private Handler handler;
@@ -56,7 +56,6 @@ public class CerebralCortexManager {
 
     CerebralCortexManager(Context context) {
         this.context = context;
-        dataKitAPI = DataKitAPI.getInstance(context);
         handler = new Handler();
         active = false;
 
@@ -75,7 +74,12 @@ public class CerebralCortexManager {
 
     void start() {
         active = true;
-        task = new CerebralCortexWrapper(context, dataKitAPI, config.getUrl(), config.getRestricted_datasource());
+        try {
+            task = new CerebralCortexWrapper(context, config.getUrl(), config.getRestricted_datasource());
+        } catch (IOException e) {
+            showAlertDialog(context, "Error:", e.getMessage());
+            e.printStackTrace();
+        }
         handler.post(publishData);
     }
 

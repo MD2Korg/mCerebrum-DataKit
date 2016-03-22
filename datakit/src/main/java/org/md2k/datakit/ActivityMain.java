@@ -82,6 +82,7 @@ public class ActivityMain extends AppCompatActivity {
                     ((Button) findViewById(R.id.button_app_status)).setText(String.format("%02d:%02d:%02d", hour, minute, second));
                 }
                 updateUI();
+                updateCCUI();
                 mHandler.postDelayed(this, 1000);
             }
         }
@@ -124,7 +125,7 @@ public class ActivityMain extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     Intent intent = new Intent(ActivityMain.this, ServiceCerebralCortex.class);
-                    startActivity(intent);
+                    startService(intent);
                 }
             });
         }

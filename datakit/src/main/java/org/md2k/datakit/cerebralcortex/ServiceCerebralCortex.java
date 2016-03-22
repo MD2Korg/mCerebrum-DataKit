@@ -3,12 +3,7 @@ package org.md2k.datakit.cerebralcortex;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
-import android.widget.Toast;
 
-import org.md2k.datakitapi.DataKitAPI;
-import org.md2k.datakitapi.messagehandler.OnConnectionListener;
-import org.md2k.datakitapi.messagehandler.OnExceptionListener;
-import org.md2k.datakitapi.status.Status;
 import org.md2k.utilities.Report.Log;
 
 /*
@@ -41,44 +36,25 @@ import org.md2k.utilities.Report.Log;
 
 public class ServiceCerebralCortex extends Service {
     private static final String TAG = ServiceCerebralCortex.class.getSimpleName();
-    DataKitAPI dataKitAPI;
     CerebralCortexManager cerebralCortexManager;
 
     public void onCreate() {
         super.onCreate();
         Log.d(TAG, "onCreate()");
-        connectDataKit();
+        connectCerebralCortex();
     }
 
-    private void connectDataKit() {
-        Log.d(TAG, "connectDataKit()...");
-        DataKitAPI.getInstance(getApplicationContext()).close();
-        dataKitAPI = DataKitAPI.getInstance(getApplicationContext());
-        dataKitAPI.connect(new OnConnectionListener() {
-            @Override
-            public void onConnected() {
-                Log.d(TAG, "onConnected()...");
-                cerebralCortexManager = new CerebralCortexManager(ServiceCerebralCortex.this);
-                cerebralCortexManager.start();
-            }
-        }, new OnExceptionListener() {
-            @Override
-            public void onException(Status status) {
-                if (cerebralCortexManager.isActive())
-                    cerebralCortexManager.stop();
-                Toast.makeText(ServiceCerebralCortex.this, "CerebralCortex Stopped. Error: " + status.getStatusMessage(), Toast.LENGTH_LONG).show();
-                stopSelf();
-            }
-        });
+    private void connectCerebralCortex() {
+        Log.d(TAG, "Connecting Cerebral Cortex");
+        cerebralCortexManager = new CerebralCortexManager(ServiceCerebralCortex.this);
+        cerebralCortexManager.start();
+
     }
 
     @Override
     public void onDestroy() {
         if (cerebralCortexManager != null && cerebralCortexManager.isActive())
             cerebralCortexManager.stop();
-        if (dataKitAPI != null && dataKitAPI.isConnected()) dataKitAPI.disconnect();
-        if (dataKitAPI != null)
-            dataKitAPI.close();
         super.onDestroy();
     }
 
