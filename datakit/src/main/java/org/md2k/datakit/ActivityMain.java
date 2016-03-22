@@ -125,7 +125,12 @@ public class ActivityMain extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     Intent intent = new Intent(ActivityMain.this, ServiceCerebralCortex.class);
-                    startService(intent);
+                    if (!cerebralCortexController.isActive()) {
+                        startService(intent);
+                    } else {
+                        stopService(intent);
+                    }
+
                 }
             });
         }

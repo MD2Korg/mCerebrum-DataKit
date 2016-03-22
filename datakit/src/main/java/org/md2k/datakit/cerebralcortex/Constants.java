@@ -28,7 +28,7 @@ package org.md2k.datakit.cerebralcortex;
  */
 public class Constants {
     public static final String CC_SERVICE_NAME = "org.md2k.cerebralcortex.ServiceCerebralCortex";
-    public static final String KEYHASHMAP = "DataExporterHashMap.json";
+    public static final String KEYHASHMAP = "DataExporterHashMap1.json";
     public static final int DATA_BLOCK_SIZE_LIMIT = 1000;
 
 }

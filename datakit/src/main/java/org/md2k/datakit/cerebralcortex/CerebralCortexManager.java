@@ -40,7 +40,7 @@ import static org.md2k.utilities.UI.AlertDialogs.showAlertDialog;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 public class CerebralCortexManager {
-    private static CerebralCortexManager instance = null;
+    private static CerebralCortexManager instance;
     private Context context;
     private boolean active;
     private Config config;

@@ -36,9 +36,8 @@ import java.io.IOException;
 public class CerebralCortexController {
     private static final String TAG = CerebralCortexController.class.getSimpleName();
     private static CerebralCortexController instance = null;
-
+    private static CerebralCortexManager cerebralCortexManager;
     Context context;
-    CerebralCortexManager cerebralCortexManager;
 
     CerebralCortexController(Context context) throws IOException {
         Log.d(TAG, "CerebralCortexController()...constructor()...");

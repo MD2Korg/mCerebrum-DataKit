@@ -27,14 +27,17 @@ package org.md2k.datakit.cerebralcortex.communication;/*
 
 import com.bluelinelabs.logansquare.annotation.JsonField;
 import com.bluelinelabs.logansquare.annotation.JsonObject;
+import com.google.gson.annotations.SerializedName;
 
 @JsonObject(serializeNullObjects = true)
 public class StudyInfoCC {
 
     @JsonField(name = "identifier")
+    @SerializedName("identifier")
     public String id;
 
     @JsonField(name = "name")
+    @SerializedName("name")
     public String name;
 
     public StudyInfoCC() {

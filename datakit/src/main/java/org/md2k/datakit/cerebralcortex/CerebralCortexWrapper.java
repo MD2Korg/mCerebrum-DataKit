@@ -6,7 +6,6 @@ import android.os.AsyncTask;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.bluelinelabs.logansquare.LoganSquare;
-import com.crashlytics.android.Crashlytics;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -144,6 +143,8 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
 
         keySyncState = readHashMap();
 
+        Gson gson = new GsonBuilder().serializeNulls().create();
+
         DataSourceBuilder userInfoBuilder = new DataSourceBuilder();
         userInfoBuilder.setType(DataSourceType.USER_INFO);
         List<DataSourceClient> userInfoClients = dbLogger.find(userInfoBuilder.build());
@@ -198,49 +199,54 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         String uiResult = null;
         UserInfoCCResponse uiResponse = null;
         try {
-            uiResult = dataExport.cerebralCortexAPI(requestURL + "participants", LoganSquare.serialize(new UserInfoCC(uInfo)));
+            uiResult = dataExport.cerebralCortexAPI(requestURL + "participants", gson.toJson(new UserInfoCC(uInfo)).toString());
         } catch (IOException e) {
             Log.d("CerebralCortex", "Participant registration error: " + e);
             Log.d("CerebralCortex", uiResult);
             return false;
         }
-        try {
-            uiResponse = LoganSquare.parse(uiResult, UserInfoCCResponse.class);
-        } catch (IOException e) {
-            Log.d("CerebralCortex", "JSON exception");
-            Crashlytics.logException(e);
-            return false;
-        }
+//        try {
+        uiResponse = gson.fromJson(uiResult, UserInfoCCResponse.class);
+//        } catch (IOException e) {
+//            Log.d("CerebralCortex", "JSON exception");
+//            Crashlytics.logException(e);
+//            return false;
+//        }
 
         //Register Study
         String siResult = null;
         StudyInfoCCResponse siResponse = null;
         try {
-            siResult = dataExport.cerebralCortexAPI(requestURL + "studies", LoganSquare.serialize(new StudyInfoCC(sInfo)));
+            siResult = dataExport.cerebralCortexAPI(requestURL + "studies", gson.toJson(new StudyInfoCC(sInfo)).toString());
         } catch (IOException e) {
             Log.d("CerebralCortex", "Study registration error: " + e);
             Log.d("CerebralCortex", siResult);
             return false;
         }
-        try {
-            siResponse = LoganSquare.parse(siResult, StudyInfoCCResponse.class);
-        } catch (IOException e) {
-            Log.d("CerebralCortex", "JSON exception");
-            Crashlytics.logException(e);
-            return false;
-        }
+//        try {
+        siResponse = gson.fromJson(siResult, StudyInfoCCResponse.class);
+//        } catch (IOException e) {
+//            Log.d("CerebralCortex", "JSON exception");
+//            Crashlytics.logException(e);
+//            return false;
+//        }
 
         //Register Participant in Study
         ParticipantRegistration pr = new ParticipantRegistration(siResponse.id, uiResponse.id);
         String prResult = null;
         try {
-            prResult = dataExport.cerebralCortexAPI(requestURL + "studies/register_participant", LoganSquare.serialize(pr));
+            prResult = dataExport.cerebralCortexAPI(requestURL + "studies/register_participant", gson.toJson(pr).toString());
         } catch (IOException e) {
             Log.d("CerebralCortex", "Register participant error: " + e);
             Log.d("CerebralCortex", prResult);
             return false;
         }
 
+        if (prResult.contains("Invalid participant or study id")) {
+            Log.d("CerebralCortex", "Register participant error: ");
+            Log.d("CerebralCortex", prResult);
+            return false;
+        }
 
         DataSourceBuilder dataSourceBuilder = new DataSourceBuilder();
         List<DataSourceClient> dataSourceClients = dbLogger.find(dataSourceBuilder.build());
@@ -252,7 +258,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                 CerebralCortexDataSource ccdp = new CerebralCortexDataSource(uiResponse.id, dsc.getDataSource());
                 String dataSourceResult = null;
                 try {
-                    dataSourceResult = dataExport.cerebralCortexAPI(requestURL + "datasources/register", LoganSquare.serialize(ccdp));
+                    dataSourceResult = dataExport.cerebralCortexAPI(requestURL + "datasources/register", gson.toJson(ccdp).toString());
                 } catch (IOException e) {
                     Log.d("CerebralCortex", "Datasource registration error: " + e);
                     return false;
@@ -272,7 +278,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                         CerebralCortexData ccdata = new CerebralCortexData(ccdpResponse.datastream_id);
 
                         //Computed Data Store
-                        List<RowObject> objects = dbLogger.queryHFLastKey(dsc.getDs_id(), keySyncState.get(dsc.getDs_id()), Constants.DATA_BLOCK_SIZE_LIMIT);
+                        List<RowObject> objects = dbLogger.queryLastKey(dsc.getDs_id(), keySyncState.get(dsc.getDs_id()), Constants.DATA_BLOCK_SIZE_LIMIT);
 
 
                         if (objects.size() > 0) {
@@ -304,48 +310,39 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                         } else {
                             long lastKeyIndex = keySyncState.get(dsc.getDs_id());
                             long st = System.currentTimeMillis();
-                            for (int i = 0; i < 100; i++) {
-                                //RAW Data Store
 
-                                objects = dbLogger.queryHFLastKey(dsc.getDs_id(), keySyncState.get(dsc.getDs_id()), Constants.DATA_BLOCK_SIZE_LIMIT);
-                                //TODO Fix this
-                                if (objects.size() > 0) {
-                                    Log.d("CerebralCortex", "Offloading HF data for " + dsc.getDs_id() + ' ' + objects.size() + ' ' + i);
-                                    for (RowObject obj : objects) {
-                                        ccdata.data.add(obj.toArrayForm());
-                                        lastKeyIndex = obj.rowKey;
-                                    }
-                                } else {
-                                    Log.d("HF Dump", "Done: " + objects.size());
-                                    break;
+                            //RAW Data Store
+                            objects = dbLogger.queryHFLastKey(dsc.getDs_id(), keySyncState.get(dsc.getDs_id()), Constants.DATA_BLOCK_SIZE_LIMIT * 100);
+                            if (objects.size() > 0) {
+                                Log.d("CerebralCortex", "Offloading HF data for (" + dsc.getDs_id() + ") " + objects.size());
+                                for (RowObject obj : objects) {
+                                    ccdata.data.add(obj.toArrayForm());
+                                    lastKeyIndex = obj.rowKey;
                                 }
-                            }
-                            Log.d("TIMING", "DATA QUERY: " + (System.currentTimeMillis() - st));
+                                Log.d("TIMING", "DATA QUERY: (" + dsc.getDataSource().getType() + ") " + (System.currentTimeMillis() - st));
 
-                            if (ccdata.data.size() > 0) {
-                                String dataResult = null;
+                                if (ccdata.data.size() > 0) {
+                                    String dataResult = null;
 
-                                try {
-                                    st = System.currentTimeMillis();
-                                    String data = LoganSquare.serialize(ccdata);
-                                    Log.d("TIMING", "JSON ENCODE: " + (System.currentTimeMillis() - st));
+                                    try {
+                                        String data = LoganSquare.serialize(ccdata);
+                                        st = System.currentTimeMillis();
+                                        dataResult = dataExport.cerebralCortexAPI(requestURL + "datapoints/bulkload", data);
+                                        Log.d("TIMING", "UPLOAD: " + (System.currentTimeMillis() - st));
 
-                                    st = System.currentTimeMillis();
-                                    dataResult = dataExport.cerebralCortexAPI(requestURL + "datapoints/bulkload", data);
-                                    Log.d("TIMING", "UPLOAD: " + (System.currentTimeMillis() - st));
-
-                                    CerebralCortexDataResponse ccdr = LoganSquare.parse(dataResult, CerebralCortexDataResponse.class);
-                                    if (ccdr.count > 0) {
-                                        keySyncState.put(dsc.getDs_id(), lastKeyIndex);
-                                        Log.d("CerebralCortex", "Record Upload Count: (" + dsc.getDs_id() + ")" + ccdr.count);
-                                        onProgressUpdate(dsc.getDs_id(), (int) lastKeyIndex);
+                                        CerebralCortexDataResponse ccdr = LoganSquare.parse(dataResult, CerebralCortexDataResponse.class);
+                                        if (ccdr.count > 0) {
+                                            keySyncState.put(dsc.getDs_id(), lastKeyIndex);
+                                            Log.d("CerebralCortex", "Record Upload Count: (" + dsc.getDs_id() + ") " + ccdr.count);
+                                            onProgressUpdate(dsc.getDs_id(), (int) lastKeyIndex);
+                                        }
+                                        if (ccdr.count >= Constants.DATA_BLOCK_SIZE_LIMIT * 100) {
+                                            cont = true;
+                                        }
+                                    } catch (IOException e) {
+                                        Log.d("CerebralCortex", "Bulk load error: " + e);
+                                        return false;
                                     }
-                                    if (ccdr.count >= Constants.DATA_BLOCK_SIZE_LIMIT) {
-                                        cont = true;
-                                    }
-                                } catch (IOException e) {
-                                    Log.d("CerebralCortex", "Bulk load error: " + e);
-                                    return false;
                                 }
                             }
                         }

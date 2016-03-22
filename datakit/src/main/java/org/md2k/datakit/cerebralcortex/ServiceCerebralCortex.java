@@ -6,6 +6,8 @@ import android.os.IBinder;
 
 import org.md2k.utilities.Report.Log;
 
+import java.io.IOException;
+
 /*
  * Copyright (c) 2015, The University of Memphis, MD2K Center
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
@@ -36,19 +38,17 @@ import org.md2k.utilities.Report.Log;
 
 public class ServiceCerebralCortex extends Service {
     private static final String TAG = ServiceCerebralCortex.class.getSimpleName();
-    CerebralCortexManager cerebralCortexManager;
+    private static CerebralCortexManager cerebralCortexManager;
 
     public void onCreate() {
         super.onCreate();
-        Log.d(TAG, "onCreate()");
-        connectCerebralCortex();
-    }
-
-    private void connectCerebralCortex() {
         Log.d(TAG, "Connecting Cerebral Cortex");
-        cerebralCortexManager = new CerebralCortexManager(ServiceCerebralCortex.this);
+        try {
+            cerebralCortexManager = CerebralCortexManager.getInstance(ServiceCerebralCortex.this.getApplicationContext());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         cerebralCortexManager.start();
-
     }
 
     @Override
