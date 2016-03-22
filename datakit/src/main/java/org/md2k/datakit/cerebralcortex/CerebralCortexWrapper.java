@@ -292,7 +292,8 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                             String dataResult = null;
 
                             try {
-                                dataResult = dataExport.cerebralCortexAPI(requestURL + "datapoints/bulkload", LoganSquare.serialize(ccdata));
+                                String data = gson.toJson(ccdata).toString();
+                                dataResult = dataExport.cerebralCortexAPI(requestURL + "datapoints/bulkload", data);
                                 CerebralCortexDataResponse ccdr = LoganSquare.parse(dataResult, CerebralCortexDataResponse.class);
                                 if (ccdr.count > 0) {
                                     keySyncState.put(dsc.getDs_id(), lastKeyIndex);
@@ -325,7 +326,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                                     String dataResult = null;
 
                                     try {
-                                        String data = LoganSquare.serialize(ccdata);
+                                        String data = gson.toJson(ccdata).toString();
                                         st = System.currentTimeMillis();
                                         dataResult = dataExport.cerebralCortexAPI(requestURL + "datapoints/bulkload", data);
                                         Log.d("TIMING", "UPLOAD: " + (System.currentTimeMillis() - st));
