@@ -1,6 +1,7 @@
 package org.md2k.datakit.cerebralcortex;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Handler;
 
 import org.md2k.datakit.cerebralcortex.config.Config;
@@ -41,21 +42,27 @@ import static org.md2k.utilities.UI.AlertDialogs.showAlertDialog;
  */
 public class CerebralCortexManager {
     private static CerebralCortexManager instance;
+    private static CerebralCortexWrapper task;
     private Context context;
     private boolean active;
     private Config config;
     private Handler handler;
-    private CerebralCortexWrapper task;
     Runnable publishData = new Runnable() {
         @Override
         public void run() {
-            try {
-                task = new CerebralCortexWrapper(context, config.getUrl(), config.getRestricted_datasource());
-                task.execute();
-            } catch (IOException e) {
-                showAlertDialog(context, "Error:", e.getMessage());
-                e.printStackTrace();
+
+            if (task != null && task.getStatus() == AsyncTask.Status.RUNNING) {
+                handler.removeCallbacks(publishData);
+            } else {
+                try {
+                    task = new CerebralCortexWrapper(context, config.getUrl(), config.getRestricted_datasource());
+                    task.execute();
+                } catch (IOException e) {
+                    showAlertDialog(context, "Error:", e.getMessage());
+                    e.printStackTrace();
+                }
             }
+
             handler.postDelayed(publishData, config.getUpload_interval());
         }
     };

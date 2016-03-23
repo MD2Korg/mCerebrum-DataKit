@@ -320,7 +320,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                             //RAW Data Store
                             objects = dbLogger.queryHFLastKey(dsc.getDs_id(), keySyncState.get(dsc.getDs_id()), Constants.HF_DATA_BLOCK_SIZE_LIMIT);
                             if (objects.size() > 0) {
-                                Log.d("CerebralCortex", "Offloading HF data for (" + dsc.getDs_id() + ") " + objects.size());
+                                Log.d("TIMING", "Querying HF data for (" + dsc.getDs_id() + ") " + objects.size());
                                 for (RowObject obj : objects) {
                                     ccdata.data.add(obj.toArrayForm());
                                     lastKeyIndex = obj.rowKey;
