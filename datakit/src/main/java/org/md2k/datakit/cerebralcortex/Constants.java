@@ -27,8 +27,8 @@ package org.md2k.datakit.cerebralcortex;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 public class Constants {
-    public static final String CC_SERVICE_NAME = "org.md2k.cerebralcortex.ServiceCerebralCortex";
-    public static final String KEYHASHMAP = "DataExporterHashMap1.json";
+    public static final String KEYHASHMAP = "DataExporterHashMap.json";
     public static final int DATA_BLOCK_SIZE_LIMIT = 1000;
+    public static final int HF_DATA_BLOCK_SIZE_LIMIT = 100000;
 
 }

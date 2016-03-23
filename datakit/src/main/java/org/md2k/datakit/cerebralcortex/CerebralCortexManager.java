@@ -49,7 +49,13 @@ public class CerebralCortexManager {
     Runnable publishData = new Runnable() {
         @Override
         public void run() {
-            task.execute();
+            try {
+                task = new CerebralCortexWrapper(context, config.getUrl(), config.getRestricted_datasource());
+                task.execute();
+            } catch (IOException e) {
+                showAlertDialog(context, "Error:", e.getMessage());
+                e.printStackTrace();
+            }
             handler.postDelayed(publishData, config.getUpload_interval());
         }
     };
@@ -74,12 +80,6 @@ public class CerebralCortexManager {
 
     void start() {
         active = true;
-        try {
-            task = new CerebralCortexWrapper(context, config.getUrl(), config.getRestricted_datasource());
-        } catch (IOException e) {
-            showAlertDialog(context, "Error:", e.getMessage());
-            e.printStackTrace();
-        }
         handler.post(publishData);
     }
 

@@ -33,6 +33,7 @@ import io.fabric.sdk.android.Fabric;
 /*
  * Copyright (c) 2015, The University of Memphis, MD2K Center
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
+ * - Timothy Hnat <twhnat@memphis.edu>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

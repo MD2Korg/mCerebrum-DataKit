@@ -10,6 +10,12 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.client.entity.GzipCompressingEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntityHC4;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.md2k.datakit.cerebralcortex.communication.CerebralCortexData;
 import org.md2k.datakit.cerebralcortex.communication.CerebralCortexDataResponse;
 import org.md2k.datakit.cerebralcortex.communication.CerebralCortexDataSource;
@@ -36,6 +42,7 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.util.HashMap;
@@ -77,7 +84,6 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
     HashMap<Integer, Long> keySyncState = new HashMap<Integer, Long>();
     DatabaseLogger dbLogger = null;
     private Context context;
-    private DataExport dataExport;
     private String requestURL;
     private List<DataSource> restricted;
 
@@ -85,7 +91,6 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         this.context = context;
         this.requestURL = url;
         this.restricted = restricted;
-        dataExport = new DataExport();
         dbLogger = DatabaseLogger.getInstance(context);
     }
 
@@ -199,7 +204,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         String uiResult = null;
         UserInfoCCResponse uiResponse = null;
         try {
-            uiResult = dataExport.cerebralCortexAPI(requestURL + "participants", gson.toJson(new UserInfoCC(uInfo)).toString());
+            uiResult = cerebralCortexAPI(requestURL + "participants", gson.toJson(new UserInfoCC(uInfo)).toString());
         } catch (IOException e) {
             Log.d("CerebralCortex", "Participant registration error: " + e);
             Log.d("CerebralCortex", uiResult);
@@ -217,7 +222,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         String siResult = null;
         StudyInfoCCResponse siResponse = null;
         try {
-            siResult = dataExport.cerebralCortexAPI(requestURL + "studies", gson.toJson(new StudyInfoCC(sInfo)).toString());
+            siResult = cerebralCortexAPI(requestURL + "studies", gson.toJson(new StudyInfoCC(sInfo)).toString());
         } catch (IOException e) {
             Log.d("CerebralCortex", "Study registration error: " + e);
             Log.d("CerebralCortex", siResult);
@@ -235,7 +240,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         ParticipantRegistration pr = new ParticipantRegistration(siResponse.id, uiResponse.id);
         String prResult = null;
         try {
-            prResult = dataExport.cerebralCortexAPI(requestURL + "studies/register_participant", gson.toJson(pr).toString());
+            prResult = cerebralCortexAPI(requestURL + "studies/register_participant", gson.toJson(pr).toString());
         } catch (IOException e) {
             Log.d("CerebralCortex", "Register participant error: " + e);
             Log.d("CerebralCortex", prResult);
@@ -258,7 +263,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                 CerebralCortexDataSource ccdp = new CerebralCortexDataSource(uiResponse.id, dsc.getDataSource());
                 String dataSourceResult = null;
                 try {
-                    dataSourceResult = dataExport.cerebralCortexAPI(requestURL + "datasources/register", gson.toJson(ccdp).toString());
+                    dataSourceResult = cerebralCortexAPI(requestURL + "datasources/register", gson.toJson(ccdp).toString());
                 } catch (IOException e) {
                     Log.d("CerebralCortex", "Datasource registration error: " + e);
                     return false;
@@ -293,7 +298,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
 
                             try {
                                 String data = gson.toJson(ccdata).toString();
-                                dataResult = dataExport.cerebralCortexAPI(requestURL + "datapoints/bulkload", data);
+                                dataResult = cerebralCortexAPI(requestURL + "datapoints/bulkload", data);
                                 CerebralCortexDataResponse ccdr = LoganSquare.parse(dataResult, CerebralCortexDataResponse.class);
                                 if (ccdr.count > 0) {
                                     keySyncState.put(dsc.getDs_id(), lastKeyIndex);
@@ -313,7 +318,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                             long st = System.currentTimeMillis();
 
                             //RAW Data Store
-                            objects = dbLogger.queryHFLastKey(dsc.getDs_id(), keySyncState.get(dsc.getDs_id()), Constants.DATA_BLOCK_SIZE_LIMIT * 100);
+                            objects = dbLogger.queryHFLastKey(dsc.getDs_id(), keySyncState.get(dsc.getDs_id()), Constants.HF_DATA_BLOCK_SIZE_LIMIT);
                             if (objects.size() > 0) {
                                 Log.d("CerebralCortex", "Offloading HF data for (" + dsc.getDs_id() + ") " + objects.size());
                                 for (RowObject obj : objects) {
@@ -328,7 +333,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                                     try {
                                         String data = gson.toJson(ccdata).toString();
                                         st = System.currentTimeMillis();
-                                        dataResult = dataExport.cerebralCortexAPI(requestURL + "datapoints/bulkload", data);
+                                        dataResult = cerebralCortexAPI(requestURL + "rawdatapoints/bulkload", data);
                                         Log.d("TIMING", "UPLOAD: " + (System.currentTimeMillis() - st));
 
                                         CerebralCortexDataResponse ccdr = LoganSquare.parse(dataResult, CerebralCortexDataResponse.class);
@@ -337,7 +342,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                                             Log.d("CerebralCortex", "Record Upload Count: (" + dsc.getDs_id() + ") " + ccdr.count);
                                             onProgressUpdate(dsc.getDs_id(), (int) lastKeyIndex);
                                         }
-                                        if (ccdr.count >= Constants.DATA_BLOCK_SIZE_LIMIT * 100) {
+                                        if (ccdr.count >= Constants.HF_DATA_BLOCK_SIZE_LIMIT) {
                                             cont = true;
                                         }
                                     } catch (IOException e) {
@@ -378,4 +383,39 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         boolean result = publishDataKitData();
         return new Boolean(result);
     }
+
+
+    /**
+     * Upload method for publishing data to the Cerebral Cortex webservice
+     *
+     * @param request URL
+     * @param data    Byte[] of data to send to Cerebral Cortex
+     */
+    public String cerebralCortexAPI(String requestURL, String json) throws IOException {
+        String result = null;
+
+        CloseableHttpClient client = HttpClientBuilder.create().build();
+        HttpPost post = new HttpPost(requestURL);
+
+        post.setHeader("Content-Encoding", "gzip");
+        post.setHeader("Accept", "application/json");
+        post.setHeader("Content-Type", "application/json");
+
+        post.setEntity(new GzipCompressingEntity(new StringEntityHC4(json)));
+        HttpResponse httpResponse = client.execute(post);
+
+        InputStream inputStream = httpResponse.getEntity().getContent();
+
+        if (inputStream != null) {
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+            String line = "";
+            result = "";
+            while ((line = bufferedReader.readLine()) != null)
+                result += line;
+            inputStream.close();
+        }
+
+        return result;
+    }
+
 }
