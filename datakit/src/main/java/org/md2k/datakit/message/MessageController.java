@@ -120,10 +120,10 @@ public class MessageController {
                 return prepareMessage(bundle, MessageType.QUERY);
 
             case MessageType.QUERYHFLASTN:
-                ArrayList<DataType> dataTypes = null;
-                dataTypes = privacyManager.queryHFlastN(incomingMessage.getData().getInt("ds_id"), incomingMessage.getData().getInt("last_n_sample"));
+                ArrayList<DataType> HFdataTypes = null;
+                HFdataTypes = privacyManager.queryHFlastN(incomingMessage.getData().getInt("ds_id"), incomingMessage.getData().getInt("last_n_sample"));
                 bundle = new Bundle();
-                bundle.putParcelableArrayList(DataType.class.getSimpleName(), dataTypes);
+                bundle.putParcelableArrayList(DataType.class.getSimpleName(), HFdataTypes);
                 bundle.putParcelable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
                 return prepareMessage(bundle, MessageType.QUERYHFLASTN);
 
