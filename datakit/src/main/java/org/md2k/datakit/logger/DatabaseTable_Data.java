@@ -212,6 +212,25 @@ public class DatabaseTable_Data {
         return dataTypes;
     }
 
+    public ArrayList<DataType> queryHFlastN(SQLiteDatabase db, int ds_id, int last_n_sample) {
+        insertDB(db, HIGHFREQ_TABLE_NAME, cValues);
+        ArrayList<DataType> dataTypes = new ArrayList<>();
+        String sql = "select datetime, sample from rawdata where datasource_id=" + Integer.toString(ds_id) + " ORDER by _id DESC" + Integer.toString(last_n_sample);
+        Cursor mCursor = db.rawQuery(sql, null);
+        if (mCursor.moveToFirst()) {
+            do {
+                byte[] data = mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE));
+                DataTypeDoubleArray dt = DataTypeDoubleArray.fromRawBytes(mCursor.getLong(mCursor.getColumnIndex(C_DATETIME)), data);
+                dataTypes.add(dt);
+            } while (mCursor.moveToNext());
+        }
+        if (!mCursor.isClosed()) {
+            mCursor.close();
+        }
+        return dataTypes;
+    }
+
+
     public ArrayList<RowObject> queryLastKey(SQLiteDatabase db, int ds_id, long last_key, int limit) {
         insertDB(db, TABLE_NAME, cValues);
         ArrayList<RowObject> rowObjects = new ArrayList<>();
