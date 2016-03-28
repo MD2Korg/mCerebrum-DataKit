@@ -14,6 +14,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.crashlytics.android.Crashlytics;
+import com.crashlytics.android.core.CrashlyticsCore;
 
 import org.md2k.datakit.cerebralcortex.ActivityCerebralCortexSettings;
 import org.md2k.datakit.cerebralcortex.CerebralCortexController;
@@ -93,7 +94,7 @@ public class ActivityMain extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         try {
             super.onCreate(savedInstanceState);
-            Fabric.with(this, new Crashlytics());
+            Fabric.with(this, new Crashlytics.Builder().core(new CrashlyticsCore.Builder().disabled(BuildConfig.DEBUG).build()).build());
             setContentView(R.layout.activity_main);
             configureAppStatus();
             setupPrivacyUI();

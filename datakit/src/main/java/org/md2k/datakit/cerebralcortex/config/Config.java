@@ -35,7 +35,7 @@ import java.util.ArrayList;
 public class Config {
     long upload_interval;
     String url;
-    ArrayList<DataSource> restricted_datasource;
+    ArrayList<DataSource> restricted_datasource = new ArrayList<>();
 
     public long getUpload_interval() {
         return upload_interval;

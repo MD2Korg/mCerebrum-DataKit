@@ -271,7 +271,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
 
                 CerebralCortexDataSourceResponse ccdpResponse = LoganSquare.parse(dataSourceResult, CerebralCortexDataSourceResponse.class);
 
-                if (!restricted.contains(dsc)) {
+                if (ccdpResponse.status.contains("ok") && !restricted.contains(dsc)) {
                     if (!keySyncState.containsKey(dsc.getDs_id())) {
                         keySyncState.put(dsc.getDs_id(), 0L);
                     }
@@ -333,6 +333,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                                     try {
                                         String data = gson.toJson(ccdata).toString();
                                         st = System.currentTimeMillis();
+                                        Log.d("TIMING", "START UPLOAD");
                                         dataResult = cerebralCortexAPI(requestURL + "rawdatapoints/bulkload", data);
                                         Log.d("TIMING", "UPLOAD: " + (System.currentTimeMillis() - st));
 
