@@ -1,4 +1,12 @@
-package org.md2k.datakit;
+package org.md2k.datakit.cerebralcortex;
+
+import android.app.Service;
+import android.content.Intent;
+import android.os.IBinder;
+
+import org.md2k.utilities.Report.Log;
+
+import java.io.IOException;
 
 /*
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -27,11 +35,31 @@ package org.md2k.datakit;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public class Constants {
-    public static final int ASSET=0;
-    public static final int INTERNAL_SDCARD=1;
-    public static final int EXTERNAL_SDCARD=2;
-    public static final int FILE_LOCATION=ASSET;
-    public static final String CONFIG_FILENAME = "datakit_privacy_config.json";
-    public static String SERVICE_NAME = "org.md2k.datakit.ServiceDataKit";
+
+public class ServiceCerebralCortex extends Service {
+    private static final String TAG = ServiceCerebralCortex.class.getSimpleName();
+    private static CerebralCortexManager cerebralCortexManager;
+
+    public void onCreate() {
+        super.onCreate();
+        Log.d(TAG, "Connecting Cerebral Cortex");
+        try {
+            cerebralCortexManager = CerebralCortexManager.getInstance(ServiceCerebralCortex.this.getApplicationContext());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        cerebralCortexManager.start();
+    }
+
+    @Override
+    public void onDestroy() {
+        if (cerebralCortexManager != null && cerebralCortexManager.isActive())
+            cerebralCortexManager.stop();
+        super.onDestroy();
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
 }

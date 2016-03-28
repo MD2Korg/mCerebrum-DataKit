@@ -6,7 +6,7 @@ import android.view.MenuItem;
 
 import org.md2k.utilities.Report.Log;
 
-/**
+/*
  * Copyright (c) 2015, The University of Memphis, MD2K Center
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
  * All rights reserved.

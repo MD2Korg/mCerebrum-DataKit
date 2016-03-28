@@ -5,6 +5,7 @@
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -34,6 +35,15 @@
             android:exported="true"
             android:label="Privacy Control Settings"
             android:screenOrientation="portrait" />
+        <activity
+            android:name=".cerebralcortex.ActivityCerebralCortexSettings"
+            android:enabled="true"
+            android:exported="true"
+            android:label="Settings: Cerebral Cortex Data Exporter">
+            <intent-filter>
+                <action android:name="org.md2k.datakit.cerebralcortex.ActivityCerebralCortexSettings" />
+            </intent-filter>
+        </activity>
 
         <service
             android:name=".ServiceDataKit"
@@ -43,10 +53,17 @@
                 <action android:name="org.md2k.datakit.ServiceListener" />
             </intent-filter>
         </service>
+
+        <service
+            android:name=".cerebralcortex.ServiceCerebralCortex"
+            android:enabled="true"
+            android:exported="true"></service>
+
+
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="1cad146ed866fa3d49c3bc8376ff52af7d9970da" />
     </application>
 
-    <uses-permission android:name="android.permission.INTERNET" />
+
 </manifest>

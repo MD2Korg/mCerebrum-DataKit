@@ -14,7 +14,11 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.crashlytics.android.Crashlytics;
+import com.crashlytics.android.core.CrashlyticsCore;
 
+import org.md2k.datakit.cerebralcortex.ActivityCerebralCortexSettings;
+import org.md2k.datakit.cerebralcortex.CerebralCortexController;
+import org.md2k.datakit.cerebralcortex.ServiceCerebralCortex;
 import org.md2k.datakit.operation.FileManager;
 import org.md2k.datakit.privacy.PrivacyController;
 import org.md2k.datakitapi.time.DateTime;
@@ -27,21 +31,22 @@ import java.lang.reflect.Method;
 
 import io.fabric.sdk.android.Fabric;
 
-/**
+/*
  * Copyright (c) 2015, The University of Memphis, MD2K Center
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
+ * - Timothy Hnat <twhnat@memphis.edu>
  * All rights reserved.
- * <p/>
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * <p/>
+ *
  * * Redistributions of source code must retain the above copyright notice, this
  * list of conditions and the following disclaimer.
- * <p/>
+ *
  * * Redistributions in binary form must reproduce the above copyright notice,
  * this list of conditions and the following disclaimer in the documentation
  * and/or other materials provided with the distribution.
- * <p/>
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -57,6 +62,9 @@ import io.fabric.sdk.android.Fabric;
 public class ActivityMain extends AppCompatActivity {
     private static final String TAG = ActivityMain.class.getSimpleName();
     PrivacyController privacyController;
+
+    CerebralCortexController cerebralCortexController;
+
     Handler mHandler = new Handler();
     Runnable runnable = new Runnable() {
         @Override
@@ -76,6 +84,7 @@ public class ActivityMain extends AppCompatActivity {
                     ((Button) findViewById(R.id.button_app_status)).setText(String.format("%02d:%02d:%02d", hour, minute, second));
                 }
                 updateUI();
+                updateCCUI();
                 mHandler.postDelayed(this, 1000);
             }
         }
@@ -85,10 +94,11 @@ public class ActivityMain extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         try {
             super.onCreate(savedInstanceState);
-            Fabric.with(this, new Crashlytics());
+            Fabric.with(this, new Crashlytics.Builder().core(new CrashlyticsCore.Builder().disabled(BuildConfig.DEBUG).build()).build());
             setContentView(R.layout.activity_main);
             configureAppStatus();
             setupPrivacyUI();
+            setupCerebralCortexUI();
             if (getSupportActionBar() != null)
                 getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         } catch (IOException e) {
@@ -99,6 +109,35 @@ public class ActivityMain extends AppCompatActivity {
     void configureAppStatus() {
         findViewById(R.id.textViewTap).setVisibility(View.GONE);
     }
+
+
+    void setupCerebralCortexUI() throws IOException {
+        cerebralCortexController = CerebralCortexController.getInstance(this);
+        LinearLayout linearLayout = (LinearLayout) findViewById(R.id.ll_cerebralcortex);
+
+        if (!cerebralCortexController.isAvailable()) {
+            linearLayout.setVisibility(View.GONE);
+        } else {
+
+            linearLayout.setVisibility(View.VISIBLE);
+            updateCCUI();
+
+            Button button = (Button) findViewById(R.id.button_cerebralcortex);
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(ActivityMain.this, ServiceCerebralCortex.class);
+                    if (!cerebralCortexController.isActive()) {
+                        startService(intent);
+                    } else {
+                        stopService(intent);
+                    }
+
+                }
+            });
+        }
+    }
+
 
     void setupPrivacyUI() throws IOException {
         privacyController = PrivacyController.getInstance(this);
@@ -117,6 +156,17 @@ public class ActivityMain extends AppCompatActivity {
                     startActivity(intent);
                 }
             });
+        }
+    }
+
+    public void updateCCUI() {
+        TextView textViewStatus = ((TextView) findViewById(R.id.textViewcerebralcortexStatus));
+        if (cerebralCortexController.isActive()) {
+            textViewStatus.setText("ON (Running)");
+            textViewStatus.setTextColor(ContextCompat.getColor(this, R.color.teal_700));
+        } else {
+            textViewStatus.setText("OFF");
+            textViewStatus.setTextColor(ContextCompat.getColor(this, R.color.red_700));
         }
     }
 
@@ -200,6 +250,12 @@ public class ActivityMain extends AppCompatActivity {
                 intent = new Intent(this, ActivityDataKitSettings.class);
                 startActivity(intent);
                 break;
+
+            case R.id.action_cerebralcortex_settings:
+                intent = new Intent(this, ActivityCerebralCortexSettings.class);
+                startActivity(intent);
+                break;
+
             case R.id.action_about:
                 intent = new Intent(this, ActivityAbout.class);
                 try {

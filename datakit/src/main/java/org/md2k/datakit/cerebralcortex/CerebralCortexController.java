@@ -1,4 +1,10 @@
-package org.md2k.datakit;
+package org.md2k.datakit.cerebralcortex;
+
+import android.content.Context;
+
+import org.md2k.utilities.Report.Log;
+
+import java.io.IOException;
 
 /*
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -27,11 +33,28 @@ package org.md2k.datakit;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public class Constants {
-    public static final int ASSET=0;
-    public static final int INTERNAL_SDCARD=1;
-    public static final int EXTERNAL_SDCARD=2;
-    public static final int FILE_LOCATION=ASSET;
-    public static final String CONFIG_FILENAME = "datakit_privacy_config.json";
-    public static String SERVICE_NAME = "org.md2k.datakit.ServiceDataKit";
+public class CerebralCortexController {
+    private static final String TAG = CerebralCortexController.class.getSimpleName();
+    private static CerebralCortexController instance = null;
+    private static CerebralCortexManager cerebralCortexManager;
+    Context context;
+
+    CerebralCortexController(Context context) throws IOException {
+        Log.d(TAG, "CerebralCortexController()...constructor()...");
+        this.context = context;
+        cerebralCortexManager = CerebralCortexManager.getInstance(context);
+    }
+
+    public static CerebralCortexController getInstance(Context context) throws IOException {
+        if (instance == null) instance = new CerebralCortexController(context);
+        return instance;
+    }
+
+    public boolean isActive() {
+        return cerebralCortexManager.isActive();
+    }
+
+    public boolean isAvailable() {
+        return cerebralCortexManager.isAvailable();
+    }
 }

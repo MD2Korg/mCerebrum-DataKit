@@ -1,0 +1,20 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="Upload Interval">
+        <ListPreference
+            android:entries="@array/upload_interval_text"
+            android:entryValues="@array/upload_interval_values"
+            android:key="upload_interval"
+            android:summary="(not selected)"
+            android:title="Interval"></ListPreference>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="API URL">
+        <EditTextPreference
+            android:key="api_url"
+            android:title="URL"></EditTextPreference>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Restricted Data Stream">
+        <CheckBoxPreference
+            android:key="restrict_location"
+            android:title="Location"></CheckBoxPreference>
+    </PreferenceCategory>
+</PreferenceScreen>
