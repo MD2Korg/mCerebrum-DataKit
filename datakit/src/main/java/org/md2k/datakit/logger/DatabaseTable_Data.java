@@ -215,7 +215,7 @@ public class DatabaseTable_Data {
     public ArrayList<DataType> queryHFlastN(SQLiteDatabase db, int ds_id, int last_n_sample) {
         insertDB(db, HIGHFREQ_TABLE_NAME, cValues);
         ArrayList<DataType> dataTypes = new ArrayList<>();
-        String sql = "select datetime, sample from rawdata where datasource_id=" + Integer.toString(ds_id) + " ORDER by _id DESC" + Integer.toString(last_n_sample);
+        String sql = "select datetime, sample from rawdata where datasource_id=" + Integer.toString(ds_id) + " ORDER by _id DESC limit " + Integer.toString(last_n_sample);
         Cursor mCursor = db.rawQuery(sql, null);
         if (mCursor.moveToFirst()) {
             do {
