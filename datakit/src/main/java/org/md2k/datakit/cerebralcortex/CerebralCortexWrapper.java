@@ -97,6 +97,13 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
     private void saveHashMap(HashMap<Integer, Long> keys) {
 
         //Record size of database for future reference
+        if (dbLogger == null) {
+            try {
+                dbLogger = DatabaseLogger.getInstance(this.context);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         DataTypeLong count = dbLogger.querySize();
         keys.put(COUNT_INDEX, count.getSample());
 
@@ -135,6 +142,13 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         if (result == null)
             return new HashMap<Integer, Long>();
 
+        if (dbLogger == null) {
+            try {
+                dbLogger = DatabaseLogger.getInstance(this.context);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         DataTypeLong count = dbLogger.querySize();
         if (result.containsKey(COUNT_INDEX) && result.get(COUNT_INDEX) > count.getSample()) {
             //Reset DB tracking pointers
@@ -145,6 +159,14 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
     }
 
     private boolean publishDataKitData() {
+
+        if (dbLogger == null) {
+            try {
+                dbLogger = DatabaseLogger.getInstance(this.context);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
         keySyncState = readHashMap();
 
