@@ -38,19 +38,15 @@ import java.io.IOException;
  */
 public class PrivacyController {
     private static final String TAG = PrivacyController.class.getSimpleName();
-    private static PrivacyController instance=null;
     Context context;
     PrivacyManager privacyManager;
     PrivacyConfiguration privacyConfiguration;
-    public static PrivacyController getInstance(Context context) throws IOException {
-        if(instance==null) instance=new PrivacyController(context);
-        return instance;
-    }
-    PrivacyController(Context context) throws IOException {
+
+    public PrivacyController(Context context) throws IOException {
         Log.d(TAG,"PrivacyController()...constructor()...");
         this.context=context;
         privacyManager=PrivacyManager.getInstance(context);
-        privacyConfiguration = PrivacyConfiguration.getInstance(context);
+        privacyConfiguration = new PrivacyConfiguration(context);
     }
     public boolean isPrivacyTypeExists(String id){
         PrivacyData privacyData=privacyManager.getLastPrivacyData();

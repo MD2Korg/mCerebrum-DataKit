@@ -7,10 +7,8 @@ import com.google.gson.Gson;
 import org.md2k.datakit.Constants;
 
 import java.io.BufferedReader;
-import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
@@ -43,15 +41,9 @@ import java.util.ArrayList;
 public class PrivacyConfiguration {
     protected Context context;
     protected PrivacyConfig privacyConfig;
-    private static PrivacyConfiguration instance=null;
-    public static PrivacyConfiguration getInstance(Context context){
-        if(instance==null)
-            instance=new PrivacyConfiguration(context);
-        return instance;
-    }
-    private PrivacyConfiguration(Context context){
+    public PrivacyConfiguration(Context context){
         this.context=context;
-        readPrivacyOptionsFromFile(context);
+        readPrivacyOptionsFromFile();
     }
     public ArrayList<Duration> getDuration(){
         return privacyConfig.duration_options;
@@ -62,26 +54,15 @@ public class PrivacyConfiguration {
     public boolean isAvailable(){
         return privacyConfig != null;
     }
-    private void readPrivacyOptionsFromFile(Context context) {
+    private void readPrivacyOptionsFromFile() {
         BufferedReader br;
-        String filename= Constants.CONFIG_FILENAME;
         privacyConfig=null;
         try {
-            if (Constants.FILE_LOCATION == Constants.ASSET) {
-                br = new BufferedReader(new InputStreamReader(context.getAssets().open(filename)));
-            } else {
-                if (!isFileExist(filename)) throw new FileNotFoundException();
-                br = new BufferedReader(new FileReader(filename));
-            }
+            br = new BufferedReader(new InputStreamReader(new FileInputStream(Constants.CONFIG_DIRECTORY + Constants.CONFIG_FILENAME)));
             Gson gson = new Gson();
             privacyConfig = gson.fromJson(br, PrivacyConfig.class);
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (FileNotFoundException e) {
         }
-    }
-    private boolean isFileExist(String filename) {
-        File file = new File(filename);
-        return file.exists();
     }
     public class PrivacyConfig{
         ArrayList<Duration> duration_options;

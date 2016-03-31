@@ -140,7 +140,7 @@ public class ActivityMain extends AppCompatActivity {
 
 
     void setupPrivacyUI() throws IOException {
-        privacyController = PrivacyController.getInstance(this);
+        privacyController = new PrivacyController(this);
         LinearLayout linearLayout = (LinearLayout) findViewById(R.id.ll_privacy);
         if (!privacyController.isAvailable()) {
             linearLayout.setVisibility(View.GONE);

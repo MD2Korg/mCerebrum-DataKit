@@ -6,6 +6,7 @@ import android.os.Handler;
 
 import org.md2k.datakit.cerebralcortex.config.Config;
 import org.md2k.datakit.cerebralcortex.config.ConfigManager;
+import org.md2k.utilities.Apps;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -55,8 +56,11 @@ public class CerebralCortexManager {
                 handler.removeCallbacks(publishData);
             } else {
                 try {
-                    task = new CerebralCortexWrapper(context, config.getUrl(), config.getRestricted_datasource());
-                    task.execute();
+                    long time = Apps.serviceRunningTime(context.getApplicationContext(), org.md2k.datakit.Constants.SERVICE_NAME);
+                    if(time>0) {
+                        task = new CerebralCortexWrapper(context, config.getUrl(), config.getRestricted_datasource());
+                        task.execute();
+                    }
                 } catch (IOException e) {
                     showAlertDialog(context, "Error:", e.getMessage());
                     e.printStackTrace();

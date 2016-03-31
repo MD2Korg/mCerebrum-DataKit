@@ -13,7 +13,7 @@
         android:title="Settings" />
     <item
         android:id="@+id/action_cerebralcortex_settings"
-        android:icon="@drawable/ic_file_download_white_24dp"
+        android:icon="@drawable/ic_upload_white_48dp"
         serviceApp:showAsAction="ifRoom"
         android:title="CerebralCortex" />
     <item

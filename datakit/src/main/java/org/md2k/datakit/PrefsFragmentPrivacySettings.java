@@ -1,7 +1,5 @@
 package org.md2k.datakit;
 
-import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
@@ -80,7 +78,7 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
     @Override
     public void onStart(){
         try {
-            privacyController = PrivacyController.getInstance(getActivity().getApplicationContext());
+            privacyController = new PrivacyController(getActivity().getApplicationContext());
             if(!privacyController.isAvailable()) getActivity().finish();
         } catch (IOException e) {
             //TODO: show alert dialog
