@@ -258,6 +258,9 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
             Log.d("CerebralCortex", uiResult);
             return false;
         }
+        if (uiResult == null) {
+            return false;
+        }
         uiResponse = gson.fromJson(uiResult, UserInfoCCResponse.class);
 
         //Register Study
@@ -268,6 +271,9 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         } catch (IOException e) {
             Log.d("CerebralCortex", "Study registration error: " + e);
             Log.d("CerebralCortex", siResult);
+            return false;
+        }
+        if (siResult == null) {
             return false;
         }
         siResponse = gson.fromJson(siResult, StudyInfoCCResponse.class);
@@ -283,7 +289,9 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
             Log.d("CerebralCortex", prResult);
             return false;
         }
-
+        if (prResult == null) {
+            return false;
+        }
         if (prResult.contains("Invalid participant or study id")) {
             Log.d("CerebralCortex", "Register participant error: ");
             Log.d("CerebralCortex", prResult);
@@ -305,7 +313,9 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                     Log.d("CerebralCortex", "Datasource registration error: " + e);
                     return false;
                 }
-
+                if (dataSourceResult == null) {
+                    return false;
+                }
                 CerebralCortexDataSourceResponse ccdpResponse = LoganSquare.parse(dataSourceResult, CerebralCortexDataSourceResponse.class);
 
                 if (ccdpResponse.status.contains("ok") && !restricted.contains(dsc)) {
@@ -336,6 +346,9 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                             try {
                                 String data = gson.toJson(ccdata);
                                 dataResult = cerebralCortexAPI(requestURL + "datapoints/bulkload", data);
+                                if (dataResult == null) {
+                                    return false;
+                                }
                                 CerebralCortexDataResponse ccdr = LoganSquare.parse(dataResult, CerebralCortexDataResponse.class);
                                 if (ccdr.count > 0) {
                                     keySyncState.put(dsc.getDs_id(), lastKeyIndex);
@@ -372,6 +385,9 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                                         st = System.currentTimeMillis();
                                         Log.d("TIMING", "START UPLOAD");
                                         dataResult = cerebralCortexAPI(requestURL + "rawdatapoints/bulkload", data);
+                                        if (dataResult == null) {
+                                            return false;
+                                        }
                                         Log.d("TIMING", "UPLOAD: " + (System.currentTimeMillis() - st));
 
                                         CerebralCortexDataResponse ccdr = LoganSquare.parse(dataResult, CerebralCortexDataResponse.class);
@@ -444,8 +460,8 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
             urlConnection.setUseCaches(false);
 //            urlConnection.setChunkedStreamingMode(0);
 
-//            urlConnection.setConnectTimeout(15000);
-//            urlConnection.setReadTimeout(10000);
+            urlConnection.setConnectTimeout(60000);
+            urlConnection.setReadTimeout(60000);
 
             urlConnection.setRequestProperty("Content-Encoding", "gzip");
             urlConnection.setRequestProperty("Accept", "application/json");
