@@ -3,6 +3,7 @@ package org.md2k.datakit.cerebralcortex;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.bluelinelabs.logansquare.LoganSquare;
@@ -85,6 +86,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
     private Context context;
     private String requestURL;
     private List<DataSource> restricted;
+    private Gson gson = new GsonBuilder().serializeNulls().create();
 
     public CerebralCortexWrapper(Context context, String url, List<DataSource> restricted) throws IOException {
         this.context = context;
@@ -196,45 +198,16 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
 
         keySyncState = readHashMap();
 
-        Gson gson = new GsonBuilder().serializeNulls().create();
 
-        DataSourceBuilder userInfoBuilder = new DataSourceBuilder();
-        userInfoBuilder.setType(DataSourceType.USER_INFO);
-        List<DataSourceClient> userInfoClients = dbLogger.find(userInfoBuilder.build());
-        DataType ui = null;
-        for (DataSourceClient dsc : userInfoClients) {
-            List<DataType> userInfo = dbLogger.query(dsc.getDs_id(), 1);
-            for (DataType dt : userInfo) {
-                ui = dt;
-            }
-        }
 
-        DataSourceBuilder studyinfoBuilder = new DataSourceBuilder();
-        studyinfoBuilder.setType(DataSourceType.STUDY_INFO);
-        List<DataSourceClient> studyInfoClients = dbLogger.find(studyinfoBuilder.build());
-        DataType si = null;
-        for (DataSourceClient dsc : studyInfoClients) {
-            List<DataType> studyInfo = dbLogger.query(dsc.getDs_id(), 1);
-            for (DataType dt : studyInfo) {
-                si = dt;
-            }
-        }
-
-        if (ui == null || si == null) {
-            Log.d("CerebralCortex", "ui or si null");
-            return false;
-        }
 
         UserInfo uInfo = null;
         StudyInfo sInfo = null;
         try {
-            uInfo = LoganSquare.parse(((DataTypeString) ui).getSample(), UserInfo.class);
-            sInfo = LoganSquare.parse(((DataTypeString) si).getSample(), StudyInfo.class);
+            uInfo = getUserInfo();
+            sInfo = getStudyinfo();
         } catch (IOException e) {
             e.printStackTrace();
-        }
-
-        if (uInfo == null || sInfo == null) {
             Log.d("CerebralCortex", "uInfo or sInfo null");
             return false;
         }
@@ -248,35 +221,27 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
             return false;
         }
 
+
         //Register User
-        String uiResult = null;
         UserInfoCCResponse uiResponse = null;
         try {
-            uiResult = cerebralCortexAPI(requestURL + "participants", gson.toJson(new UserInfoCC(uInfo)));
+            uiResponse = registerUser(gson.toJson(new UserInfoCC(uInfo)));
         } catch (IOException e) {
-            Log.d("CerebralCortex", "Participant registration error: " + e);
-            Log.d("CerebralCortex", uiResult);
+            Log.d("CerebralCortex", "User Info Registration Error");
+            e.printStackTrace();
             return false;
         }
-        if (uiResult == null) {
-            return false;
-        }
-        uiResponse = gson.fromJson(uiResult, UserInfoCCResponse.class);
+
 
         //Register Study
-        String siResult = null;
         StudyInfoCCResponse siResponse = null;
         try {
-            siResult = cerebralCortexAPI(requestURL + "studies", gson.toJson(new StudyInfoCC(sInfo)));
+            siResponse = registerStudy(gson.toJson(new StudyInfoCC(sInfo)));
         } catch (IOException e) {
-            Log.d("CerebralCortex", "Study registration error: " + e);
-            Log.d("CerebralCortex", siResult);
+            Log.d("CerebralCortex", "User Info Registration Error");
+            e.printStackTrace();
             return false;
         }
-        if (siResult == null) {
-            return false;
-        }
-        siResponse = gson.fromJson(siResult, StudyInfoCCResponse.class);
 
 
         //Register Participant in Study
@@ -298,9 +263,9 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
             return false;
         }
 
+
         DataSourceBuilder dataSourceBuilder = new DataSourceBuilder();
         List<DataSourceClient> dataSourceClients = dbLogger.find(dataSourceBuilder.build());
-
 
         for (DataSourceClient dsc : dataSourceClients) {
 
@@ -413,6 +378,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                 }
             } catch (Exception e) {
                 Log.d("CerebralCortex", "Exception in main loop: " + e);
+                e.printStackTrace();
             }
             onProgressUpdate(dsc.getDs_id(), keySyncState.get(dsc.getDs_id()).intValue());
 
@@ -421,6 +387,54 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         saveHashMap(keySyncState);
 
         return true;
+    }
+
+    private StudyInfoCCResponse registerStudy(String encodedString) throws IOException {
+        String siResult = null;
+        siResult = cerebralCortexAPI(requestURL + "studies", encodedString);
+        if (siResult == null) {
+            return null;
+        }
+        return gson.fromJson(siResult, StudyInfoCCResponse.class);
+    }
+
+    private UserInfoCCResponse registerUser(String encodedString) throws IOException {
+        String uiResult = null;
+        uiResult = cerebralCortexAPI(requestURL + "participants", encodedString);
+        if (uiResult == null) {
+            return null;
+        }
+        return gson.fromJson(uiResult, UserInfoCCResponse.class);
+    }
+
+    @Nullable
+    private StudyInfo getStudyinfo() throws IOException {
+        DataSourceBuilder studyinfoBuilder = new DataSourceBuilder();
+        studyinfoBuilder.setType(DataSourceType.STUDY_INFO);
+        List<DataSourceClient> studyInfoClients = dbLogger.find(studyinfoBuilder.build());
+        DataType si = null;
+        for (DataSourceClient dsc : studyInfoClients) {
+            List<DataType> studyInfo = dbLogger.query(dsc.getDs_id(), 1);
+            for (DataType dt : studyInfo) {
+                si = dt;
+            }
+        }
+        return LoganSquare.parse(((DataTypeString) si).getSample(), StudyInfo.class);
+    }
+
+    @Nullable
+    private UserInfo getUserInfo() throws IOException {
+        DataSourceBuilder userInfoBuilder = new DataSourceBuilder();
+        userInfoBuilder.setType(DataSourceType.USER_INFO);
+        List<DataSourceClient> userInfoClients = dbLogger.find(userInfoBuilder.build());
+        DataType ui = null;
+        for (DataSourceClient dsc : userInfoClients) {
+            List<DataType> userInfo = dbLogger.query(dsc.getDs_id(), 1);
+            for (DataType dt : userInfo) {
+                ui = dt;
+            }
+        }
+        return LoganSquare.parse(((DataTypeString) ui).getSample(), UserInfo.class);
     }
 
     @Override
