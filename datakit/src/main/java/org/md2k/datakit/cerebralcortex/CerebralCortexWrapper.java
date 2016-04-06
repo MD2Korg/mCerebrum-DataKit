@@ -26,8 +26,8 @@ import org.md2k.datakit.cerebralcortex.communication.UserInfoCC;
 import org.md2k.datakit.cerebralcortex.communication.UserInfoCCResponse;
 import org.md2k.datakit.logger.DatabaseLogger;
 import org.md2k.datakitapi.datatype.DataType;
+import org.md2k.datakitapi.datatype.DataTypeJSONObject;
 import org.md2k.datakitapi.datatype.DataTypeLong;
-import org.md2k.datakitapi.datatype.DataTypeString;
 import org.md2k.datakitapi.datatype.RowObject;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceBuilder;
@@ -87,6 +87,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
     private String requestURL;
     private List<DataSource> restricted;
     private Gson gson = new GsonBuilder().serializeNulls().create();
+
 
     public CerebralCortexWrapper(Context context, String url, List<DataSource> restricted) throws IOException {
         this.context = context;
@@ -198,9 +199,6 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
 
         keySyncState = readHashMap();
 
-
-
-
         UserInfo uInfo = null;
         StudyInfo sInfo = null;
         try {
@@ -212,12 +210,20 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
             return false;
         }
 
-        if (uInfo.user_id.contentEquals("") || uInfo.uuid.contentEquals("")) {
-            Log.d("CerebralCortex", "uInfo field contains a blank");
+        if (uInfo != null) {
+            if (uInfo.user_id.contentEquals("") || uInfo.uuid.contentEquals("")) {
+                Log.d("CerebralCortex", "uInfo field contains a blank");
+                return false;
+            }
+        } else {
             return false;
         }
-        if (sInfo.id.contentEquals("") || sInfo.name.contentEquals("")) {
-            Log.d("CerebralCortex", "sInfo field contains a blank");
+        if (sInfo != null) {
+            if (sInfo.id.contentEquals("") || sInfo.name.contentEquals("")) {
+                Log.d("CerebralCortex", "sInfo field contains a blank");
+                return false;
+            }
+        } else {
             return false;
         }
 
@@ -295,7 +301,8 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                         CerebralCortexData ccdata = new CerebralCortexData(ccdpResponse.datastream_id);
 
                         //Computed Data Store
-                        List<RowObject> objects = dbLogger.queryLastKey(dsc.getDs_id(), keySyncState.get(dsc.getDs_id()), Constants.DATA_BLOCK_SIZE_LIMIT);
+//                        List<RowObject> objects = dbLogger.queryLastKey(dsc.getDs_id(), keySyncState.get(dsc.getDs_id()), Constants.DATA_BLOCK_SIZE_LIMIT);
+                        List<RowObject> objects = dbLogger.queryLastKey(dsc.getDs_id(), 0, Constants.DATA_BLOCK_SIZE_LIMIT);
 
 
                         if (objects.size() > 0) {
@@ -419,7 +426,11 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                 si = dt;
             }
         }
-        return LoganSquare.parse(((DataTypeString) si).getSample(), StudyInfo.class);
+        if (si != null) {
+            return LoganSquare.parse(((DataTypeJSONObject) si).getSample().toString(), StudyInfo.class);
+        } else {
+            return null;
+        }
     }
 
     @Nullable
@@ -434,7 +445,11 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                 ui = dt;
             }
         }
-        return LoganSquare.parse(((DataTypeString) ui).getSample(), UserInfo.class);
+        if (ui != null) {
+            return LoganSquare.parse(((DataTypeJSONObject) ui).getSample().toString(), UserInfo.class);
+        } else {
+            return null;
+        }
     }
 
     @Override
