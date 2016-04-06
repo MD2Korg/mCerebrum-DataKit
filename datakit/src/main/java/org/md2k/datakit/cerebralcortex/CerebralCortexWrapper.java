@@ -336,47 +336,47 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                             }
 
                         } else {
-//                            long lastKeyIndex = keySyncState.get(dsc.getDs_id());
-//                            long st = System.currentTimeMillis();
-//
-//                            //RAW Data Store
-//                            objects = dbLogger.queryHFLastKey(dsc.getDs_id(), keySyncState.get(dsc.getDs_id()), Constants.HF_DATA_BLOCK_SIZE_LIMIT);
-//                            if (objects.size() > 0) {
-//                                Log.d("TIMING", "Querying HF data for (" + dsc.getDs_id() + ") " + objects.size() + " TIME[" + (System.currentTimeMillis() - st) + "]");
-//                                for (RowObject obj : objects) {
-//                                    ccdata.data.add(obj.toArrayForm());
-//                                    lastKeyIndex = obj.rowKey;
-//                                }
-//                                Log.d("TIMING", "DATA QUERY: (" + dsc.getDataSource().getType() + ") " + (System.currentTimeMillis() - st));
-//
-//                                if (ccdata.data.size() > 0) {
-//                                    String dataResult = null;
-//
-//                                    try {
-//                                        String data = gson.toJson(ccdata);
-//                                        st = System.currentTimeMillis();
-//                                        Log.d("TIMING", "START UPLOAD");
-//                                        dataResult = cerebralCortexAPI(requestURL + "rawdatapoints/bulkload", data);
-//                                        if (dataResult == null) {
-//                                            return false;
-//                                        }
-//                                        Log.d("TIMING", "UPLOAD: " + (System.currentTimeMillis() - st));
-//
-//                                        CerebralCortexDataResponse ccdr = LoganSquare.parse(dataResult, CerebralCortexDataResponse.class);
-//                                        if (ccdr.count > 0) {
-//                                            keySyncState.put(dsc.getDs_id(), lastKeyIndex);
-//                                            Log.d("CerebralCortex", "Record Upload Count: (" + dsc.getDs_id() + ") " + ccdr.count);
-//                                            onProgressUpdate(dsc.getDs_id(), (int) lastKeyIndex);
-//                                        }
-//                                        if (ccdr.count >= Constants.HF_DATA_BLOCK_SIZE_LIMIT) {
-//                                            cont = true;
-//                                        }
-//                                    } catch (IOException e) {
-//                                        Log.d("CerebralCortex", "Bulk load error: " + e);
-//                                        return false;
-//                                    }
-//                                }
-//                            }
+                            long lastKeyIndex = keySyncState.get(dsc.getDs_id());
+                            long st = System.currentTimeMillis();
+
+                            //RAW Data Store
+                            objects = dbLogger.queryHFLastKey(dsc.getDs_id(), keySyncState.get(dsc.getDs_id()), Constants.HF_DATA_BLOCK_SIZE_LIMIT);
+                            if (objects.size() > 0) {
+                                Log.d("TIMING", "Querying HF data for (" + dsc.getDs_id() + ") " + objects.size() + " TIME[" + (System.currentTimeMillis() - st) + "]");
+                                for (RowObject obj : objects) {
+                                    ccdata.data.add(obj.toArrayForm());
+                                    lastKeyIndex = obj.rowKey;
+                                }
+                                Log.d("TIMING", "DATA QUERY: (" + dsc.getDataSource().getType() + ") " + (System.currentTimeMillis() - st));
+
+                                if (ccdata.data.size() > 0) {
+                                    String dataResult = null;
+
+                                    try {
+                                        String data = gson.toJson(ccdata);
+                                        st = System.currentTimeMillis();
+                                        Log.d("TIMING", "START UPLOAD");
+                                        dataResult = cerebralCortexAPI(requestURL + "rawdatapoints/bulkload", data);
+                                        if (dataResult == null) {
+                                            return false;
+                                        }
+                                        Log.d("TIMING", "UPLOAD: " + (System.currentTimeMillis() - st));
+
+                                        CerebralCortexDataResponse ccdr = LoganSquare.parse(dataResult, CerebralCortexDataResponse.class);
+                                        if (ccdr.count > 0) {
+                                            keySyncState.put(dsc.getDs_id(), lastKeyIndex);
+                                            Log.d("CerebralCortex", "Record Upload Count: (" + dsc.getDs_id() + ") " + ccdr.count);
+                                            onProgressUpdate(dsc.getDs_id(), (int) lastKeyIndex);
+                                        }
+                                        if (ccdr.count >= Constants.HF_DATA_BLOCK_SIZE_LIMIT) {
+                                            cont = true;
+                                        }
+                                    } catch (IOException e) {
+                                        Log.d("CerebralCortex", "Bulk load error: " + e);
+                                        return false;
+                                    }
+                                }
+                            }
                         }
                     }
 

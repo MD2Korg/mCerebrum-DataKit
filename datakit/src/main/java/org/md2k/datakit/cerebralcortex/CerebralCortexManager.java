@@ -57,10 +57,10 @@ public class CerebralCortexManager {
             } else {
                 try {
                     long time = Apps.serviceRunningTime(context.getApplicationContext(), org.md2k.datakit.Constants.SERVICE_NAME);
-//                    if(time>0) {
+                    if (time > 0) {
                         task = new CerebralCortexWrapper(context, config.getUrl(), config.getRestricted_datasource());
                         task.execute();
-//                    }
+                    }
                 } catch (IOException e) {
                     showAlertDialog(context, "Error:", e.getMessage());
                     e.printStackTrace();
