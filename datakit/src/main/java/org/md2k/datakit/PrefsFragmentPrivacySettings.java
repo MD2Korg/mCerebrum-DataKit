@@ -119,13 +119,13 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
                     privacyTypeSelected=privacyData.getPrivacyTypes();
 
                     privacyData.setStatus(false);
-                    privacyController.insertPrivacyData(privacyData);
+                    privacyController.writeToDataKit(privacyData);
                     Toast.makeText(getActivity(), "Sensors are activated...", Toast.LENGTH_SHORT).show();
 
                 } else {
                     privacyData=preparePrivacyData();
                     if(privacyData!=null){
-                        privacyController.insertPrivacyData(privacyData);
+                        privacyController.writeToDataKit(privacyData);
                         Toast.makeText(getActivity(), "Sensors are deactivated temporarily...", Toast.LENGTH_SHORT).show();
                     }
                 }

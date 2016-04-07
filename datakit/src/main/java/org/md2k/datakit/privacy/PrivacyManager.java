@@ -10,8 +10,8 @@ import com.google.gson.Gson;
 import org.md2k.datakit.router.RoutingManager;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
+import org.md2k.datakitapi.datatype.DataTypeJSONObject;
 import org.md2k.datakitapi.datatype.DataTypeLong;
-import org.md2k.datakitapi.datatype.DataTypeString;
 import org.md2k.datakitapi.datatype.RowObject;
 import org.md2k.datakitapi.source.application.Application;
 import org.md2k.datakitapi.source.application.ApplicationBuilder;
@@ -25,6 +25,7 @@ import org.md2k.datakitapi.source.platform.PlatformType;
 import org.md2k.datakitapi.status.Status;
 import org.md2k.datakitapi.time.DateTime;
 import org.md2k.utilities.Report.Log;
+import org.md2k.utilities.data_format.privacy.PrivacyData;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -106,15 +107,15 @@ public class PrivacyManager {
 
     void createPrivacyList() {
         Log.d(TAG,"createPrivacyList()...");
-        if(lastPrivacyData==null || lastPrivacyData.privacyTypes==null) return;
+        if(lastPrivacyData==null || lastPrivacyData.getPrivacyTypes()==null) return;
         listPrivacyListDsId.clear();
         String dataSourceType;
         String platformType;
         int id;
-        for (int i = 0; i < lastPrivacyData.privacyTypes.size(); i++) {
-            for (int j = 0; j < lastPrivacyData.privacyTypes.get(i).source.size(); j++) {
-                dataSourceType = lastPrivacyData.privacyTypes.get(i).source.get(j).datasource_type;
-                platformType = lastPrivacyData.privacyTypes.get(i).source.get(j).platform_type;
+        for (int i = 0; i < lastPrivacyData.getPrivacyTypes().size(); i++) {
+            for (int j = 0; j < lastPrivacyData.getPrivacyTypes().get(i).getSource().size(); j++) {
+                dataSourceType = lastPrivacyData.getPrivacyTypes().get(i).getSource().get(j).getDatasource_type();
+                platformType = lastPrivacyData.getPrivacyTypes().get(i).getSource().get(j).getPlatform_type();
                 Log.d(TAG,"search...dataSourceType="+dataSourceType+" platformType="+platformType);
                 ArrayList<DataSourceClient> dataSourceClients = routingManager.find(createDataSource(dataSourceType, platformType));
                 for (int k = 0; k < dataSourceClients.size(); k++) {
@@ -167,7 +168,7 @@ public class PrivacyManager {
 
     public long getRemainingTime(){
         long currentTimeStamp = DateTime.getDateTime();
-        long endTimeStamp = lastPrivacyData.startTimeStamp + lastPrivacyData.duration.getValue();
+        long endTimeStamp = lastPrivacyData.getStartTimeStamp() + lastPrivacyData.getDuration().getValue();
         Log.d(TAG,"remainging time = "+(endTimeStamp-currentTimeStamp));
         return endTimeStamp-currentTimeStamp;
 
@@ -177,13 +178,13 @@ public class PrivacyManager {
         Log.d(TAG, "processPrivacyData()...");
         lastPrivacyData= queryLastPrivacyData();
         Log.d(TAG,"lastPrivacyData="+lastPrivacyData);
-        if (lastPrivacyData == null|| !lastPrivacyData.status || getRemainingTime()<=0) {
+        if (lastPrivacyData == null|| !lastPrivacyData.isStatus() || getRemainingTime()<=0) {
             Log.d(TAG,"deactivate");
             deactivate();
         }
         else {
             Log.d(TAG,"activate");
-            Log.d(TAG,"lastPrivacyData="+lastPrivacyData.startTimeStamp+" "+lastPrivacyData.status+" "+lastPrivacyData.duration.getValue());
+            Log.d(TAG,"lastPrivacyData="+lastPrivacyData.getStartTimeStamp()+" "+lastPrivacyData.isStatus()+" "+lastPrivacyData.getDuration().getValue());
             createPrivacyList();
             activate();
         }
@@ -260,7 +261,8 @@ public class PrivacyManager {
         ArrayList<DataType> dataTypes = routingManager.query(dsIdPrivacy, 1);
 
         if (dataTypes == null || dataTypes.size() == 0) return null;
-        return gson.fromJson((((DataTypeString) dataTypes.get(0))).getSample(), PrivacyData.class);
+        DataTypeJSONObject dataTypeJSONObject = (DataTypeJSONObject) dataTypes.get(0);
+        return gson.fromJson(dataTypeJSONObject.getSample().toString(), PrivacyData.class);
     }
 
     void deactivate() {
