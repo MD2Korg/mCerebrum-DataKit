@@ -21,13 +21,13 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import org.md2k.datakit.privacy.Duration;
 import org.md2k.datakit.privacy.PrivacyController;
-import org.md2k.datakit.privacy.PrivacyData;
-import org.md2k.datakit.privacy.PrivacyType;
 import org.md2k.datakitapi.time.DateTime;
 import org.md2k.utilities.Report.Log;
 import org.md2k.utilities.UI.AlertDialogs;
+import org.md2k.utilities.data_format.privacy.Duration;
+import org.md2k.utilities.data_format.privacy.PrivacyData;
+import org.md2k.utilities.data_format.privacy.PrivacyType;
 
 import java.io.IOException;
 import java.util.ArrayList;

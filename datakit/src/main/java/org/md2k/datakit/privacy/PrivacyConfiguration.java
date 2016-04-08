@@ -5,6 +5,8 @@ import android.content.Context;
 import com.google.gson.Gson;
 
 import org.md2k.datakit.Constants;
+import org.md2k.utilities.data_format.privacy.Duration;
+import org.md2k.utilities.data_format.privacy.PrivacyType;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
