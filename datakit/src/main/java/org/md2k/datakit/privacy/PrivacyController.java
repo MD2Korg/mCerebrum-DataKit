@@ -3,10 +3,13 @@ package org.md2k.datakit.privacy;
 import android.content.Context;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
-import org.md2k.datakitapi.datatype.DataTypeString;
+import org.md2k.datakitapi.datatype.DataTypeJSONObject;
 import org.md2k.datakitapi.time.DateTime;
 import org.md2k.utilities.Report.Log;
+import org.md2k.utilities.data_format.privacy.PrivacyData;
 
 import java.io.IOException;
 
@@ -74,17 +77,16 @@ public class PrivacyController {
         String list="";
         if(!isActive()) return null;
         PrivacyData privacyData = privacyManager.getLastPrivacyData();
-        for(int i=0;i<privacyData.privacyTypes.size();i++){
+        for(int i=0;i<privacyData.getPrivacyTypes().size();i++){
             if(i!=0) list+=",";
-            list+=privacyData.privacyTypes.get(i).getTitle();
+            list+=privacyData.getPrivacyTypes().get(i).getTitle();
         }
         return list;
     }
-    public void insertPrivacyData(PrivacyData privacyData){
+    public void writeToDataKit(PrivacyData privacyData){
         Gson gson=new Gson();
-        String str=gson.toJson(privacyData);
-        Log.d(TAG, "dsid="+privacyManager.dsIdPrivacy+" privacydata=" + str);
-        DataTypeString dataTypeString=new DataTypeString(DateTime.getDateTime(),str);
-        privacyManager.insert(privacyManager.dsIdPrivacy, dataTypeString);
+        JsonObject sample = new JsonParser().parse(gson.toJson(privacyData)).getAsJsonObject();
+        DataTypeJSONObject dataTypeJSONObject = new DataTypeJSONObject(DateTime.getDateTime(), sample);
+        privacyManager.insert(privacyManager.dsIdPrivacy, dataTypeJSONObject);
     }
 }
