@@ -193,7 +193,6 @@ public class ServiceDataKit extends Service {
                 outgoingMessage = messageController.execute(incomingMessage);
             if (outgoingMessage != null) {
                 replyTo = incomingMessage.replyTo;
-                Log.d(TAG, "replyto=" + replyTo);
                 try {
                     replyTo.send(outgoingMessage);
                 } catch (RemoteException ignored) {

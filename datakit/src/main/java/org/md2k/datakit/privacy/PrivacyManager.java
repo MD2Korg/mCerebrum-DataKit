@@ -106,7 +106,6 @@ public class PrivacyManager {
     }
 
     void createPrivacyList() {
-        Log.d(TAG,"createPrivacyList()...");
         if(lastPrivacyData==null || lastPrivacyData.getPrivacyTypes()==null) return;
         listPrivacyListDsId.clear();
         String dataSourceType;
@@ -169,7 +168,7 @@ public class PrivacyManager {
     public long getRemainingTime(){
         long currentTimeStamp = DateTime.getDateTime();
         long endTimeStamp = lastPrivacyData.getStartTimeStamp() + lastPrivacyData.getDuration().getValue();
-        Log.d(TAG,"remainging time = "+(endTimeStamp-currentTimeStamp));
+        Log.d(TAG,"remaining time = "+(endTimeStamp-currentTimeStamp));
         return endTimeStamp-currentTimeStamp;
 
     }
