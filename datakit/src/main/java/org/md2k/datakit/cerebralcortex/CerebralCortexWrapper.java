@@ -249,6 +249,11 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
             return false;
         }
 
+        if (siResponse == null || uiResponse == null) {
+            Log.d("CerebralCortex", "Registration has failed");
+            return false;
+        }
+
 
         //Register Participant in Study
         ParticipantRegistration pr = new ParticipantRegistration(siResponse.id, uiResponse.id);
