@@ -30,5 +30,5 @@ public class Constants {
     public static final String KEYHASHMAP = "DataExporterHashMap.json";
     public static final int DATA_BLOCK_SIZE_LIMIT = 1000;
     public static final int HF_DATA_BLOCK_SIZE_LIMIT = 100000;
-
+    public static final String CEREBRAL_CORTEX_STATUS = "CerebralCortex_Status";
 }
