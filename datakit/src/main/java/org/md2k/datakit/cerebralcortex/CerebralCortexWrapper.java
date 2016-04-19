@@ -215,13 +215,13 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
             sInfo = getStudyinfo();
         } catch (IOException e) {
             e.printStackTrace();
-            Log.d("CerebralCortex", "uInfo or sInfo null");
+            messenger("uInfo or sInfo null");
             return false;
         }
 
         if (uInfo != null) {
             if (uInfo.user_id.contentEquals("") || uInfo.uuid.contentEquals("")) {
-                Log.d("CerebralCortex", "uInfo field contains a blank");
+                messenger("uInfo field contains a blank");
                 return false;
             }
         } else {
@@ -229,7 +229,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         }
         if (sInfo != null) {
             if (sInfo.id.contentEquals("") || sInfo.name.contentEquals("")) {
-                Log.d("CerebralCortex", "sInfo field contains a blank");
+                messenger("sInfo field contains a blank");
                 return false;
             }
         } else {
@@ -242,7 +242,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         try {
             uiResponse = registerUser(gson.toJson(new UserInfoCC(uInfo)));
         } catch (IOException e) {
-            Log.d("CerebralCortex", "User Info Registration Error");
+            messenger("User Info Registration Error");
             e.printStackTrace();
             return false;
         }
@@ -253,13 +253,13 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         try {
             siResponse = registerStudy(gson.toJson(new StudyInfoCC(sInfo)));
         } catch (IOException e) {
-            Log.d("CerebralCortex", "User Info Registration Error");
+            messenger("User Info Registration Error");
             e.printStackTrace();
             return false;
         }
 
         if (siResponse == null || uiResponse == null) {
-            Log.d("CerebralCortex", "Registration has failed");
+            messenger("Registration has failed");
             return false;
         }
         messenger("Registered study");
@@ -275,10 +275,11 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
             return false;
         }
         if (prResult == null) {
+            messenger("prResult is null");
             return false;
         }
         if (prResult.contains("Invalid participant or study id")) {
-            Log.d("CerebralCortex", "Register participant error: ");
+            messenger("Register participant error: ");
             Log.d("CerebralCortex", prResult);
             return false;
         }
@@ -360,6 +361,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                     }
                 } catch (IOException e) {
                     Log.d("CerebralCortex", "Bulk load error: " + e);
+                    messenger("Bulk load error");
                     break;
                 }
             }
