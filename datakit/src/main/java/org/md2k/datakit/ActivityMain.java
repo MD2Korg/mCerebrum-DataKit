@@ -1,10 +1,14 @@
 package org.md2k.datakit;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -64,6 +68,7 @@ public class ActivityMain extends AppCompatActivity {
     PrivacyController privacyController;
 
     CerebralCortexController cerebralCortexController;
+    CerebralCortexUpdateReceiver ccRcvr;
 
     Handler mHandler = new Handler();
     Runnable runnable = new Runnable() {
@@ -99,6 +104,8 @@ public class ActivityMain extends AppCompatActivity {
             configureAppStatus();
             setupPrivacyUI();
             setupCerebralCortexUI();
+            ccRcvr = new CerebralCortexUpdateReceiver();
+
             if (getSupportActionBar() != null)
                 getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         } catch (IOException e) {
@@ -109,7 +116,6 @@ public class ActivityMain extends AppCompatActivity {
     void configureAppStatus() {
         findViewById(R.id.textViewTap).setVisibility(View.GONE);
     }
-
 
     void setupCerebralCortexUI() throws IOException {
         cerebralCortexController = CerebralCortexController.getInstance(this);
@@ -138,7 +144,6 @@ public class ActivityMain extends AppCompatActivity {
         }
     }
 
-
     void setupPrivacyUI() throws IOException {
         privacyController = new PrivacyController(this);
         LinearLayout linearLayout = (LinearLayout) findViewById(R.id.ll_privacy);
@@ -161,6 +166,8 @@ public class ActivityMain extends AppCompatActivity {
 
     public void updateCCUI() {
         TextView textViewStatus = ((TextView) findViewById(R.id.textViewcerebralcortexStatus));
+
+
         if (cerebralCortexController.isActive()) {
             textViewStatus.setText("ON (Running)");
             textViewStatus.setTextColor(ContextCompat.getColor(this, R.color.teal_700));
@@ -200,6 +207,7 @@ public class ActivityMain extends AppCompatActivity {
     @Override
     public void onPause() {
         mHandler.removeCallbacks(runnable);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(ccRcvr);
         super.onPause();
     }
 
@@ -207,6 +215,7 @@ public class ActivityMain extends AppCompatActivity {
     public void onResume() {
         updateSDCardSetttingsText();
         mHandler.post(runnable);
+        LocalBroadcastManager.getInstance(this).registerReceiver(ccRcvr, new IntentFilter(org.md2k.datakit.cerebralcortex.Constants.CEREBRAL_CORTEX_STATUS));
 
         super.onResume();
     }
@@ -273,6 +282,15 @@ public class ActivityMain extends AppCompatActivity {
                 break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private class CerebralCortexUpdateReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            TextView textViewMessage = ((TextView) findViewById(R.id.textViewcerebralcortexMessage));
+            textViewMessage.setText(intent.getStringExtra("CC_Upload"));
+        }
     }
 
 

@@ -25,8 +25,8 @@ android {
     defaultConfig {
         minSdkVersion 19
         targetSdkVersion 21
-        versionCode 23
-        versionName '0.7.6'
+        versionCode 24
+        versionName '0.8.0'
     }
     packagingOptions {
         exclude 'META-INF/DEPENDENCIES'
