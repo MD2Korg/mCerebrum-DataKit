@@ -246,7 +246,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
             e.printStackTrace();
             return false;
         }
-        messenger("Registered user with " + this.requestURL);
+        messenger("Registered user");
 
         //Register Study
         StudyInfoCCResponse siResponse = null;
@@ -262,7 +262,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
             Log.d("CerebralCortex", "Registration has failed");
             return false;
         }
-        messenger("Registered study with " + this.requestURL);
+        messenger("Registered study");
 
         //Register Participant in Study
         ParticipantRegistration pr = new ParticipantRegistration(siResponse.id, uiResponse.id);
@@ -282,7 +282,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
             Log.d("CerebralCortex", prResult);
             return false;
         }
-        messenger("Registered participant in study with " + requestURL + "studies/register_participant");
+        messenger("Registered participant in study");
 
         DataSourceBuilder dataSourceBuilder = new DataSourceBuilder();
         List<DataSourceClient> dataSourceClients = dbLogger.find(dataSourceBuilder.build());
@@ -292,6 +292,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         for (DataSourceClient dsc : dataSourceClients) {
             CerebralCortexDataSourceResponse ccdpResponse = registerDataSource(uiResponse, dsc);
             if (ccdpResponse.status.contains("ok") && !restricted.contains(dsc)) {
+                messenger("Registered datastream: " + dsc.getDs_id());
                 validDataSources.put(dsc, ccdpResponse);
                 if (!keySyncState.containsKey(dsc.getDs_id())) {
                     keySyncState.put(dsc.getDs_id(), 0L);
@@ -305,8 +306,6 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
             publishDataStream(true, entry.getKey(), entry.getValue(), keySyncState);
 
         }
-
-//            onProgressUpdate(dsc.getDs_id(), keySyncState.get(dsc.getDs_id()).intValue());
 
         messenger("Upload Complete");
         return true;
@@ -446,17 +445,12 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
 
     @Override
     protected void onProgressUpdate(Integer... ints) {
-//        Intent intent = new Intent("cerebralCortex");
-//        intent.putExtra("streamID", ints[0]);
-//        intent.putExtra("index", (long) ints[1]);
-//        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
         Log.d("CerebralCortex", "Progress Update:" + ints[0]);
     }
 
     @Override
     protected Boolean doInBackground(Void... voids) {
-        boolean result = publishDataKitData();
-        return new Boolean(result);
+        return publishDataKitData();
     }
 
     /**

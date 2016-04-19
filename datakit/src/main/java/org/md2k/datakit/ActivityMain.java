@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -206,7 +207,7 @@ public class ActivityMain extends AppCompatActivity {
     @Override
     public void onPause() {
         mHandler.removeCallbacks(runnable);
-        this.unregisterReceiver(ccRcvr);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(ccRcvr);
         super.onPause();
     }
 
@@ -214,7 +215,7 @@ public class ActivityMain extends AppCompatActivity {
     public void onResume() {
         updateSDCardSetttingsText();
         mHandler.post(runnable);
-        this.registerReceiver(ccRcvr, new IntentFilter(org.md2k.datakit.cerebralcortex.Constants.CEREBRAL_CORTEX_STATUS));
+        LocalBroadcastManager.getInstance(this).registerReceiver(ccRcvr, new IntentFilter(org.md2k.datakit.cerebralcortex.Constants.CEREBRAL_CORTEX_STATUS));
 
         super.onResume();
     }
