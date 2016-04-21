@@ -9,7 +9,6 @@ import android.support.v4.content.LocalBroadcastManager;
 import com.bluelinelabs.logansquare.LoganSquare;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 
 import org.apache.http.client.entity.GzipCompressingEntity;
 import org.apache.http.entity.StringEntityHC4;
@@ -27,7 +26,6 @@ import org.md2k.datakit.cerebralcortex.communication.UserInfoCCResponse;
 import org.md2k.datakit.logger.DatabaseLogger;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.datatype.DataTypeJSONObject;
-import org.md2k.datakitapi.datatype.DataTypeLong;
 import org.md2k.datakitapi.datatype.RowObject;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceBuilder;
@@ -36,12 +34,9 @@ import org.md2k.datakitapi.source.datasource.DataSourceType;
 import org.md2k.utilities.Report.Log;
 
 import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
@@ -82,7 +77,6 @@ import javax.net.ssl.HttpsURLConnection;
 public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
     private static final String TAG = CerebralCortexWrapper.class.getSimpleName();
     private static final Integer COUNT_INDEX = -1;
-    HashMap<Integer, Long> keySyncState = new HashMap<Integer, Long>();
     DatabaseLogger dbLogger = null;
     private Context context;
     private String requestURL;
@@ -128,70 +122,6 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         LocalBroadcastManager.getInstance(this.context).sendBroadcast(intent);
     }
 
-    private void saveHashMap(HashMap<Integer, Long> keys) {
-
-        //Record size of database for future reference
-        if (dbLogger == null) {
-            try {
-                dbLogger = DatabaseLogger.getInstance(this.context);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        DataTypeLong count = dbLogger.querySize();
-        keys.put(COUNT_INDEX, count.getSample());
-
-        Gson gson = new GsonBuilder().create();
-        try {
-            FileOutputStream output = context.openFileOutput(Constants.KEYHASHMAP, Context.MODE_PRIVATE);
-            output.write(gson.toJson(keys).getBytes());
-            output.close();
-        } catch (IOException e) {
-            //Not concerned, just a missing file
-        }
-    }
-
-    private HashMap<Integer, Long> readHashMap() {
-        Gson gson = new GsonBuilder().create();
-
-        String inputData = "";
-        String line;
-        try {
-            FileInputStream in = context.openFileInput(Constants.KEYHASHMAP);
-            InputStreamReader inputStreamReader = new InputStreamReader(in);
-            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-            while ((line = bufferedReader.readLine()) != null)
-                inputData += line;
-            bufferedReader.close();
-            inputStreamReader.close();
-            in.close();
-        } catch (IOException e) {
-            //Not concerned, missing file will be created below
-        }
-
-        Type hashType = new TypeToken<Map<Integer, Long>>() {
-        }.getType();
-        HashMap<Integer, Long> result = gson.fromJson(inputData, hashType);
-
-        if (result == null)
-            return new HashMap<>();
-
-        if (dbLogger == null) {
-            try {
-                dbLogger = DatabaseLogger.getInstance(this.context);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        DataTypeLong count = dbLogger.querySize();
-        if (result.containsKey(COUNT_INDEX) && result.get(COUNT_INDEX) > count.getSample()) {
-            //Reset DB tracking pointers
-            return new HashMap<>();
-        }
-
-        return result;
-    }
-
     private boolean publishDataKitData() {
 
         //Ensure that the database is available
@@ -205,8 +135,6 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         }
 
         messenger("Starting publish procedure");
-
-        keySyncState = readHashMap();
 
         UserInfo uInfo = null;
         StudyInfo sInfo = null;
@@ -225,6 +153,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                 return false;
             }
         } else {
+            messenger("User does not exist");
             return false;
         }
         if (sInfo != null) {
@@ -233,6 +162,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                 return false;
             }
         } else {
+            messenger("Study not defined");
             return false;
         }
         messenger("Extracted user and study info");
@@ -295,16 +225,13 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
             if (ccdpResponse.status.contains("ok") && !restricted.contains(dsc)) {
                 messenger("Registered datastream: " + dsc.getDs_id());
                 validDataSources.put(dsc, ccdpResponse);
-                if (!keySyncState.containsKey(dsc.getDs_id())) {
-                    keySyncState.put(dsc.getDs_id(), 0L);
-                }
             }
         }
         for (Map.Entry<DataSourceClient, CerebralCortexDataSourceResponse> entry : validDataSources.entrySet()) {
 
             messenger("Publishing data for " + entry.getKey().getDs_id());
-            publishDataStream(false, entry.getKey(), entry.getValue(), keySyncState);
-            publishDataStream(true, entry.getKey(), entry.getValue(), keySyncState);
+            publishDataStream(false, entry.getKey(), entry.getValue());
+            publishDataStream(true, entry.getKey(), entry.getValue());
 
         }
 
@@ -312,7 +239,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         return true;
         }
 
-    private void publishDataStream(boolean hf, DataSourceClient dsc, CerebralCortexDataSourceResponse ccdpResponse, HashMap<Integer, Long> keySyncState) {
+    private void publishDataStream(boolean hf, DataSourceClient dsc, CerebralCortexDataSourceResponse ccdpResponse) {
         String APIendpoint;
         String dataResult = null;
         boolean cont = true;
@@ -327,21 +254,23 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
             int BLOCK_SIZE_LIMIT;
             if (!hf) {
                 APIendpoint = "datapoints/bulkload";
-                objects = dbLogger.queryLastKey(dsc.getDs_id(), keySyncState.get(dsc.getDs_id()), Constants.DATA_BLOCK_SIZE_LIMIT);
+                objects = dbLogger.queryLastKey(dsc.getDs_id(), Constants.DATA_BLOCK_SIZE_LIMIT);
                 BLOCK_SIZE_LIMIT = Constants.DATA_BLOCK_SIZE_LIMIT;
             } else {
                 APIendpoint = "rawdatapoints/bulkload";
-                objects = dbLogger.queryHFLastKey(dsc.getDs_id(), keySyncState.get(dsc.getDs_id()), Constants.HF_DATA_BLOCK_SIZE_LIMIT);
+                objects = dbLogger.queryHFLastKey(dsc.getDs_id(), Constants.HF_DATA_BLOCK_SIZE_LIMIT);
                 BLOCK_SIZE_LIMIT = Constants.HF_DATA_BLOCK_SIZE_LIMIT;
             }
 
             if (objects.size() > 0) {
                 Log.d("CerebralCortex", "Offloading data for " + dsc.getDs_id());
-                long lastKeyIndex = keySyncState.get(dsc.getDs_id());
 
+                long[] keys = new long[objects.size()];
                 for (RowObject obj : objects) {
                     ccdata.data.add(obj.toArrayForm());
-                    lastKeyIndex = obj.rowKey;
+                }
+                for (int i = 0; i < objects.size(); i++) {
+                    keys[i] = objects.get(i).rowKey;
                 }
 
                 try {
@@ -352,9 +281,12 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                     }
                     CerebralCortexDataResponse ccdr = LoganSquare.parse(dataResult, CerebralCortexDataResponse.class);
                     if (ccdr.count > 0) {
-                        keySyncState.put(dsc.getDs_id(), lastKeyIndex);
                         Log.d("CerebralCortex", "Record Upload Count: (" + dsc.getDs_id() + ") #" + ccdr.count);
-                        onProgressUpdate(dsc.getDs_id(), (int) lastKeyIndex);
+                        if (!hf) {
+                            dbLogger.setSyncedBit(keys);
+                        } else {
+                            dbLogger.setHFSyncedBit(keys);
+                        }
                     }
                     if (ccdr.count == BLOCK_SIZE_LIMIT) {
                         cont = true;
@@ -365,7 +297,6 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                     break;
                 }
             }
-            saveHashMap(keySyncState);
         }
     }
 
@@ -476,7 +407,6 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
             urlConnection.setDoInput(true);
             urlConnection.setRequestMethod("POST");
             urlConnection.setUseCaches(false);
-//            urlConnection.setChunkedStreamingMode(0);
 
             urlConnection.setConnectTimeout(60000);
             urlConnection.setReadTimeout(60000);

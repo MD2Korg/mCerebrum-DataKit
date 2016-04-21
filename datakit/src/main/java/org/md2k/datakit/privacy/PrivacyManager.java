@@ -200,12 +200,13 @@ public class PrivacyManager {
     public ArrayList<DataType> queryHFlastN(int ds_id, int last_n_sample) {
         return routingManager.queryHFlastN(ds_id, last_n_sample);
     }
-    public ArrayList<RowObject> queryLastKey(int ds_id, long last_key, int limit) {
-        return routingManager.queryLastKey(ds_id, last_key, limit);
+
+    public ArrayList<RowObject> queryLastKey(int ds_id, int limit) {
+        return routingManager.queryLastKey(ds_id, limit);
     }
 
-    public ArrayList<RowObject> queryHFLastKey(int ds_id, long last_key, int limit) {
-        return routingManager.queryHFLastKey(ds_id, last_key, limit);
+    public ArrayList<RowObject> queryHFLastKey(int ds_id, int limit) {
+        return routingManager.queryHFLastKey(ds_id, limit);
     }
 
     public DataTypeLong querySize() {
