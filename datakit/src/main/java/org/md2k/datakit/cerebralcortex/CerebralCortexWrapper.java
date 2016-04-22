@@ -39,6 +39,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.sql.Time;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -117,8 +118,10 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
 
     private void messenger(String message) {
         Intent intent = new Intent(Constants.CEREBRAL_CORTEX_STATUS);
-        intent.putExtra("CC_Upload", message);
-        Log.d("CerebralCortexMessenger", message);
+        Time t = new Time(System.currentTimeMillis());
+        String msg = t.toString() + ": " + message;
+        intent.putExtra("CC_Upload", msg);
+        Log.d("CerebralCortexMessenger", msg);
         LocalBroadcastManager.getInstance(this.context).sendBroadcast(intent);
     }
 
@@ -252,28 +255,29 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
             //Computed Data Store
             List<RowObject> objects;
             int BLOCK_SIZE_LIMIT;
+            long count = 0L;
             if (!hf) {
                 APIendpoint = "datapoints/bulkload";
                 objects = dbLogger.queryLastKey(dsc.getDs_id(), Constants.DATA_BLOCK_SIZE_LIMIT);
+                count = dbLogger.queryCount(dsc.getDs_id(), true).getSample();
                 BLOCK_SIZE_LIMIT = Constants.DATA_BLOCK_SIZE_LIMIT;
             } else {
                 APIendpoint = "rawdatapoints/bulkload";
                 objects = dbLogger.queryHFLastKey(dsc.getDs_id(), Constants.HF_DATA_BLOCK_SIZE_LIMIT);
+                count = dbLogger.queryHFCount(dsc.getDs_id(), true).getSample();
                 BLOCK_SIZE_LIMIT = Constants.HF_DATA_BLOCK_SIZE_LIMIT;
             }
 
             if (objects.size() > 0) {
-                Log.d("CerebralCortex", "Offloading data for " + dsc.getDs_id());
+                messenger("Offloading data: " + dsc.getDs_id() + "(" + count + ")");
 
-                long[] keys = new long[objects.size()];
+                long key = objects.get(objects.size() - 1).rowKey;
                 for (RowObject obj : objects) {
                     ccdata.data.add(obj.toArrayForm());
                 }
-                for (int i = 0; i < objects.size(); i++) {
-                    keys[i] = objects.get(i).rowKey;
-                }
 
                 try {
+                    messenger("JSON upload started: " + dsc.getDs_id() + "(" + ccdata.data.size() + ")");
                     String data = gson.toJson(ccdata);
                     dataResult = cerebralCortexAPI(requestURL + APIendpoint, data);
                     if (dataResult == null) {
@@ -281,12 +285,13 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                     }
                     CerebralCortexDataResponse ccdr = LoganSquare.parse(dataResult, CerebralCortexDataResponse.class);
                     if (ccdr.count > 0) {
-                        Log.d("CerebralCortex", "Record Upload Count: (" + dsc.getDs_id() + ") #" + ccdr.count);
+                        messenger("Uploaded " + dsc.getDs_id() + "(" + ccdr.count + ")");
                         if (!hf) {
-                            dbLogger.setSyncedBit(keys);
+                            dbLogger.setSyncedBit(dsc.getDs_id(), key);
                         } else {
-                            dbLogger.setHFSyncedBit(keys);
+                            dbLogger.setHFSyncedBit(dsc.getDs_id(), key);
                         }
+                        messenger("CloudSync " + dsc.getDs_id() + "(" + (count - ccdr.count) + ")");
                     }
                     if (ccdr.count == BLOCK_SIZE_LIMIT) {
                         cont = true;

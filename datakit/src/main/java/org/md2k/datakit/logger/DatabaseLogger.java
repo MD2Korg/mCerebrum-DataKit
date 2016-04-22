@@ -117,12 +117,12 @@ public class DatabaseLogger extends SQLiteOpenHelper {
         return databaseTable_data.queryHFLastKey(db, ds_id, limit);
     }
 
-    public boolean setSyncedBit(long[] keys) {
-        return databaseTable_data.setSyncedBit(db, keys);
+    public boolean setSyncedBit(int ds_id, long key) {
+        return databaseTable_data.setSyncedBit(db, ds_id, key);
     }
 
-    public boolean setHFSyncedBit(long[] keys) {
-        return databaseTable_data.setHFSyncedBit(db, keys);
+    public boolean setHFSyncedBit(int ds_id, long key) {
+        return databaseTable_data.setHFSyncedBit(db, ds_id, key);
     }
 
     public DataTypeLong querySize() {
@@ -147,5 +147,13 @@ public class DatabaseLogger extends SQLiteOpenHelper {
 
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         onUpgrade(db, oldVersion, newVersion);
+    }
+
+    public DataTypeLong queryCount(int ds_id, boolean unsynced) {
+        return databaseTable_data.queryCount(db, DatabaseTable_Data.TABLE_NAME, ds_id, unsynced);
+    }
+
+    public DataTypeLong queryHFCount(int ds_id, boolean unsynced) {
+        return databaseTable_data.queryCount(db, DatabaseTable_Data.HIGHFREQ_TABLE_NAME, ds_id, unsynced);
     }
 }

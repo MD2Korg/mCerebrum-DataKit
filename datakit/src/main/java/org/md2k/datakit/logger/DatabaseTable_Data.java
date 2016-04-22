@@ -50,8 +50,8 @@ import java.util.List;
 public class DatabaseTable_Data {
     private static final String TAG = DatabaseTable_Data.class.getSimpleName();
 
-    private static String TABLE_NAME = "data";
-    private static String HIGHFREQ_TABLE_NAME = "rawdata";
+    public static String TABLE_NAME = "data";
+    public static String HIGHFREQ_TABLE_NAME = "rawdata";
     private static String C_ID = "_id";
     private static String C_DATASOURCE_ID = "datasource_id";
     private static final String SQL_CREATE_DATA_INDEX = "CREATE INDEX IF NOT EXISTS index_datasource_id on " + TABLE_NAME + " (" + C_DATASOURCE_ID + ");";
@@ -255,43 +255,24 @@ public class DatabaseTable_Data {
         return rowObjects;
     }
 
-    public boolean setSyncedBit(SQLiteDatabase db, long[] keys) {
+    public boolean setSyncedBit(SQLiteDatabase db, int dsid, long lastSyncKey) {
         insertDB(db, TABLE_NAME, cValues);
-        db.beginTransaction();
-
         ContentValues values = new ContentValues();
-        try {
-            int bit = 1;
-            for (long k : keys) {
-                values.put("cc_sync", bit);
-                db.update(TABLE_NAME, values, "_id=" + k, null);
-            }
-            db.setTransactionSuccessful();
-        } catch (Exception e) {
-            return false;
-        } finally {
-            db.endTransaction();
-        }
+        int bit = 1;
+        values.put("cc_sync", bit);
+        String[] args = new String[]{Long.toString(lastSyncKey), Integer.toString(dsid)};
+        db.update(TABLE_NAME, values, "cc_sync = 0 AND _id <= ? AND datasource_id = ?", args);
+
         return true;
     }
 
-    public boolean setHFSyncedBit(SQLiteDatabase db, long[] keys) {
+    public boolean setHFSyncedBit(SQLiteDatabase db, int dsid, long lastSyncKey) {
         insertDB(db, HIGHFREQ_TABLE_NAME, cValues);
-        db.beginTransaction();
-
         ContentValues values = new ContentValues();
-        try {
-            int bit = 1;
-            for (long k : keys) {
-                values.put("cc_sync", bit);
-                db.update(TABLE_NAME, values, "_id=" + k, null);
-            }
-            db.setTransactionSuccessful();
-        } catch (Exception e) {
-            return false;
-        } finally {
-            db.endTransaction();
-        }
+        int bit = 1;
+        values.put("cc_sync", bit);
+        String[] args = new String[]{Long.toString(lastSyncKey), Integer.toString(dsid)};
+        db.update(HIGHFREQ_TABLE_NAME, values, "cc_sync = 0 AND _id <= ? AND datasource_id = ?", args);
         return true;
     }
 
@@ -317,6 +298,23 @@ public class DatabaseTable_Data {
     public DataTypeLong querySize(SQLiteDatabase db) {
         insertDB(db, TABLE_NAME, cValues);
         String sql = "select count(_id)as c from data";
+        Cursor mCursor = db.rawQuery(sql, null);
+        DataTypeLong count = new DataTypeLong(0L, 0L);
+        if (mCursor.moveToFirst()) {
+            do {
+                count = new DataTypeLong(0L, mCursor.getLong(mCursor.getColumnIndex(C_COUNT)));
+            } while (mCursor.moveToNext());
+        }
+        if (!mCursor.isClosed()) {
+            mCursor.close();
+        }
+        return count;
+    }
+
+    public DataTypeLong queryCount(SQLiteDatabase db, String table, int ds_id, boolean unsynced) {
+        String sql = "select count(_id)as c from " + table + " where " + C_DATASOURCE_ID + " = " + ds_id;
+        if (unsynced)
+            sql += " and " + C_CLOUD_SYNC_BIT + " = 0";
         Cursor mCursor = db.rawQuery(sql, null);
         DataTypeLong count = new DataTypeLong(0L, 0L);
         if (mCursor.moveToFirst()) {
@@ -372,5 +370,6 @@ public class DatabaseTable_Data {
         input.close();
         return dataType;
     }
+
 
 }
