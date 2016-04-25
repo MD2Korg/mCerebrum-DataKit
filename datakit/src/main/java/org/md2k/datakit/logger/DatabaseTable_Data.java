@@ -53,12 +53,16 @@ public class DatabaseTable_Data {
     public static String TABLE_NAME = "data";
     public static String HIGHFREQ_TABLE_NAME = "rawdata";
     private static String C_ID = "_id";
-    private static String C_DATASOURCE_ID = "datasource_id";
-    private static final String SQL_CREATE_DATA_INDEX = "CREATE INDEX IF NOT EXISTS index_datasource_id on " + TABLE_NAME + " (" + C_DATASOURCE_ID + ");";
-    private static final String SQL_CREATE_HIGHFREQ_DATA_INDEX = "CREATE INDEX IF NOT EXISTS index_hf_datasource_id on " + HIGHFREQ_TABLE_NAME + " (" + C_DATASOURCE_ID + ");";
     private static String C_CLOUD_SYNC_BIT = "cc_sync";
     private static String C_DATETIME = "datetime";
     private static String C_SAMPLE = "sample";
+    private static String C_DATASOURCE_ID = "datasource_id";
+
+    private static final String SQL_CREATE_DATA_INDEX = "CREATE INDEX IF NOT EXISTS index_datasource_id on " + TABLE_NAME + " (" + C_DATASOURCE_ID + ");";
+    private static final String SQL_CREATE_HIGHFREQ_DATA_INDEX = "CREATE INDEX IF NOT EXISTS index_hf_datasource_id on " + HIGHFREQ_TABLE_NAME + " (" + C_DATASOURCE_ID + ");";
+    private static final String SQL_CREATE_CC_INDEX = "CREATE INDEX IF NOT EXISTS index_cc_datasource_id on " + TABLE_NAME + " (" + C_DATASOURCE_ID + ", " + C_CLOUD_SYNC_BIT + ");";
+    private static final String SQL_CREATE_HF_CC_INDEX = "CREATE INDEX IF NOT EXISTS index_cc_hf_datasource_id on " + HIGHFREQ_TABLE_NAME + " (" + C_DATASOURCE_ID + ", " + C_CLOUD_SYNC_BIT + ");";
+
     private static final String SQL_CREATE_DATA = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
             C_ID + " INTEGER PRIMARY KEY autoincrement, " +
             C_DATASOURCE_ID + " TEXT not null, " +
@@ -94,8 +98,10 @@ public class DatabaseTable_Data {
     public void createIfNotExists(SQLiteDatabase db) {
         db.execSQL(SQL_CREATE_DATA);
         db.execSQL(SQL_CREATE_DATA_INDEX);
+        db.execSQL(SQL_CREATE_CC_INDEX);
         db.execSQL(SQL_CREATE_HIGHFREQ_DATA);
         db.execSQL(SQL_CREATE_HIGHFREQ_DATA_INDEX);
+        db.execSQL(SQL_CREATE_HF_CC_INDEX);
     }
 
     private Status insertDB(SQLiteDatabase db, String tableName, List<ContentValues> data) {
