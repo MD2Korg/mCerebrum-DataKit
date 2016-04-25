@@ -261,6 +261,56 @@ public class DatabaseTable_Data {
         return rowObjects;
     }
 
+    public ArrayList<RowObject> querySyncedData(SQLiteDatabase db, int ds_id, long ageLimit, int limit) {
+        insertDB(db, TABLE_NAME, cValues);
+        ArrayList<RowObject> rowObjects = new ArrayList<>();
+        String sql = "select _id, sample from data where cc_sync = 1 and datasource_id=" + Integer.toString(ds_id) + " and datetime <= " + ageLimit + " LIMIT " + Integer.toString(limit);
+        Cursor mCursor = db.rawQuery(sql, null);
+        if (mCursor.moveToFirst()) {
+            do {
+                DataType dt = fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE)));
+                rowObjects.add(new RowObject(mCursor.getLong(mCursor.getColumnIndex(C_ID)), dt));
+            } while (mCursor.moveToNext());
+        }
+        if (!mCursor.isClosed()) {
+            mCursor.close();
+        }
+        return rowObjects;
+    }
+
+    public ArrayList<RowObject> queryHFSyncedData(SQLiteDatabase db, int ds_id, long ageLimit, int limit) {
+        insertDB(db, HIGHFREQ_TABLE_NAME, cValues);
+        ArrayList<RowObject> rowObjects = new ArrayList<>();
+        String sql = "select _id, datetime, sample from rawdata where cc_sync = 1 and datasource_id=" + Integer.toString(ds_id) + " and datetime <= " + ageLimit + " LIMIT " + Integer.toString(limit);
+        Cursor mCursor = db.rawQuery(sql, null);
+        if (mCursor.moveToFirst()) {
+            do {
+                byte[] data = mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE));
+                DataTypeDoubleArray dt = DataTypeDoubleArray.fromRawBytes(mCursor.getLong(mCursor.getColumnIndex(C_DATETIME)), data);
+                rowObjects.add(new RowObject(mCursor.getLong(mCursor.getColumnIndex(C_ID)), dt));
+            } while (mCursor.moveToNext());
+        }
+        if (!mCursor.isClosed()) {
+            mCursor.close();
+        }
+        return rowObjects;
+    }
+
+    public boolean removeSyncedData(SQLiteDatabase db, int dsid, long lastSyncKey) {
+        insertDB(db, TABLE_NAME, cValues);
+        String[] args = new String[]{Long.toString(lastSyncKey), Integer.toString(dsid)};
+        db.delete(TABLE_NAME, "cc_sync = 1 AND _id <= ? AND datasource_id = ?", args);
+        return true;
+    }
+
+    public boolean removeHFSyncedData(SQLiteDatabase db, int dsid, long lastSyncKey) {
+        insertDB(db, HIGHFREQ_TABLE_NAME, cValues);
+        String[] args = new String[]{Long.toString(lastSyncKey), Integer.toString(dsid)};
+        db.delete(HIGHFREQ_TABLE_NAME, "cc_sync = 1 AND _id <= ? AND datasource_id = ?", args);
+        return true;
+    }
+
+
     public boolean setSyncedBit(SQLiteDatabase db, int dsid, long lastSyncKey) {
         insertDB(db, TABLE_NAME, cValues);
         ContentValues values = new ContentValues();

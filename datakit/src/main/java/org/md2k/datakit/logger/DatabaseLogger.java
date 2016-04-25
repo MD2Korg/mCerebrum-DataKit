@@ -113,12 +113,28 @@ public class DatabaseLogger extends SQLiteOpenHelper {
         return databaseTable_data.queryLastKey(db, ds_id, limit);
     }
 
+    public ArrayList<RowObject> querySyncedData(int ds_id, long ageLimit, int limit) {
+        return databaseTable_data.querySyncedData(db, ds_id, ageLimit, limit);
+    }
+
+    public ArrayList<RowObject> queryHFSyncedData(int ds_id, long ageLimit, int limit) {
+        return databaseTable_data.queryHFSyncedData(db, ds_id, ageLimit, limit);
+    }
+
     public ArrayList<RowObject> queryHFLastKey(int ds_id, int limit) {
         return databaseTable_data.queryHFLastKey(db, ds_id, limit);
     }
 
     public boolean setSyncedBit(int ds_id, long key) {
         return databaseTable_data.setSyncedBit(db, ds_id, key);
+    }
+
+    public boolean removeSyncedData(int ds_id, long key) {
+        return databaseTable_data.removeSyncedData(db, ds_id, key);
+    }
+
+    public boolean removeHFSyncedData(int ds_id, long key) {
+        return databaseTable_data.removeHFSyncedData(db, ds_id, key);
     }
 
     public boolean setHFSyncedBit(int ds_id, long key) {

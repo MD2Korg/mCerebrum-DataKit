@@ -24,6 +24,7 @@ import org.md2k.datakit.cerebralcortex.communication.UserInfo;
 import org.md2k.datakit.cerebralcortex.communication.UserInfoCC;
 import org.md2k.datakit.cerebralcortex.communication.UserInfoCCResponse;
 import org.md2k.datakit.logger.DatabaseLogger;
+import org.md2k.datakit.operation.FileManager;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.datatype.DataTypeJSONObject;
 import org.md2k.datakitapi.datatype.RowObject;
@@ -34,15 +35,20 @@ import org.md2k.datakitapi.source.datasource.DataSourceType;
 import org.md2k.utilities.Report.Log;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.Time;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.GZIPOutputStream;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -78,6 +84,7 @@ import javax.net.ssl.HttpsURLConnection;
 public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
     private static final String TAG = CerebralCortexWrapper.class.getSimpleName();
     private static final Integer COUNT_INDEX = -1;
+    public static String CCDIR = "";
     DatabaseLogger dbLogger = null;
     private Context context;
     private String requestURL;
@@ -89,6 +96,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         this.requestURL = url;
         this.restricted = restricted;
         dbLogger = DatabaseLogger.getInstance(context);
+        CCDIR = FileManager.getExternalSDCardDirectory(this.context) + "/cerebralcortex/";
     }
 
     private static String readStream(InputStream in) {
@@ -136,6 +144,12 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                 return false;
             }
         }
+
+
+        File ccdir = new File(CCDIR);
+        if (!ccdir.exists())
+            ccdir.mkdir();
+
 
         messenger("Starting publish procedure");
 
@@ -230,6 +244,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                 validDataSources.put(dsc, ccdpResponse);
             }
         }
+
         for (Map.Entry<DataSourceClient, CerebralCortexDataSourceResponse> entry : validDataSources.entrySet()) {
 
             messenger("Publishing data for " + entry.getKey().getDs_id());
@@ -238,9 +253,75 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
 
         }
 
+        for (Map.Entry<DataSourceClient, CerebralCortexDataSourceResponse> entry : validDataSources.entrySet()) {
+            messenger("Archiving data for " + entry.getKey().getDs_id());
+            //Only prune HF data
+            archiveDataStream(true, entry.getKey(), entry.getValue());
+        }
+
         messenger("Upload Complete");
         return true;
         }
+
+    private void archiveDataStream(boolean hf, DataSourceClient dsc, CerebralCortexDataSourceResponse ccdpResponse) {
+        String dataResult = null;
+        boolean cont = true;
+        long DAY = 1000 * 60 * 3;
+
+        while (cont) {
+            cont = false;
+
+            CerebralCortexData ccdata = new CerebralCortexData(ccdpResponse.datastream_id);
+
+            //Computed Data Store
+            List<RowObject> objects;
+            long count = 0L;
+            if (!hf) {
+                objects = dbLogger.querySyncedData(dsc.getDs_id(), System.currentTimeMillis() - DAY, Constants.DATA_BLOCK_SIZE_LIMIT);
+            } else {
+                objects = dbLogger.queryHFSyncedData(dsc.getDs_id(), System.currentTimeMillis() - DAY, Constants.HF_DATA_BLOCK_SIZE_LIMIT);
+            }
+
+            if (objects.size() > 0) {
+                long key = objects.get(objects.size() - 1).rowKey;
+                for (RowObject obj : objects) {
+                    ccdata.data.add(obj.toArrayForm());
+                }
+
+                messenger("Archiving datastream " + dsc.getDs_id());
+                String data = new GsonBuilder().setPrettyPrinting().create().toJson(ccdata);
+                String filename = dsc.getDs_id() + "_" + objects.get(0).data.getDateTime() + ".json.gz";
+                archiveJsonData(data, filename);
+
+                messenger("Pruning datastream data " + dsc.getDs_id());
+                if (!hf) {
+                    dbLogger.removeSyncedData(dsc.getDs_id(), key);
+                } else {
+                    dbLogger.removeHFSyncedData(dsc.getDs_id(), key);
+                }
+
+            }
+        }
+    }
+
+    private void archiveJsonData(String data, String filename) {
+        File outputfile = new File(CCDIR + filename);
+        if (!outputfile.exists()) {
+            try {
+                FileOutputStream output = new FileOutputStream(outputfile, false);
+                Writer writer = new OutputStreamWriter(new GZIPOutputStream(output), "UTF-8");
+
+                writer.write(data);
+
+                writer.close();
+                output.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            //File exists, skipping
+        }
+    }
 
     private void publishDataStream(boolean hf, DataSourceClient dsc, CerebralCortexDataSourceResponse ccdpResponse) {
         String APIendpoint;
@@ -311,6 +392,11 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         String dataSourceResult = null;
         CerebralCortexDataSourceResponse result = new CerebralCortexDataSourceResponse();
         result.status = "ERROR";
+
+        String data = new GsonBuilder().setPrettyPrinting().create().toJson(dsc);
+        String filename = dsc.getDs_id() + "_datasource.json.gz";
+        archiveJsonData(data, filename);
+
         try {
             dataSourceResult = cerebralCortexAPI(requestURL + "datasources/register", gson.toJson(ccdp));
         } catch (IOException e) {
@@ -322,6 +408,8 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+
         return result;
     }
 
