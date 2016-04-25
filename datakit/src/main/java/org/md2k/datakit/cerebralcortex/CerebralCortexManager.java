@@ -58,7 +58,7 @@ public class CerebralCortexManager {
                 try {
                     long time = Apps.serviceRunningTime(context.getApplicationContext(), org.md2k.datakit.Constants.SERVICE_NAME);
                     if (time > 0) {
-                        task = new CerebralCortexWrapper(context, config.getUrl(), config.getRestricted_datasource());
+                        task = new CerebralCortexWrapper(context, config.getUrl(), config.getHistory_time(), config.getRestricted_datasource());
                         task.execute();
                     }
                 } catch (IOException e) {

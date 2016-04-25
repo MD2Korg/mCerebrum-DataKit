@@ -85,16 +85,18 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
     private static final String TAG = CerebralCortexWrapper.class.getSimpleName();
     private static final Integer COUNT_INDEX = -1;
     public static String CCDIR = "";
+    private final long history_time;
     DatabaseLogger dbLogger = null;
     private Context context;
     private String requestURL;
     private List<DataSource> restricted;
     private Gson gson = new GsonBuilder().serializeNulls().create();
 
-    public CerebralCortexWrapper(Context context, String url, List<DataSource> restricted) throws IOException {
+    public CerebralCortexWrapper(Context context, String url, long history_time, List<DataSource> restricted) throws IOException {
         this.context = context;
         this.requestURL = url;
         this.restricted = restricted;
+        this.history_time = history_time;
         dbLogger = DatabaseLogger.getInstance(context);
         CCDIR = FileManager.getExternalSDCardDirectory(this.context) + "/cerebralcortex/";
     }
@@ -148,7 +150,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
 
         File ccdir = new File(CCDIR);
         if (!ccdir.exists())
-            ccdir.mkdir();
+            ccdir.mkdirs();
 
 
         messenger("Starting publish procedure");
@@ -266,7 +268,6 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
     private void archiveDataStream(boolean hf, DataSourceClient dsc, CerebralCortexDataSourceResponse ccdpResponse) {
         String dataResult = null;
         boolean cont = true;
-        long DAY = 1000 * 60 * 3;
 
         while (cont) {
             cont = false;
@@ -277,9 +278,9 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
             List<RowObject> objects;
             long count = 0L;
             if (!hf) {
-                objects = dbLogger.querySyncedData(dsc.getDs_id(), System.currentTimeMillis() - DAY, Constants.DATA_BLOCK_SIZE_LIMIT);
+                objects = dbLogger.querySyncedData(dsc.getDs_id(), System.currentTimeMillis() - history_time, Constants.DATA_BLOCK_SIZE_LIMIT);
             } else {
-                objects = dbLogger.queryHFSyncedData(dsc.getDs_id(), System.currentTimeMillis() - DAY, Constants.HF_DATA_BLOCK_SIZE_LIMIT);
+                objects = dbLogger.queryHFSyncedData(dsc.getDs_id(), System.currentTimeMillis() - history_time, Constants.HF_DATA_BLOCK_SIZE_LIMIT);
             }
 
             if (objects.size() > 0) {
@@ -291,7 +292,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                 messenger("Archiving datastream " + dsc.getDs_id());
                 String data = new GsonBuilder().setPrettyPrinting().create().toJson(ccdata);
                 String filename = dsc.getDs_id() + "_" + objects.get(0).data.getDateTime() + ".json.gz";
-                archiveJsonData(data, filename);
+                archiveJsonData(data, dsc.getDs_id(), filename);
 
                 messenger("Pruning datastream data " + dsc.getDs_id());
                 if (!hf) {
@@ -304,8 +305,12 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         }
     }
 
-    private void archiveJsonData(String data, String filename) {
-        File outputfile = new File(CCDIR + filename);
+    private void archiveJsonData(String data, int ds_id, String filename) {
+        File outputDir = new File(CCDIR + "ds" + ds_id + "/");
+        if (!outputDir.mkdirs()) {
+            Log.e("Archive", "mkdir error" + outputDir);
+        }
+        File outputfile = new File(outputDir + "/" + filename);
         if (!outputfile.exists()) {
             try {
                 FileOutputStream output = new FileOutputStream(outputfile, false);
@@ -395,7 +400,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
 
         String data = new GsonBuilder().setPrettyPrinting().create().toJson(dsc);
         String filename = dsc.getDs_id() + "_datasource.json.gz";
-        archiveJsonData(data, filename);
+        archiveJsonData(data, dsc.getDs_id(), filename);
 
         try {
             dataSourceResult = cerebralCortexAPI(requestURL + "datasources/register", gson.toJson(ccdp));

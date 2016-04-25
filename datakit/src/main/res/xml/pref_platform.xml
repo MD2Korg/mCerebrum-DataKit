@@ -7,6 +7,14 @@
             android:summary="(not selected)"
             android:title="Interval"></ListPreference>
     </PreferenceCategory>
+    <PreferenceCategory android:title="History Buffer">
+        <ListPreference
+            android:entries="@array/history_time_text"
+            android:entryValues="@array/history_time_values"
+            android:key="history_time"
+            android:summary="(not selected)"
+            android:title="Time"></ListPreference>
+    </PreferenceCategory>
     <PreferenceCategory android:title="API URL">
         <EditTextPreference
             android:key="api_url"
