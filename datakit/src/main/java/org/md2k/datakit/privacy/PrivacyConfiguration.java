@@ -2,16 +2,11 @@ package org.md2k.datakit.privacy;
 
 import android.content.Context;
 
-import com.google.gson.Gson;
-
-import org.md2k.datakit.Constants;
+import org.md2k.datakit.configuration.ConfigurationManager;
+import org.md2k.datakit.configuration.PrivacyConfig;
 import org.md2k.utilities.data_format.privacy.Duration;
 import org.md2k.utilities.data_format.privacy.PrivacyType;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 /**
@@ -45,7 +40,7 @@ public class PrivacyConfiguration {
     protected PrivacyConfig privacyConfig;
     public PrivacyConfiguration(Context context){
         this.context=context;
-        readPrivacyOptionsFromFile();
+        privacyConfig=ConfigurationManager.getInstance().configuration.privacy_config;
     }
     public ArrayList<Duration> getDuration(){
         return privacyConfig.duration_options;
@@ -55,19 +50,5 @@ public class PrivacyConfiguration {
     }
     public boolean isAvailable(){
         return privacyConfig != null;
-    }
-    private void readPrivacyOptionsFromFile() {
-        BufferedReader br;
-        privacyConfig=null;
-        try {
-            br = new BufferedReader(new InputStreamReader(new FileInputStream(Constants.CONFIG_DIRECTORY + Constants.CONFIG_FILENAME)));
-            Gson gson = new Gson();
-            privacyConfig = gson.fromJson(br, PrivacyConfig.class);
-        } catch (FileNotFoundException e) {
-        }
-    }
-    public class PrivacyConfig{
-        ArrayList<Duration> duration_options;
-        ArrayList<PrivacyType> privacy_type_options;
     }
 }

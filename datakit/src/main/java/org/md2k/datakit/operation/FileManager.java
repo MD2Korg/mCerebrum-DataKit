@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Environment;
 import android.os.StatFs;
 
+import org.md2k.datakit.configuration.ConfigurationManager;
 import org.md2k.utilities.Report.Log;
 
 import java.io.File;
@@ -35,12 +36,11 @@ import java.io.File;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 public class FileManager {
-    public static final int INTERNAL_SDCARD = 1;
-    public static final int EXTERNAL_SDCARD = 2;
-    public static final int INTERNAL_SDCARD_FOLLOWED_BY_EXTERNAL_SDCARD = 3;
-    public static final int EXTERNAL_SDCARD_FOLLOWED_BY_INTERNAL_SDCARD = 4;
-    public static final int NONE = 5;
-    public static int STORAGE_OPTION = EXTERNAL_SDCARD_FOLLOWED_BY_INTERNAL_SDCARD;
+    public static final String INTERNAL_SDCARD = "INTERNAL_SDCARD";
+    public static final String EXTERNAL_SDCARD = "EXTERNAL_SDCARD";
+    public static final String PREFERRED_EXTERNAL_SDCARD = "PREFERRED_EXTERNAL_SDCARD";
+    public static final String PREFERRED_INTERNAL_SDCARD = "PREFERRED_INTERNAL_SDCARD";
+    public static final String NONE = "NONE";
     public static final String INTERNAL_SDCARD_STR = "Internal SD Card";
     public static final String EXTERNAL_SDCARD_STR = "External SD Card";
 
@@ -50,20 +50,6 @@ public class FileManager {
         return "database.db";
     }
 
-    public static String getStorageOption() {
-        switch (STORAGE_OPTION) {
-            case INTERNAL_SDCARD:
-                return INTERNAL_SDCARD_STR;
-            case EXTERNAL_SDCARD:
-                return EXTERNAL_SDCARD_STR;
-            case INTERNAL_SDCARD_FOLLOWED_BY_EXTERNAL_SDCARD:
-                return "both Internal & External SD Card";
-            case EXTERNAL_SDCARD_FOLLOWED_BY_INTERNAL_SDCARD:
-                return "both External & Internal SD Card";
-            default:
-                return "SD Card";
-        }
-    }
 
     public static final int VERSION = 1;
 
@@ -106,14 +92,15 @@ public class FileManager {
     }
 
     public static String getCurrentSDCardOptionString() {
+        String STORAGE_OPTION= ConfigurationManager.getInstance().configuration.database_location;
         switch (STORAGE_OPTION) {
             case INTERNAL_SDCARD:
                 return INTERNAL_SDCARD_STR;
             case EXTERNAL_SDCARD:
                 return EXTERNAL_SDCARD_STR;
-            case INTERNAL_SDCARD_FOLLOWED_BY_EXTERNAL_SDCARD:
+            case PREFERRED_INTERNAL_SDCARD:
                 return "Internal SDcard followed by External SDcard";
-            case EXTERNAL_SDCARD_FOLLOWED_BY_INTERNAL_SDCARD:
+            case PREFERRED_EXTERNAL_SDCARD:
                 return "External SDcard followed by Internal SDcard";
             case NONE:
                 return "None";
@@ -131,6 +118,7 @@ public class FileManager {
     }
 
     public static String getValidSDcard(Context context) {
+        String STORAGE_OPTION= ConfigurationManager.getInstance().configuration.database_location;
         switch (STORAGE_OPTION) {
             case INTERNAL_SDCARD:
                 if (getInternalSDCardDirectory(context) == null) return "Not found";
@@ -138,11 +126,11 @@ public class FileManager {
             case EXTERNAL_SDCARD:
                 if (getExternalSDCardDirectory(context) == null) return "Not found";
                 else return EXTERNAL_SDCARD_STR;
-            case INTERNAL_SDCARD_FOLLOWED_BY_EXTERNAL_SDCARD:
+            case PREFERRED_INTERNAL_SDCARD:
                 if (getInternalSDCardDirectory(context) != null) return INTERNAL_SDCARD_STR;
                 else if (getExternalSDCardDirectory(context) != null) return EXTERNAL_SDCARD_STR;
                 else return "Not found";
-            case EXTERNAL_SDCARD_FOLLOWED_BY_INTERNAL_SDCARD:
+            case PREFERRED_EXTERNAL_SDCARD:
                 if (getExternalSDCardDirectory(context) != null) return EXTERNAL_SDCARD_STR;
                 else if (getInternalSDCardDirectory(context) != null) return INTERNAL_SDCARD_STR;
                 else return "Not found";
@@ -228,6 +216,7 @@ public class FileManager {
     }
 
     public static String getDirectory(Context context) {
+        String STORAGE_OPTION= ConfigurationManager.getInstance().configuration.database_location;
         if (context == null) return null;
         Log.d(TAG, "getDirectory.. STORAGE_OPTION=" + STORAGE_OPTION + " Context=" + context);
         String directory;
@@ -238,12 +227,12 @@ public class FileManager {
             case EXTERNAL_SDCARD:
                 directory = getExternalSDCardDirectory(context);
                 break;
-            case INTERNAL_SDCARD_FOLLOWED_BY_EXTERNAL_SDCARD:
+            case PREFERRED_INTERNAL_SDCARD:
                 directory = getInternalSDCardDirectory(context);
                 if (directory == null)
                     directory = getExternalSDCardDirectory(context);
                 break;
-            case EXTERNAL_SDCARD_FOLLOWED_BY_INTERNAL_SDCARD:
+            case PREFERRED_EXTERNAL_SDCARD:
                 directory = getExternalSDCardDirectory(context);
                 if (directory == null)
                     directory = getInternalSDCardDirectory(context);
