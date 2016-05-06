@@ -105,7 +105,7 @@ public class PrefsFragmentDataKitSettings extends PreferenceFragment {
 
     void setupDatabaseFile(){
         Preference preference = findPreference("database_filename");
-        preference.setSummary(FileManager.getDatabaseFilePath(getActivity()));
+        preference.setSummary(FileManager.getFilePath(getActivity()));
     }
     void setupDatabaseClear(){
         Preference preference = findPreference("database_clear");

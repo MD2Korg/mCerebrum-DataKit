@@ -4,7 +4,6 @@ import android.content.Context;
 import android.os.Environment;
 import android.os.StatFs;
 
-import org.md2k.datakit.configuration.ConfigurationManager;
 import org.md2k.utilities.Report.Log;
 
 import java.io.File;
@@ -38,17 +37,11 @@ import java.io.File;
 public class FileManager {
     public static final String INTERNAL_SDCARD = "INTERNAL_SDCARD";
     public static final String EXTERNAL_SDCARD = "EXTERNAL_SDCARD";
-    public static final String PREFERRED_EXTERNAL_SDCARD = "PREFERRED_EXTERNAL_SDCARD";
-    public static final String PREFERRED_INTERNAL_SDCARD = "PREFERRED_INTERNAL_SDCARD";
+    public static final String EXTERNAL_SDCARD_PREFERRED = "EXTERNAL_SDCARD_PREFERRED";
+    public static final String INTERNAL_SDCARD_PREFERRED = "INTERNAL_SDCARD_PREFERRED";
     public static final String NONE = "NONE";
-    public static final String INTERNAL_SDCARD_STR = "Internal SD Card";
-    public static final String EXTERNAL_SDCARD_STR = "External SD Card";
 
     private static final String TAG = FileManager.class.getSimpleName();
-
-    public static String getFileName() {
-        return "database.db";
-    }
 
 
     public static final int VERSION = 1;
@@ -68,57 +61,24 @@ public class FileManager {
     }
 
     public static String getExternalSDCardDirectory(Context context) {
-        File file = getExternalSDCardPath(context);
-        if (file == null) return null;
-        return file.getAbsolutePath();
-    }
-
-    public static File getExternalSDCardPath(Context context) {
-        /**
-         * TODO: There is no straight forward way to detect the presence of removable SD card.
-         * This functions works for Samsung Galaxy S4. But for different phone, it needs to check
-         **/
         String strSDCardPath = System.getenv("SECONDARY_STORAGE");
-        String directory = null;
-        Log.d(TAG, "External SD Card=" + strSDCardPath + " context=" + context + " state=" + Environment.getExternalStorageState());
         File[] externalFilesDirs = context.getExternalFilesDirs(null);
-        Log.d(TAG, "External File Dir: size=" + externalFilesDirs.length);
         for (File externalFilesDir : externalFilesDirs) {
             if (externalFilesDir == null) continue;
             if (externalFilesDir.getAbsolutePath().contains(strSDCardPath))
-                return externalFilesDir;
+                return externalFilesDir.getAbsolutePath();
         }
         return null;
     }
 
-    public static String getCurrentSDCardOptionString() {
-        String STORAGE_OPTION= ConfigurationManager.getInstance().configuration.database_location;
-        switch (STORAGE_OPTION) {
-            case INTERNAL_SDCARD:
-                return INTERNAL_SDCARD_STR;
-            case EXTERNAL_SDCARD:
-                return EXTERNAL_SDCARD_STR;
-            case PREFERRED_INTERNAL_SDCARD:
-                return "Internal SDcard followed by External SDcard";
-            case PREFERRED_EXTERNAL_SDCARD:
-                return "External SDcard followed by Internal SDcard";
-            case NONE:
-                return "None";
-            default:
-                return "(null)";
-        }
-
-    }
-
-    public static String getDatabaseFilePath(Context context) {
-        String filepath = getDatabaseDirectory(context);
+    public static String getFilePath(Context context) {
+        String filepath = getDirectory(context);
         if (filepath != null)
             filepath = filepath + getFileName();
         return filepath;
     }
 
-    public static String getValidSDcard(Context context) {
-        String STORAGE_OPTION= ConfigurationManager.getInstance().configuration.database_location;
+    public static String getValidSDcard(Context context, String STORAGE_OPTION) {
         switch (STORAGE_OPTION) {
             case INTERNAL_SDCARD:
                 if (getInternalSDCardDirectory(context) == null) return "Not found";
@@ -126,11 +86,11 @@ public class FileManager {
             case EXTERNAL_SDCARD:
                 if (getExternalSDCardDirectory(context) == null) return "Not found";
                 else return EXTERNAL_SDCARD_STR;
-            case PREFERRED_INTERNAL_SDCARD:
+            case INTERNAL_SDCARD_PREFERRED:
                 if (getInternalSDCardDirectory(context) != null) return INTERNAL_SDCARD_STR;
                 else if (getExternalSDCardDirectory(context) != null) return EXTERNAL_SDCARD_STR;
                 else return "Not found";
-            case PREFERRED_EXTERNAL_SDCARD:
+            case EXTERNAL_SDCARD_PREFERRED:
                 if (getExternalSDCardDirectory(context) != null) return EXTERNAL_SDCARD_STR;
                 else if (getInternalSDCardDirectory(context) != null) return INTERNAL_SDCARD_STR;
                 else return "Not found";
@@ -162,7 +122,7 @@ public class FileManager {
         return usedStr + " out of " + totalStr + " ( "+String.valueOf(used*100/total)+"% )";
     }
     public static String getFileSize(Context context){
-        long fileSize=getFileSize(new File(getDatabaseFilePath(context)));
+        long fileSize=getFileSize(new File(getFilePath(context)));
         return formatSize(fileSize);
     }
 
@@ -210,13 +170,12 @@ public class FileManager {
         return resultBuffer.toString();
     }
     public static boolean deleteFile(Context context){
-        String filePath= getDatabaseFilePath(context);
+        String filePath= getFilePath(context);
         File file = new File(filePath);
         return file.delete();
     }
 
-    public static String getDatabaseDirectory(Context context) {
-        String STORAGE_OPTION= ConfigurationManager.getInstance().configuration.database_location;
+    public static String getDirectory(Context context, String STORAGE_OPTION) {
         if (context == null) return null;
         Log.d(TAG, "getDirectory.. STORAGE_OPTION=" + STORAGE_OPTION + " Context=" + context);
         String directory;
@@ -227,12 +186,10 @@ public class FileManager {
             case EXTERNAL_SDCARD:
                 directory = getExternalSDCardDirectory(context);
                 break;
-            case PREFERRED_INTERNAL_SDCARD:
+            case INTERNAL_SDCARD_PREFERRED:
                 directory = getInternalSDCardDirectory(context);
-                if (directory == null)
-                    directory = getExternalSDCardDirectory(context);
                 break;
-            case PREFERRED_EXTERNAL_SDCARD:
+            case EXTERNAL_SDCARD_PREFERRED:
                 directory = getExternalSDCardDirectory(context);
                 if (directory == null)
                     directory = getInternalSDCardDirectory(context);

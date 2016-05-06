@@ -39,16 +39,7 @@ import java.io.InputStreamReader;
  */
 public class ConfigurationManager {
     public Configuration configuration;
-    private static ConfigurationManager instance=null;
-    public static ConfigurationManager getInstance(){
-        if(instance==null)
-            instance=new ConfigurationManager();
-        return instance;
-    }
-    public static void clear(){
-        instance=null;
-    }
-    private ConfigurationManager(){
+    public ConfigurationManager(){
         read();
     }
     private void read(){

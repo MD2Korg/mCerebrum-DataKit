@@ -53,7 +53,7 @@ public class DatabaseLogger extends SQLiteOpenHelper {
     SQLiteDatabase db = null;
 
     public DatabaseLogger(Context context) {
-        super(context, FileManager.getDatabaseFilePath(context), null, FileManager.VERSION);
+        super(context, FileManager.getFilePath(context), null, FileManager.VERSION);
         db = this.getWritableDatabase();
         Log.d(TAG, "DataBaseLogger() db isopen=" + db.isOpen() + " readonly=" + db.isReadOnly() + " isWriteAheadLoggingEnabled=" + db.isWriteAheadLoggingEnabled());
         databaseTable_dataSource = new DatabaseTable_DataSource(db);
@@ -62,7 +62,7 @@ public class DatabaseLogger extends SQLiteOpenHelper {
 
     public static DatabaseLogger getInstance(Context context) throws IOException {
         if (instance == null) {
-            String directory = FileManager.getDatabaseDirectory(context);
+            String directory = FileManager.getDirectory(context);
             Log.d(TAG, "directory=" + directory);
             if (directory != null)
                 instance = new DatabaseLogger(context);
