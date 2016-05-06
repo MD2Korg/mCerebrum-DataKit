@@ -5,7 +5,7 @@ import android.os.Environment;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import org.md2k.utilities.Files;
+import org.md2k.utilities.FileManager;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -48,7 +48,7 @@ public class ConfigManager {
 
     private static Config read(String filename) throws FileNotFoundException {
         Config config;
-        if (!Files.isExist(CONFIG_DIRECTORY + filename)) throw new FileNotFoundException();
+        if (!FileManager.isExist(CONFIG_DIRECTORY + filename)) throw new FileNotFoundException();
         BufferedReader br = new BufferedReader(new FileReader(CONFIG_DIRECTORY + filename));
         Gson gson = new Gson();
         Type collectionType = new TypeToken<Config>() {

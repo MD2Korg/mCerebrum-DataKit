@@ -23,10 +23,11 @@ import com.crashlytics.android.core.CrashlyticsCore;
 import org.md2k.datakit.cerebralcortex.ActivityCerebralCortexSettings;
 import org.md2k.datakit.cerebralcortex.CerebralCortexController;
 import org.md2k.datakit.cerebralcortex.ServiceCerebralCortex;
-import org.md2k.datakit.operation.FileManager;
+import org.md2k.datakit.configuration.ConfigurationManager;
 import org.md2k.datakit.privacy.PrivacyController;
 import org.md2k.datakitapi.time.DateTime;
 import org.md2k.utilities.Apps;
+import org.md2k.utilities.FileManager;
 import org.md2k.utilities.UI.ActivityAbout;
 import org.md2k.utilities.UI.ActivityCopyright;
 
@@ -66,6 +67,7 @@ import io.fabric.sdk.android.Fabric;
 public class ActivityMain extends AppCompatActivity {
     private static final String TAG = ActivityMain.class.getSimpleName();
     PrivacyController privacyController;
+    ConfigurationManager configurationManager;
 
     CerebralCortexController cerebralCortexController;
     CerebralCortexUpdateReceiver ccRcvr;
@@ -199,9 +201,11 @@ public class ActivityMain extends AppCompatActivity {
 
     }
 
-    void updateSDCardSetttingsText() {
-        ((TextView) findViewById(R.id.textview_sdcard_settings)).setText(FileManager.getCurrentSDCardOptionString());
-        ((TextView) findViewById(R.id.textview_location_sd)).setText(FileManager.getValidSDcard(ActivityMain.this));
+    void updateSDCardSettingsText() {
+        configurationManager=new ConfigurationManager();
+        String option=configurationManager.configuration.database.location;
+        ((TextView) findViewById(R.id.textview_sdcard_settings)).setText(option);
+        ((TextView) findViewById(R.id.textview_location_sd)).setText(FileManager.getSelectedSDCard(this,option));
     }
 
     @Override
@@ -213,7 +217,7 @@ public class ActivityMain extends AppCompatActivity {
 
     @Override
     public void onResume() {
-        updateSDCardSetttingsText();
+        updateSDCardSettingsText();
         mHandler.post(runnable);
         LocalBroadcastManager.getInstance(this).registerReceiver(ccRcvr, new IntentFilter(org.md2k.datakit.cerebralcortex.Constants.CEREBRAL_CORTEX_STATUS));
 

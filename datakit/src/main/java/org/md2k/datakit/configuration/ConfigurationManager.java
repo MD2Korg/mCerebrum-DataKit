@@ -4,7 +4,7 @@ package org.md2k.datakit.configuration;
 import com.google.gson.Gson;
 
 import org.md2k.datakit.Constants;
-import org.md2k.utilities.Files;
+import org.md2k.utilities.FileManager;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -45,7 +45,7 @@ public class ConfigurationManager {
     private void read(){
         BufferedReader br;
         String filepath= Constants.CONFIG_DIRECTORY+Constants.CONFIG_FILENAME;
-        if(!Files.isExist(filepath))
+        if(!FileManager.isExist(filepath))
             configuration =null;
         else {
             try {
