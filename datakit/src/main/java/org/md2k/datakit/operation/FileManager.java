@@ -110,8 +110,8 @@ public class FileManager {
 
     }
 
-    public static String getFilePath(Context context) {
-        String filepath = getDirectory(context);
+    public static String getDatabaseFilePath(Context context) {
+        String filepath = getDatabaseDirectory(context);
         if (filepath != null)
             filepath = filepath + getFileName();
         return filepath;
@@ -162,7 +162,7 @@ public class FileManager {
         return usedStr + " out of " + totalStr + " ( "+String.valueOf(used*100/total)+"% )";
     }
     public static String getFileSize(Context context){
-        long fileSize=getFileSize(new File(getFilePath(context)));
+        long fileSize=getFileSize(new File(getDatabaseFilePath(context)));
         return formatSize(fileSize);
     }
 
@@ -210,12 +210,12 @@ public class FileManager {
         return resultBuffer.toString();
     }
     public static boolean deleteFile(Context context){
-        String filePath=getFilePath(context);
+        String filePath= getDatabaseFilePath(context);
         File file = new File(filePath);
         return file.delete();
     }
 
-    public static String getDirectory(Context context) {
+    public static String getDatabaseDirectory(Context context) {
         String STORAGE_OPTION= ConfigurationManager.getInstance().configuration.database_location;
         if (context == null) return null;
         Log.d(TAG, "getDirectory.. STORAGE_OPTION=" + STORAGE_OPTION + " Context=" + context);

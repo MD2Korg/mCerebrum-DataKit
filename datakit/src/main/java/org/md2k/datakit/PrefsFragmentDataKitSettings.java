@@ -16,13 +16,9 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import org.md2k.datakit.logger.DatabaseLogger;
 import org.md2k.datakit.operation.FileManager;
-import org.md2k.utilities.Apps;
 import org.md2k.utilities.Report.Log;
 import org.md2k.utilities.UI.AlertDialogs;
-
-import java.io.File;
 
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -109,7 +105,7 @@ public class PrefsFragmentDataKitSettings extends PreferenceFragment {
 
     void setupDatabaseFile(){
         Preference preference = findPreference("database_filename");
-        preference.setSummary(FileManager.getFilePath(getActivity()));
+        preference.setSummary(FileManager.getDatabaseFilePath(getActivity()));
     }
     void setupDatabaseClear(){
         Preference preference = findPreference("database_clear");
