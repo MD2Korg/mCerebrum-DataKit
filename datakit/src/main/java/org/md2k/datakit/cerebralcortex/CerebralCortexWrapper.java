@@ -505,21 +505,23 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
 
         HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
         try {
-            urlConnection.setDoOutput(true);
-            urlConnection.setDoInput(true);
             urlConnection.setRequestMethod("POST");
-            urlConnection.setUseCaches(false);
 
-            urlConnection.setConnectTimeout(60000);
-            urlConnection.setReadTimeout(60000);
-
-            urlConnection.setRequestProperty("Content-Encoding", "gzip");
             urlConnection.setRequestProperty("Accept", "application/json");
+            urlConnection.setRequestProperty("Content-Encoding", "gzip");
             urlConnection.setRequestProperty("Content-Type", "application/json");
             urlConnection.setRequestProperty("Connection", "Keep-Alive");
             urlConnection.setRequestProperty("Cache-Control", "no-cache");
 
-            urlConnection.setRequestProperty("Content-Length", "" + entity.getContentLength());
+            urlConnection.setConnectTimeout(60000);
+            urlConnection.setReadTimeout(60000);
+
+            urlConnection.setDoOutput(true);
+            urlConnection.setDoInput(true);
+
+            urlConnection.setUseCaches(false);
+
+//            urlConnection.setRequestProperty("Content-Length", "" + entity.getContentLength()); //Breaks in Android 4.4.x
 
             entity.writeTo(urlConnection.getOutputStream());
 
