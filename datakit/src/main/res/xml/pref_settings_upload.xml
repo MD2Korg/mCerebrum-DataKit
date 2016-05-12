@@ -1,0 +1,25 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="Settings"/>
+    <SwitchPreference
+        android:key="key_enabled"
+        android:title="Enable"
+        android:defaultValue="true" />
+    <EditTextPreference
+        android:key="key_url"
+        android:dependency="key_enabled"
+        android:title="URL"/>
+        <ListPreference
+            android:entries="@array/upload_interval_text"
+            android:entryValues="@array/upload_interval_values"
+            android:dependency="key_enabled"
+            android:defaultValue="86400000"
+            android:key="key_interval"
+            android:title="Upload Interval"/>
+    <PreferenceCategory android:title="Restricted Data Stream">
+        <CheckBoxPreference
+            android:key="key_restrict_location"
+            android:defaultValue="true"
+            android:enabled="false"
+            android:title="Location"/>
+    </PreferenceCategory>
+</PreferenceScreen>

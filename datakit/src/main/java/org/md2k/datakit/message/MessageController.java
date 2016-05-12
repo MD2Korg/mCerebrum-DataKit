@@ -130,7 +130,7 @@ public class MessageController {
 
             case MessageType.QUERYPRIMARYKEY:
                 ArrayList<RowObject> objectTypes=null;
-                objectTypes = privacyManager.queryLastKey(incomingMessage.getData().getInt("ds_id"), incomingMessage.getData().getLong("last_key"), incomingMessage.getData().getInt("limit"));
+                objectTypes = privacyManager.queryLastKey(incomingMessage.getData().getInt("ds_id"), incomingMessage.getData().getInt("limit"));
                 bundle = new Bundle();
                 bundle.putParcelableArrayList(RowObject.class.getSimpleName(), objectTypes);
                 bundle.putParcelable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
@@ -138,7 +138,7 @@ public class MessageController {
 
             case MessageType.QUERYHFPRIMARYKEY:
                 ArrayList<RowObject> objectHFTypes = null;
-                objectHFTypes = privacyManager.queryHFLastKey(incomingMessage.getData().getInt("ds_id"), incomingMessage.getData().getLong("last_key"), incomingMessage.getData().getInt("limit"));
+                objectHFTypes = privacyManager.queryHFLastKey(incomingMessage.getData().getInt("ds_id"), incomingMessage.getData().getInt("limit"));
                 bundle = new Bundle();
                 bundle.putParcelableArrayList(RowObject.class.getSimpleName(), objectHFTypes);
                 bundle.putParcelable(Status.class.getSimpleName(), new Status(Status.SUCCESS));

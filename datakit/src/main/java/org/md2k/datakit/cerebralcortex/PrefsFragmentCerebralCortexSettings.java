@@ -83,7 +83,7 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        addPreferencesFromResource(R.xml.pref_platform);
+        addPreferencesFromResource(R.xml.pref_settings_upload);
         try {
             defaultConfig = ConfigManager.readDefaultConfig();
         } catch (FileNotFoundException e) {
@@ -96,6 +96,7 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
         }
         if (defaultConfig != null) config = defaultConfig;
         createPrefInterval();
+        createPrefHistory();
         createPrefAPIURL();
         createPrefRestrictLocation();
         setBackButton();
@@ -174,6 +175,33 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
         });
     }
 
+    void createPrefHistory() {
+        final ListPreference listPreferenceHistory = (ListPreference) findPreference("history_time");
+        if (defaultConfig != null) {
+            listPreferenceHistory.setEnabled(false);
+        } else {
+            listPreferenceHistory.setEnabled(true);
+        }
+        if (config.getHistory_time() == 0)
+            listPreferenceHistory.setSummary("(not assigned)");
+        else {
+            listPreferenceHistory.setSummary(convertTimeToString(config.getHistory_time()));
+        }
+        listPreferenceHistory.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                if ("custom".equals(newValue)) {
+                    showHistoryEditDialog(preference);
+                } else {
+                    config.setHistory_time(Long.parseLong(newValue.toString()));
+                    listPreferenceHistory.setSummary(convertTimeToString(config.getHistory_time()));
+                }
+                return false;
+
+            }
+        });
+    }
+
     void showEditDialog(final Preference preference) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Upload Interval (in Minutes)");
@@ -186,6 +214,29 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
             public void onClick(DialogInterface dialog, int which) {
                 config.setUpload_interval(Long.parseLong(input.getText().toString()) * 60 * 1000);
                 preference.setSummary(convertTimeToString(config.getUpload_interval()));
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        builder.show();
+    }
+
+    void showHistoryEditDialog(final Preference preference) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("History to keep (in Minutes)");
+
+        final EditText input = new EditText(getActivity());
+        builder.setView(input);
+
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                config.setHistory_time(Long.parseLong(input.getText().toString()) * 60 * 1000);
+                preference.setSummary(convertTimeToString(config.getHistory_time()));
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {

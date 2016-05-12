@@ -4,14 +4,14 @@
     android:layout_height="match_parent">
 
     <include
-        android:id="@+id/layout_two_button"
-        layout="@layout/layout_two_button" />
+        android:id="@+id/layout_one_button"
+        layout="@layout/layout_one_button" />
 
 
     <LinearLayout
         android:id="@+id/layout_preference_fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@id/layout_two_button"
+        android:layout_above="@id/layout_one_button"
         android:orientation="vertical" />
 </RelativeLayout>

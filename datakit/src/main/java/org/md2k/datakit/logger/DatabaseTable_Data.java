@@ -50,19 +50,30 @@ import java.util.List;
 public class DatabaseTable_Data {
     private static final String TAG = DatabaseTable_Data.class.getSimpleName();
 
-    private static String TABLE_NAME = "data";
-    private static String HIGHFREQ_TABLE_NAME = "rawdata";
+    public static String TABLE_NAME = "data";
+    public static String HIGHFREQ_TABLE_NAME = "rawdata";
     private static String C_ID = "_id";
-    private static String C_DATASOURCE_ID = "datasource_id";
-    private static final String SQL_CREATE_DATA_INDEX = "CREATE INDEX IF NOT EXISTS index_datasource_id on " + TABLE_NAME + " (" + C_DATASOURCE_ID + ");";
-    private static final String SQL_CREATE_HIGHFREQ_DATA_INDEX = "CREATE INDEX IF NOT EXISTS index_hf_datasource_id on " + HIGHFREQ_TABLE_NAME + " (" + C_DATASOURCE_ID + ");";
+    private static String C_CLOUD_SYNC_BIT = "cc_sync";
     private static String C_DATETIME = "datetime";
     private static String C_SAMPLE = "sample";
-    private static final String SQL_CREATE_DATA = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" + C_ID + " INTEGER PRIMARY KEY autoincrement, " +
-            C_DATASOURCE_ID + " TEXT, " + C_DATETIME + " LONG, " +
+    private static String C_DATASOURCE_ID = "datasource_id";
+
+    private static final String SQL_CREATE_DATA_INDEX = "CREATE INDEX IF NOT EXISTS index_datasource_id on " + TABLE_NAME + " (" + C_DATASOURCE_ID + ");";
+    private static final String SQL_CREATE_HIGHFREQ_DATA_INDEX = "CREATE INDEX IF NOT EXISTS index_hf_datasource_id on " + HIGHFREQ_TABLE_NAME + " (" + C_DATASOURCE_ID + ");";
+    private static final String SQL_CREATE_CC_INDEX = "CREATE INDEX IF NOT EXISTS index_cc_datasource_id on " + TABLE_NAME + " (" + C_DATASOURCE_ID + ", " + C_CLOUD_SYNC_BIT + ");";
+    private static final String SQL_CREATE_HF_CC_INDEX = "CREATE INDEX IF NOT EXISTS index_cc_hf_datasource_id on " + HIGHFREQ_TABLE_NAME + " (" + C_DATASOURCE_ID + ", " + C_CLOUD_SYNC_BIT + ");";
+
+    private static final String SQL_CREATE_DATA = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
+            C_ID + " INTEGER PRIMARY KEY autoincrement, " +
+            C_DATASOURCE_ID + " TEXT not null, " +
+            C_CLOUD_SYNC_BIT + " INTEGER DEFAULT 0, " +
+            C_DATETIME + " LONG, " +
             C_SAMPLE + " BLOB not null);";
-    private static final String SQL_CREATE_HIGHFREQ_DATA = "CREATE TABLE IF NOT EXISTS " + HIGHFREQ_TABLE_NAME + " (" + C_ID + " INTEGER PRIMARY KEY autoincrement, " +
-            C_DATASOURCE_ID + " TEXT, " + C_DATETIME + " LONG, " +
+    private static final String SQL_CREATE_HIGHFREQ_DATA = "CREATE TABLE IF NOT EXISTS " + HIGHFREQ_TABLE_NAME + " (" +
+            C_ID + " INTEGER PRIMARY KEY autoincrement, " +
+            C_DATASOURCE_ID + " TEXT, " +
+            C_CLOUD_SYNC_BIT + " INTEGER DEFAULT 0, " +
+            C_DATETIME + " LONG, " +
             C_SAMPLE + " BLOB not null);";
     private static String C_COUNT = "c";
     private static long WAITTIME = 5 * 1000L; // 5 second;
@@ -87,8 +98,10 @@ public class DatabaseTable_Data {
     public void createIfNotExists(SQLiteDatabase db) {
         db.execSQL(SQL_CREATE_DATA);
         db.execSQL(SQL_CREATE_DATA_INDEX);
+        db.execSQL(SQL_CREATE_CC_INDEX);
         db.execSQL(SQL_CREATE_HIGHFREQ_DATA);
         db.execSQL(SQL_CREATE_HIGHFREQ_DATA_INDEX);
+        db.execSQL(SQL_CREATE_HF_CC_INDEX);
     }
 
     private Status insertDB(SQLiteDatabase db, String tableName, List<ContentValues> data) {
@@ -231,10 +244,10 @@ public class DatabaseTable_Data {
     }
 
 
-    public ArrayList<RowObject> queryLastKey(SQLiteDatabase db, int ds_id, long last_key, int limit) {
+    public ArrayList<RowObject> queryLastKey(SQLiteDatabase db, int ds_id, int limit) {
         insertDB(db, TABLE_NAME, cValues);
         ArrayList<RowObject> rowObjects = new ArrayList<>();
-        String sql = "select _id, sample from data where _id>" + Long.toString(last_key) + " and datasource_id=" + Integer.toString(ds_id) + " LIMIT " + Integer.toString(limit);
+        String sql = "select _id, sample from data where cc_sync = 0 and datasource_id=" + Integer.toString(ds_id) + " LIMIT " + Integer.toString(limit);
         Cursor mCursor = db.rawQuery(sql, null);
         if (mCursor.moveToFirst()) {
             do {
@@ -248,10 +261,27 @@ public class DatabaseTable_Data {
         return rowObjects;
     }
 
-    public ArrayList<RowObject> queryHFLastKey(SQLiteDatabase db, int ds_id, long last_key, int limit) {
+    public ArrayList<RowObject> querySyncedData(SQLiteDatabase db, int ds_id, long ageLimit, int limit) {
+        insertDB(db, TABLE_NAME, cValues);
+        ArrayList<RowObject> rowObjects = new ArrayList<>();
+        String sql = "select _id, sample from data where cc_sync = 1 and datasource_id=" + Integer.toString(ds_id) + " and datetime <= " + ageLimit + " LIMIT " + Integer.toString(limit);
+        Cursor mCursor = db.rawQuery(sql, null);
+        if (mCursor.moveToFirst()) {
+            do {
+                DataType dt = fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE)));
+                rowObjects.add(new RowObject(mCursor.getLong(mCursor.getColumnIndex(C_ID)), dt));
+            } while (mCursor.moveToNext());
+        }
+        if (!mCursor.isClosed()) {
+            mCursor.close();
+        }
+        return rowObjects;
+    }
+
+    public ArrayList<RowObject> queryHFSyncedData(SQLiteDatabase db, int ds_id, long ageLimit, int limit) {
         insertDB(db, HIGHFREQ_TABLE_NAME, cValues);
         ArrayList<RowObject> rowObjects = new ArrayList<>();
-        String sql = "select _id, datetime, sample from rawdata where _id>" + Long.toString(last_key) + " and datasource_id=" + Integer.toString(ds_id) + " LIMIT " + Integer.toString(limit);
+        String sql = "select _id, datetime, sample from rawdata where cc_sync = 1 and datasource_id=" + Integer.toString(ds_id) + " and datetime <= " + ageLimit + " LIMIT " + Integer.toString(limit);
         Cursor mCursor = db.rawQuery(sql, null);
         if (mCursor.moveToFirst()) {
             do {
@@ -266,9 +296,81 @@ public class DatabaseTable_Data {
         return rowObjects;
     }
 
+    public boolean removeSyncedData(SQLiteDatabase db, int dsid, long lastSyncKey) {
+        insertDB(db, TABLE_NAME, cValues);
+        String[] args = new String[]{Long.toString(lastSyncKey), Integer.toString(dsid)};
+        db.delete(TABLE_NAME, "cc_sync = 1 AND _id <= ? AND datasource_id = ?", args);
+        return true;
+    }
+
+    public boolean removeHFSyncedData(SQLiteDatabase db, int dsid, long lastSyncKey) {
+        insertDB(db, HIGHFREQ_TABLE_NAME, cValues);
+        String[] args = new String[]{Long.toString(lastSyncKey), Integer.toString(dsid)};
+        db.delete(HIGHFREQ_TABLE_NAME, "cc_sync = 1 AND _id <= ? AND datasource_id = ?", args);
+        return true;
+    }
+
+
+    public boolean setSyncedBit(SQLiteDatabase db, int dsid, long lastSyncKey) {
+        insertDB(db, TABLE_NAME, cValues);
+        ContentValues values = new ContentValues();
+        int bit = 1;
+        values.put("cc_sync", bit);
+        String[] args = new String[]{Long.toString(lastSyncKey), Integer.toString(dsid)};
+        db.update(TABLE_NAME, values, "cc_sync = 0 AND _id <= ? AND datasource_id = ?", args);
+
+        return true;
+    }
+
+    public boolean setHFSyncedBit(SQLiteDatabase db, int dsid, long lastSyncKey) {
+        insertDB(db, HIGHFREQ_TABLE_NAME, cValues);
+        ContentValues values = new ContentValues();
+        int bit = 1;
+        values.put("cc_sync", bit);
+        String[] args = new String[]{Long.toString(lastSyncKey), Integer.toString(dsid)};
+        db.update(HIGHFREQ_TABLE_NAME, values, "cc_sync = 0 AND _id <= ? AND datasource_id = ?", args);
+        return true;
+    }
+
+    public ArrayList<RowObject> queryHFLastKey(SQLiteDatabase db, int ds_id, int limit) {
+        insertDB(db, HIGHFREQ_TABLE_NAME, cValues);
+        ArrayList<RowObject> rowObjects = new ArrayList<>();
+        String sql = "select _id, datetime, sample from rawdata where cc_sync = 0 and datasource_id=" + Integer.toString(ds_id) + " LIMIT " + Integer.toString(limit);
+        Cursor mCursor = db.rawQuery(sql, null);
+        if (mCursor.moveToFirst()) {
+            do {
+                byte[] data = mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE));
+                DataTypeDoubleArray dt = DataTypeDoubleArray.fromRawBytes(mCursor.getLong(mCursor.getColumnIndex(C_DATETIME)), data);
+                rowObjects.add(new RowObject(mCursor.getLong(mCursor.getColumnIndex(C_ID)), dt));
+            } while (mCursor.moveToNext());
+        }
+        if (!mCursor.isClosed()) {
+            mCursor.close();
+        }
+        return rowObjects;
+    }
+
+
     public DataTypeLong querySize(SQLiteDatabase db) {
         insertDB(db, TABLE_NAME, cValues);
         String sql = "select count(_id)as c from data";
+        Cursor mCursor = db.rawQuery(sql, null);
+        DataTypeLong count = new DataTypeLong(0L, 0L);
+        if (mCursor.moveToFirst()) {
+            do {
+                count = new DataTypeLong(0L, mCursor.getLong(mCursor.getColumnIndex(C_COUNT)));
+            } while (mCursor.moveToNext());
+        }
+        if (!mCursor.isClosed()) {
+            mCursor.close();
+        }
+        return count;
+    }
+
+    public DataTypeLong queryCount(SQLiteDatabase db, String table, int ds_id, boolean unsynced) {
+        String sql = "select count(_id)as c from " + table + " where " + C_DATASOURCE_ID + " = " + ds_id;
+        if (unsynced)
+            sql += " and " + C_CLOUD_SYNC_BIT + " = 0";
         Cursor mCursor = db.rawQuery(sql, null);
         DataTypeLong count = new DataTypeLong(0L, 0L);
         if (mCursor.moveToFirst()) {
@@ -324,5 +426,6 @@ public class DatabaseTable_Data {
         input.close();
         return dataType;
     }
+
 
 }

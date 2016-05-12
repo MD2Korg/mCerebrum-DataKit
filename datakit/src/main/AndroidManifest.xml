@@ -24,7 +24,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ActivityDataKitSettings"
+            android:name=".ActivitySettings"
             android:enabled="true"
             android:exported="true"
             android:label="Settings"
@@ -36,15 +36,23 @@
             android:label="Privacy Control Settings"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".cerebralcortex.ActivityCerebralCortexSettings"
+            android:name=".ActivitySettingsArchive"
             android:enabled="true"
             android:exported="true"
-            android:label="Settings: Cerebral Cortex Data Exporter">
-            <intent-filter>
-                <action android:name="org.md2k.datakit.cerebralcortex.ActivityCerebralCortexSettings" />
-            </intent-filter>
-        </activity>
-
+            android:label="Settings:Archive"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ActivitySettingsUpload"
+            android:enabled="true"
+            android:exported="true"
+            android:label="Settings:Upload"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ActivitySettingsDatabase"
+            android:enabled="true"
+            android:exported="true"
+            android:label="Settings:Database"
+            android:screenOrientation="portrait" />
         <service
             android:name=".ServiceDataKit"
             android:enabled="true"
@@ -57,7 +65,7 @@
         <service
             android:name=".cerebralcortex.ServiceCerebralCortex"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true"/>
 
 
         <meta-data

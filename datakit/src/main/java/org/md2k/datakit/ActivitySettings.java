@@ -1,13 +1,8 @@
-package org.md2k.datakit.privacy;
+package org.md2k.datakit;
 
-import android.content.Context;
-
-import org.md2k.datakit.configuration.ConfigurationManager;
-import org.md2k.datakit.configuration.PrivacyConfig;
-import org.md2k.utilities.data_format.privacy.Duration;
-import org.md2k.utilities.data_format.privacy.PrivacyType;
-
-import java.util.ArrayList;
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.view.MenuItem;
 
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -35,20 +30,29 @@ import java.util.ArrayList;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public class PrivacyConfiguration {
-    protected Context context;
-    protected PrivacyConfig privacyConfig;
-    public PrivacyConfiguration(Context context){
-        this.context=context;
-        privacyConfig=ConfigurationManager.getInstance(context).configuration.privacy;
+
+public class ActivitySettings extends AppCompatActivity {
+    private static final String TAG = ActivitySettings.class.getSimpleName();
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_settings);
+        getFragmentManager().beginTransaction().replace(R.id.layout_preference_fragment,
+                new PrefsFragmentSettings()).commit();
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayShowTitleEnabled(true);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
     }
-    public ArrayList<Duration> getDuration(){
-        return privacyConfig.duration_options;
-    }
-    public ArrayList<PrivacyType> getPrivacyType(){
-        return privacyConfig.privacy_type_options;
-    }
-    public boolean isAvailable(){
-        return privacyConfig != null;
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            // Respond to the action bar's Up/Home button
+            case android.R.id.home:
+                finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

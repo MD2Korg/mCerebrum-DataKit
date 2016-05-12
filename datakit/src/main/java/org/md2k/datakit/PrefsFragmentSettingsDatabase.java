@@ -1,14 +1,16 @@
 package org.md2k.datakit;
 
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,13 +18,11 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import org.md2k.datakit.logger.DatabaseLogger;
-import org.md2k.datakit.operation.FileManager;
-import org.md2k.utilities.Apps;
+import org.md2k.datakit.configuration.Configuration;
+import org.md2k.datakit.configuration.ConfigurationManager;
+import org.md2k.utilities.FileManager;
 import org.md2k.utilities.Report.Log;
 import org.md2k.utilities.UI.AlertDialogs;
-
-import java.io.File;
 
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -50,31 +50,39 @@ import java.io.File;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public class PrefsFragmentDataKitSettings extends PreferenceFragment {
-
-    private static final String TAG = PrefsFragmentDataKitSettings.class.getSimpleName();
+public class PrefsFragmentSettingsDatabase extends PreferenceFragment {
+    private static final String TAG = PrefsFragmentSettingsDatabase.class.getSimpleName();
+    Configuration configuration;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        addPreferencesFromResource(R.xml.pref_datakit_general);
+        configuration = ConfigurationManager.getInstance(getActivity()).configuration;
+        getPreferenceManager().getSharedPreferences().edit().clear().apply();
+        getPreferenceManager().getSharedPreferences().edit().putString("key_storage", configuration.database.location).apply();
+        addPreferencesFromResource(R.xml.pref_settings_database);
+        setBackButton();
+        setSaveButton();
+        if(getActivity().getIntent().getBooleanExtra("delete",false))
+            clearDatabase();
     }
+
     @Override
-    public void onResume(){
-        Log.d(TAG,"onResume()...");
+    public void onResume() {
         setupPreferences();
         super.onResume();
     }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View v=super.onCreateView(inflater, container,savedInstanceState);
+        View v = super.onCreateView(inflater, container, savedInstanceState);
         ListView lv = (ListView) v.findViewById(android.R.id.list);
         lv.setPadding(0, 0, 0, 0);
 
         return v;
     }
+
     private void setBackButton() {
         final Button button = (Button) getActivity().findViewById(R.id.button_1);
         button.setText("Close");
@@ -85,34 +93,73 @@ public class PrefsFragmentDataKitSettings extends PreferenceFragment {
         });
     }
 
+    private void setSaveButton() {
+        final Button button = (Button) getActivity().findViewById(R.id.button_2);
+        button.setText("Save");
+        button.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                SharedPreferences sharedPreferences = getPreferenceManager().getSharedPreferences();
+                configuration.database.location = sharedPreferences.getString("key_storage", configuration.database.location);
+                ConfigurationManager.getInstance(getActivity()).write();
+                Toast.makeText(getActivity(),"Saved...",Toast.LENGTH_LONG).show();
+                setupPreferences();
+            }
+        });
+    }
+
     void setupPreferences() {
+        setupStorage();
         setupDatabaseFile();
-        setupDatabaseLocation();
         setupDatabaseClear();
         setupSDCardSpace();
         setupDatabaseSize();
-        setBackButton();
-    }
-    void setupDatabaseLocation(){
-        Preference preference = findPreference("database_location");
-        preference.setSummary(FileManager.getValidSDcard(getActivity()));
-    }
-    void setupSDCardSpace(){
-        Preference preference = findPreference("storage_space");
-        preference.setSummary(FileManager.getStorageSpace(getActivity()));
-    }
-    void setupDatabaseSize(){
-        Preference preference = findPreference("database_size");
-        Log.d("MD2K", "filesize=" + FileManager.getFileSize(getActivity()));
-        preference.setSummary(FileManager.getFileSize(getActivity()));
     }
 
-    void setupDatabaseFile(){
-        Preference preference = findPreference("database_filename");
-        preference.setSummary(FileManager.getFilePath(getActivity()));
+    void setupStorage() {
+        ListPreference preference = (ListPreference) findPreference("key_storage");
+        String storage = getPreferenceManager().getSharedPreferences().getString("key_storage", configuration.database.location);
+        preference.setValue(storage);
+        Log.d(TAG, "shared=" + storage + " config=" + configuration.database.location);
+        preference.setSummary(findString(getResources().getStringArray(R.array.sdcard_values), getResources().getStringArray(R.array.sdcard_text), storage));
+        preference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                getPreferenceManager().getSharedPreferences().edit().putString("key_storage", newValue.toString()).apply();
+                setupPreferences();
+                return false;
+            }
+        });
     }
-    void setupDatabaseClear(){
-        Preference preference = findPreference("database_clear");
+
+    private String findString(String[] values, String[] strings, String value) {
+        for (int i = 0; i < values.length; i++)
+            if (values[i].equals(value))
+                return strings[i];
+        return ("(not selected)");
+    }
+
+    void setupSDCardSpace() {
+        Preference preference = findPreference("key_sdcard_size");
+        String location = getPreferenceManager().getSharedPreferences().getString("key_storage", configuration.database.location);
+        preference.setSummary(FileManager.getLocationType(getActivity(), location)+" ["+FileManager.getSDCardSizeString(getActivity(), location)+"]");
+    }
+
+    void setupDatabaseSize() {
+        Preference preference = findPreference("key_file_size");
+        String location = getPreferenceManager().getSharedPreferences().getString("key_storage", configuration.database.location);
+        long fileSize = FileManager.getFileSize(getActivity(), location);
+        preference.setSummary(FileManager.formatSize(fileSize));
+    }
+
+    void setupDatabaseFile() {
+        Preference preference = findPreference("key_directory");
+        String location = getPreferenceManager().getSharedPreferences().getString("key_storage", configuration.database.location);
+        String filename = FileManager.getDirectory(getActivity(), location) + Constants.DATABASE_FILENAME;
+        preference.setSummary(filename);
+    }
+
+    void setupDatabaseClear() {
+        Preference preference = findPreference("key_delete");
         preference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
@@ -121,19 +168,23 @@ public class PrefsFragmentDataKitSettings extends PreferenceFragment {
             }
         });
     }
-    void sendLocalBroadcast(String str){
+
+    void sendLocalBroadcast(String str) {
         Intent intent = new Intent("datakit");
         intent.putExtra("action", str);
         LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(intent);
-
     }
-    void clearDatabase(){
+
+    void clearDatabase() {
         AlertDialogs.showAlertDialogConfirm(getActivity(), "Clear Database", "Clear Database?\n\nData can't be recovered after deletion\n\nSome apps may have problems after this operation. If it is, please restart those apps", "Yes", "Cancel", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 if (which == AlertDialog.BUTTON_POSITIVE) {
                     sendLocalBroadcast("stop");
                     new DatabaseDeleteAsyncTask().execute();
+                }else{
+                    if(getActivity().getIntent().getBooleanExtra("delete",false))
+                        getActivity().finish();
                 }
             }
         });
@@ -141,8 +192,8 @@ public class PrefsFragmentDataKitSettings extends PreferenceFragment {
 
     class DatabaseDeleteAsyncTask extends AsyncTask<String, String, String> {
         private ProgressDialog dialog;
-        public static final int progress_bar_type = 0;
-        DatabaseDeleteAsyncTask(){
+
+        DatabaseDeleteAsyncTask() {
             dialog = new ProgressDialog(getActivity());
         }
 
@@ -157,12 +208,9 @@ public class PrefsFragmentDataKitSettings extends PreferenceFragment {
         @Override
         protected String doInBackground(String... strings) {
             try {
-                //TODO: verify then enable
-//                DatabaseLogger databaseLogger = DatabaseLogger.getInstance(getActivity());
-//                assert databaseLogger != null;
-//                databaseLogger.removeAll();
-//                databaseLogger.close();
-                FileManager.deleteFile(getActivity());
+                String location = ConfigurationManager.getInstance(getActivity()).configuration.database.location;
+                String filename = FileManager.getDirectory(getActivity(), location) + Constants.DATABASE_FILENAME;
+                FileManager.deleteFile(filename);
             } catch (Exception e) {
             }
             return null;
@@ -177,6 +225,8 @@ public class PrefsFragmentDataKitSettings extends PreferenceFragment {
                 dialog.dismiss();
             }
             Toast.makeText(getActivity(), "Database is Deleted", Toast.LENGTH_LONG).show();
+            if(getActivity().getIntent().getBooleanExtra("delete",false))
+                getActivity().finish();
         }
     }
 }

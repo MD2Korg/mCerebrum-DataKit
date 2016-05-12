@@ -92,12 +92,13 @@ public class RoutingManager {
     public ArrayList<DataType> queryHFlastN(int ds_id, int last_n_sample) {
         return databaseLogger.queryHFlastN(ds_id, last_n_sample);
     }
-    public ArrayList<RowObject> queryLastKey(int ds_id,long last_key, int limit){
-        return databaseLogger.queryLastKey(ds_id, last_key, limit);
+
+    public ArrayList<RowObject> queryLastKey(int ds_id, int limit) {
+        return databaseLogger.queryLastKey(ds_id, limit);
     }
 
-    public ArrayList<RowObject> queryHFLastKey(int ds_id, long last_key, int limit) {
-        return databaseLogger.queryHFLastKey(ds_id, last_key, limit);
+    public ArrayList<RowObject> queryHFLastKey(int ds_id, int limit) {
+        return databaseLogger.queryHFLastKey(ds_id, limit);
     }
 
     public DataTypeLong querySize() {

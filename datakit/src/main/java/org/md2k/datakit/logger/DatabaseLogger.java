@@ -4,7 +4,9 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import org.md2k.datakit.operation.FileManager;
+import org.md2k.datakit.Constants;
+import org.md2k.datakit.configuration.Configuration;
+import org.md2k.datakit.configuration.ConfigurationManager;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
 import org.md2k.datakitapi.datatype.DataTypeLong;
@@ -12,6 +14,7 @@ import org.md2k.datakitapi.datatype.RowObject;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
 import org.md2k.datakitapi.status.Status;
+import org.md2k.utilities.FileManager;
 import org.md2k.utilities.Report.Log;
 
 import java.io.IOException;
@@ -52,8 +55,8 @@ public class DatabaseLogger extends SQLiteOpenHelper {
     DatabaseTable_Data databaseTable_data = null;
     SQLiteDatabase db = null;
 
-    public DatabaseLogger(Context context) {
-        super(context, FileManager.getFilePath(context), null, FileManager.VERSION);
+    public DatabaseLogger(Context context, String path) {
+        super(context, path, null, 1);
         db = this.getWritableDatabase();
         Log.d(TAG, "DataBaseLogger() db isopen=" + db.isOpen() + " readonly=" + db.isReadOnly() + " isWriteAheadLoggingEnabled=" + db.isWriteAheadLoggingEnabled());
         databaseTable_dataSource = new DatabaseTable_DataSource(db);
@@ -62,10 +65,11 @@ public class DatabaseLogger extends SQLiteOpenHelper {
 
     public static DatabaseLogger getInstance(Context context) throws IOException {
         if (instance == null) {
-            String directory = FileManager.getDirectory(context);
+            Configuration configuration=ConfigurationManager.getInstance(context).configuration;
+            String directory=FileManager.getDirectory(context, configuration.database.location);
             Log.d(TAG, "directory=" + directory);
             if (directory != null)
-                instance = new DatabaseLogger(context);
+                instance = new DatabaseLogger(context, directory+ Constants.DATABASE_FILENAME);
             else throw new IOException("Database directory not found");
         }
         return instance;
@@ -109,13 +113,36 @@ public class DatabaseLogger extends SQLiteOpenHelper {
         return databaseTable_data.queryHFlastN(db, ds_id, last_n_sample);
     }
 
-
-    public ArrayList<RowObject> queryLastKey(int ds_id, long last_key, int limit) {
-        return databaseTable_data.queryLastKey(db, ds_id, last_key, limit);
+    public ArrayList<RowObject> queryLastKey(int ds_id, int limit) {
+        return databaseTable_data.queryLastKey(db, ds_id, limit);
     }
 
-    public ArrayList<RowObject> queryHFLastKey(int ds_id, long last_key, int limit) {
-        return databaseTable_data.queryHFLastKey(db, ds_id, last_key, limit);
+    public ArrayList<RowObject> querySyncedData(int ds_id, long ageLimit, int limit) {
+        return databaseTable_data.querySyncedData(db, ds_id, ageLimit, limit);
+    }
+
+    public ArrayList<RowObject> queryHFSyncedData(int ds_id, long ageLimit, int limit) {
+        return databaseTable_data.queryHFSyncedData(db, ds_id, ageLimit, limit);
+    }
+
+    public ArrayList<RowObject> queryHFLastKey(int ds_id, int limit) {
+        return databaseTable_data.queryHFLastKey(db, ds_id, limit);
+    }
+
+    public boolean setSyncedBit(int ds_id, long key) {
+        return databaseTable_data.setSyncedBit(db, ds_id, key);
+    }
+
+    public boolean removeSyncedData(int ds_id, long key) {
+        return databaseTable_data.removeSyncedData(db, ds_id, key);
+    }
+
+    public boolean removeHFSyncedData(int ds_id, long key) {
+        return databaseTable_data.removeHFSyncedData(db, ds_id, key);
+    }
+
+    public boolean setHFSyncedBit(int ds_id, long key) {
+        return databaseTable_data.setHFSyncedBit(db, ds_id, key);
     }
 
     public DataTypeLong querySize() {
@@ -140,5 +167,13 @@ public class DatabaseLogger extends SQLiteOpenHelper {
 
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         onUpgrade(db, oldVersion, newVersion);
+    }
+
+    public DataTypeLong queryCount(int ds_id, boolean unsynced) {
+        return databaseTable_data.queryCount(db, DatabaseTable_Data.TABLE_NAME, ds_id, unsynced);
+    }
+
+    public DataTypeLong queryHFCount(int ds_id, boolean unsynced) {
+        return databaseTable_data.queryCount(db, DatabaseTable_Data.HIGHFREQ_TABLE_NAME, ds_id, unsynced);
     }
 }

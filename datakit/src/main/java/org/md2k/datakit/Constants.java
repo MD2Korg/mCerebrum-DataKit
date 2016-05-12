@@ -30,7 +30,9 @@ import android.os.Environment;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 public class Constants {
-    public static final String CONFIG_FILENAME = "privacy_config.json";
     public static final String CONFIG_DIRECTORY= Environment.getExternalStorageDirectory().getAbsolutePath() + "/mCerebrum/org.md2k.datakit/";
+    public static final String CONFIG_FILENAME = "config.json";
+    public static final String DATABASE_FILENAME="database.db";
+    public static final String ARCHIVE_DIRECTORY="cerebralcortex/";
     public static String SERVICE_NAME = "org.md2k.datakit.ServiceDataKit";
 }

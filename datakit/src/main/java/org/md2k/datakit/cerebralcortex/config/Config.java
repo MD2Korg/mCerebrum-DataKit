@@ -36,6 +36,7 @@ public class Config {
     long upload_interval;
     String url;
     ArrayList<DataSource> restricted_datasource = new ArrayList<>();
+    long history_time;
 
     public long getUpload_interval() {
         return upload_interval;
@@ -85,5 +86,13 @@ public class Config {
                     break;
                 }
             }
+    }
+
+    public long getHistory_time() {
+        return history_time;
+    }
+
+    public void setHistory_time(long t) {
+        history_time = t;
     }
 }
