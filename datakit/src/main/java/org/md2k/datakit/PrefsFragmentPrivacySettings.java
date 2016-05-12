@@ -105,12 +105,12 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
                     PrivacyData privacyData=privacyManager.getPrivacyData();
                     privacyData.setStatus(false);
                     privacyManager.insertPrivacy(privacyData);
-                    Toast.makeText(getActivity(), "Privacy Mode On...", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "Privacy Mode Off...", Toast.LENGTH_SHORT).show();
 
                 } else {
                     if(preparePrivacyData())
                         privacyManager.insertPrivacy(newPrivacyData);
-                        Toast.makeText(getActivity(), "Privacy Mode Off...", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getActivity(), "Privacy Mode On´...", Toast.LENGTH_SHORT).show();
                 }
             }
         });
