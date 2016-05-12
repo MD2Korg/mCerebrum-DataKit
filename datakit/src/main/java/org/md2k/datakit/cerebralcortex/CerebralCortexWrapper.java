@@ -23,8 +23,9 @@ import org.md2k.datakit.cerebralcortex.communication.StudyInfoCCResponse;
 import org.md2k.datakit.cerebralcortex.communication.UserInfo;
 import org.md2k.datakit.cerebralcortex.communication.UserInfoCC;
 import org.md2k.datakit.cerebralcortex.communication.UserInfoCCResponse;
+import org.md2k.datakit.configuration.Configuration;
+import org.md2k.datakit.configuration.ConfigurationManager;
 import org.md2k.datakit.logger.DatabaseLogger;
-import org.md2k.datakit.operation.FileManager;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.datatype.DataTypeJSONObject;
 import org.md2k.datakitapi.datatype.RowObject;
@@ -32,6 +33,7 @@ import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceBuilder;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
 import org.md2k.datakitapi.source.datasource.DataSourceType;
+import org.md2k.utilities.FileManager;
 import org.md2k.utilities.Report.Log;
 
 import java.io.BufferedReader;
@@ -83,7 +85,6 @@ import javax.net.ssl.HttpsURLConnection;
 
 public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
     private static final String TAG = CerebralCortexWrapper.class.getSimpleName();
-    private static final Integer COUNT_INDEX = -1;
     public static String CCDIR = "";
     private final long history_time;
     DatabaseLogger dbLogger = null;
@@ -92,13 +93,16 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
     private List<DataSource> restricted;
     private Gson gson = new GsonBuilder().serializeNulls().create();
 
-    public CerebralCortexWrapper(Context context, String url, long history_time, List<DataSource> restricted) throws IOException {
+    public CerebralCortexWrapper(Context context, String url, List<DataSource> restricted) throws IOException {
+        Configuration configuration=ConfigurationManager.getInstance(context).configuration;
         this.context = context;
         this.requestURL = url;
         this.restricted = restricted;
-        this.history_time = history_time;
-        dbLogger = DatabaseLogger.getInstance(context);
-        CCDIR = FileManager.getExternalSDCardDirectory(this.context) + "/cerebralcortex/";
+        this.history_time = configuration.archive.interval;
+        if(configuration.archive.enabled) {
+            CCDIR = FileManager.getDirectory(context, configuration.archive.location) + org.md2k.datakit.Constants.ARCHIVE_DIRECTORY;
+        }else CCDIR=null;
+            dbLogger = DatabaseLogger.getInstance(context);
     }
 
     private static String readStream(InputStream in) {
@@ -147,19 +151,18 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
             }
         }
 
-
-        File ccdir = new File(CCDIR);
-        if (!ccdir.exists())
-            ccdir.mkdirs();
-
-
+        if(CCDIR!=null) {
+            File ccdir = new File(CCDIR);
+            if (!ccdir.exists())
+                ccdir.mkdirs();
+        }
         messenger("Starting publish procedure");
 
         UserInfo uInfo = null;
         StudyInfo sInfo = null;
         try {
             uInfo = getUserInfo();
-            sInfo = getStudyinfo();
+            sInfo = getStudyInfo();
         } catch (IOException e) {
             e.printStackTrace();
             messenger("uInfo or sInfo null");
@@ -306,6 +309,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
     }
 
     private void archiveJsonData(String data, int ds_id, String filename) {
+        if(CCDIR==null) return;
         File outputDir = new File(CCDIR + "ds" + ds_id + "/");
         if (!outputDir.mkdirs()) {
             Log.e("Archive", "mkdir error" + outputDir);
@@ -437,7 +441,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
     }
 
     @Nullable
-    private StudyInfo getStudyinfo() throws IOException {
+    private StudyInfo getStudyInfo() throws IOException {
         DataSourceBuilder studyinfoBuilder = new DataSourceBuilder();
         studyinfoBuilder.setType(DataSourceType.STUDY_INFO);
         List<DataSourceClient> studyInfoClients = dbLogger.find(studyinfoBuilder.build());
@@ -532,6 +536,4 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
 
         return result;
     }
-
-
 }

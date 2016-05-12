@@ -179,52 +179,6 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/toggle" />
-
         </LinearLayout>
-
     </LinearLayout>
-
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingBottom="10dp"
-        android:paddingTop="20dp">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <TextView
-                style="?attr/text_view_title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/settings" />
-        </LinearLayout>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="SDCard Settings:" />
-
-        <TextView
-            android:id="@+id/textview_sdcard_settings"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Location:" />
-
-        <TextView
-            android:id="@+id/textview_location_sd"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="" />
-
-    </LinearLayout>
-
 </LinearLayout>

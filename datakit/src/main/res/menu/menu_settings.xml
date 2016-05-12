@@ -12,11 +12,6 @@
         serviceApp:showAsAction="ifRoom"
         android:title="Settings" />
     <item
-        android:id="@+id/action_cerebralcortex_settings"
-        android:icon="@drawable/ic_upload_white_48dp"
-        serviceApp:showAsAction="ifRoom"
-        android:title="CerebralCortex" />
-    <item
         android:id="@+id/action_copyright"
         android:icon="@drawable/ic_copyright_teal_48dp"
         android:title="Copyright" />

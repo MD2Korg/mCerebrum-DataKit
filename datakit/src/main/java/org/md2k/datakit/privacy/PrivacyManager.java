@@ -6,6 +6,8 @@ import android.os.Messenger;
 import android.util.SparseArray;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import org.md2k.datakit.router.RoutingManager;
 import org.md2k.datakitapi.datatype.DataType;
@@ -59,27 +61,29 @@ import java.util.ArrayList;
  */
 public class PrivacyManager {
     private static final String TAG = PrivacyManager.class.getSimpleName();
-    //    private static final String TAG = PrivacyManager.class.getSimpleName();
     private static PrivacyManager instance;
     Context context;
     RoutingManager routingManager;
     SparseArray<Boolean> listPrivacyListDsId;
     int dsIdPrivacy;
     Handler handler;
-    PrivacyData lastPrivacyData;
-    boolean active;
+    PrivacyData privacyData;
     Runnable timer = new Runnable() {
         @Override
         public void run() {
             deactivate();
         }
     };
+    public boolean isActive(){
+        if (privacyData == null|| !privacyData.isStatus() || getRemainingTime()<=0)
+            return false;
+        else return true;
+    }
 
     private PrivacyManager(Context context) throws IOException {
         Log.d(TAG,"PrivacyManager()..constructor()..");
         this.context = context;
         routingManager = RoutingManager.getInstance(context);
-        active=false;
         listPrivacyListDsId = new SparseArray<>();
         handler = new Handler();
         processPrivacyData();
@@ -89,10 +93,6 @@ public class PrivacyManager {
         if (instance == null)
             instance = new PrivacyManager(context);
         return instance;
-    }
-
-    public boolean isActive(){
-        return active;
     }
 
     private DataSource createDataSource(String dataSourceType, String platformType) {
@@ -106,15 +106,15 @@ public class PrivacyManager {
     }
 
     void createPrivacyList() {
-        if(lastPrivacyData==null || lastPrivacyData.getPrivacyTypes()==null) return;
+        if(!isActive()) return;
         listPrivacyListDsId.clear();
         String dataSourceType;
         String platformType;
         int id;
-        for (int i = 0; i < lastPrivacyData.getPrivacyTypes().size(); i++) {
-            for (int j = 0; j < lastPrivacyData.getPrivacyTypes().get(i).getSource().size(); j++) {
-                dataSourceType = lastPrivacyData.getPrivacyTypes().get(i).getSource().get(j).getDatasource_type();
-                platformType = lastPrivacyData.getPrivacyTypes().get(i).getSource().get(j).getPlatform_type();
+        for (int i = 0; i < privacyData.getPrivacyTypes().size(); i++) {
+            for (int j = 0; j < privacyData.getPrivacyTypes().get(i).getSource().size(); j++) {
+                dataSourceType = privacyData.getPrivacyTypes().get(i).getSource().get(j).getDatasource_type();
+                platformType = privacyData.getPrivacyTypes().get(i).getSource().get(j).getPlatform_type();
                 Log.d(TAG,"search...dataSourceType="+dataSourceType+" platformType="+platformType);
                 ArrayList<DataSourceClient> dataSourceClients = routingManager.find(createDataSource(dataSourceType, platformType));
                 for (int k = 0; k < dataSourceClients.size(); k++) {
@@ -148,6 +148,13 @@ public class PrivacyManager {
         }
         return status;
     }
+    public void insertPrivacy(PrivacyData privacyData){
+        this.privacyData=privacyData;
+        Gson gson=new Gson();
+        JsonObject sample = new JsonParser().parse(gson.toJson(privacyData)).getAsJsonObject();
+        DataTypeJSONObject dataTypeJSONObject = new DataTypeJSONObject(DateTime.getDateTime(), sample);
+        insert(dsIdPrivacy, dataTypeJSONObject);
+    }
 
     public Status insertHF(int ds_id, DataTypeDoubleArray dataType) {
         Status status = new Status(Status.SUCCESS);
@@ -167,7 +174,7 @@ public class PrivacyManager {
 
     public long getRemainingTime(){
         long currentTimeStamp = DateTime.getDateTime();
-        long endTimeStamp = lastPrivacyData.getStartTimeStamp() + lastPrivacyData.getDuration().getValue();
+        long endTimeStamp = privacyData.getStartTimeStamp() + privacyData.getDuration().getValue();
         Log.d(TAG,"remaining time = "+(endTimeStamp-currentTimeStamp));
         return endTimeStamp-currentTimeStamp;
 
@@ -175,18 +182,11 @@ public class PrivacyManager {
 
     private void processPrivacyData(){
         Log.d(TAG, "processPrivacyData()...");
-        lastPrivacyData= queryLastPrivacyData();
-        Log.d(TAG,"lastPrivacyData="+lastPrivacyData);
-        if (lastPrivacyData == null|| !lastPrivacyData.isStatus() || getRemainingTime()<=0) {
-            Log.d(TAG,"deactivate");
-            deactivate();
-        }
-        else {
-            Log.d(TAG,"activate");
-            Log.d(TAG,"lastPrivacyData="+lastPrivacyData.getStartTimeStamp()+" "+lastPrivacyData.isStatus()+" "+lastPrivacyData.getDuration().getValue());
-            createPrivacyList();
+        privacyData = queryLastPrivacyData();
+        Log.d(TAG,"privacyData="+ privacyData);
+        if(isActive())
             activate();
-        }
+        else deactivate();
     }
 
     public ArrayList<DataType> query(int ds_id, long starttimestamp, long endtimestamp) {
@@ -245,13 +245,12 @@ public class PrivacyManager {
 
     void activate() {
         handler.removeCallbacks(timer);
-        Log.d(TAG, "privacy activated...");
-        active=true;
+        createPrivacyList();
         handler.postDelayed(timer,getRemainingTime());
     }
 
-    public PrivacyData getLastPrivacyData(){
-        return lastPrivacyData;
+    public PrivacyData getPrivacyData(){
+        return privacyData;
     }
 
     private PrivacyData queryLastPrivacyData() {
@@ -268,7 +267,7 @@ public class PrivacyManager {
     void deactivate() {
         Log.d(TAG, "privacy deactivated...");
         listPrivacyListDsId.clear();
-        active=false;
+        privacyData =null;
         handler.removeCallbacks(timer);
     }
 }

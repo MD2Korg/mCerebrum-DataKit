@@ -4,8 +4,6 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 
-import org.md2k.utilities.Report.Log;
-
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
@@ -33,15 +31,15 @@ import org.md2k.utilities.Report.Log;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-public class ActivityDataKitSettings extends AppCompatActivity {
-    private static final String TAG = ActivityDataKitSettings.class.getSimpleName();
+public class ActivitySettingsDatabase extends AppCompatActivity {
+    private static final String TAG = ActivitySettingsDatabase.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_datakit_settings);
+        setContentView(R.layout.activity_settings_database);
         getFragmentManager().beginTransaction().replace(R.id.layout_preference_fragment,
-                new PrefsFragmentDataKitSettings()).commit();
+                new PrefsFragmentSettingsDatabase()).commit();
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayShowTitleEnabled(true);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);

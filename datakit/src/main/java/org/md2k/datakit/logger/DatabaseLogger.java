@@ -4,6 +4,9 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import org.md2k.datakit.Constants;
+import org.md2k.datakit.configuration.Configuration;
+import org.md2k.datakit.configuration.ConfigurationManager;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
 import org.md2k.datakitapi.datatype.DataTypeLong;
@@ -11,6 +14,7 @@ import org.md2k.datakitapi.datatype.RowObject;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
 import org.md2k.datakitapi.status.Status;
+import org.md2k.utilities.FileManager;
 import org.md2k.utilities.Report.Log;
 
 import java.io.IOException;
@@ -51,8 +55,8 @@ public class DatabaseLogger extends SQLiteOpenHelper {
     DatabaseTable_Data databaseTable_data = null;
     SQLiteDatabase db = null;
 
-    public DatabaseLogger(Context context) {
-        super(context, FileManager.getFilePath(context), null, FileManager.VERSION);
+    public DatabaseLogger(Context context, String path) {
+        super(context, path, null, 1);
         db = this.getWritableDatabase();
         Log.d(TAG, "DataBaseLogger() db isopen=" + db.isOpen() + " readonly=" + db.isReadOnly() + " isWriteAheadLoggingEnabled=" + db.isWriteAheadLoggingEnabled());
         databaseTable_dataSource = new DatabaseTable_DataSource(db);
@@ -61,10 +65,11 @@ public class DatabaseLogger extends SQLiteOpenHelper {
 
     public static DatabaseLogger getInstance(Context context) throws IOException {
         if (instance == null) {
-            String directory = FileManager.getDirectory(context);
+            Configuration configuration=ConfigurationManager.getInstance(context).configuration;
+            String directory=FileManager.getDirectory(context, configuration.database.location);
             Log.d(TAG, "directory=" + directory);
             if (directory != null)
-                instance = new DatabaseLogger(context);
+                instance = new DatabaseLogger(context, directory+ Constants.DATABASE_FILENAME);
             else throw new IOException("Database directory not found");
         }
         return instance;

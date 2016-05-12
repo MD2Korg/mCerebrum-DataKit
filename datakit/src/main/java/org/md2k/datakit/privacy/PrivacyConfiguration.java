@@ -40,7 +40,7 @@ public class PrivacyConfiguration {
     protected PrivacyConfig privacyConfig;
     public PrivacyConfiguration(Context context){
         this.context=context;
-        privacyConfig=ConfigurationManager.getInstance().configuration.privacy_config;
+        privacyConfig=ConfigurationManager.getInstance(context).configuration.privacy;
     }
     public ArrayList<Duration> getDuration(){
         return privacyConfig.duration_options;

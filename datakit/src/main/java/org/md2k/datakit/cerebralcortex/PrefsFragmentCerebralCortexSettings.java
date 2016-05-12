@@ -83,7 +83,7 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        addPreferencesFromResource(R.xml.pref_platform);
+        addPreferencesFromResource(R.xml.pref_settings_upload);
         try {
             defaultConfig = ConfigManager.readDefaultConfig();
         } catch (FileNotFoundException e) {

@@ -1,12 +1,8 @@
-package org.md2k.datakit.operation;
+package org.md2k.datakit;
 
-import android.content.Context;
-import android.os.Environment;
-import android.os.StatFs;
-
-import org.md2k.utilities.Report.Log;
-
-import java.io.File;
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.view.MenuItem;
 
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -34,7 +30,29 @@ import java.io.File;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public class FileManager {
 
+public class ActivitySettings extends AppCompatActivity {
+    private static final String TAG = ActivitySettings.class.getSimpleName();
 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_settings);
+        getFragmentManager().beginTransaction().replace(R.id.layout_preference_fragment,
+                new PrefsFragmentSettings()).commit();
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayShowTitleEnabled(true);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            // Respond to the action bar's Up/Home button
+            case android.R.id.home:
+                finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 }

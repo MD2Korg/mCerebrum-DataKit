@@ -1,6 +1,5 @@
 package org.md2k.datakit;
 
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.ListPreference;
@@ -8,7 +7,6 @@ import android.preference.MultiSelectListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
-import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -21,7 +19,9 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import org.md2k.datakit.privacy.PrivacyController;
+import org.md2k.datakit.configuration.ConfigurationManager;
+import org.md2k.datakit.configuration.PrivacyConfig;
+import org.md2k.datakit.privacy.PrivacyManager;
 import org.md2k.datakitapi.time.DateTime;
 import org.md2k.utilities.Report.Log;
 import org.md2k.utilities.UI.AlertDialogs;
@@ -31,6 +31,7 @@ import org.md2k.utilities.data_format.privacy.PrivacyType;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -60,43 +61,28 @@ import java.util.ArrayList;
  */
 public class PrefsFragmentPrivacySettings extends PreferenceFragment {
     private static final String TAG = PrefsFragmentPrivacySettings.class.getSimpleName();
-    PrivacyController privacyController;
+    PrivacyConfig privacyConfig;
     Handler handler;
-    Duration durationSelected;
-    ArrayList<PrivacyType> privacyTypeSelected = new ArrayList<>();
-    SharedPreferences sharedPrefs;
-    SharedPreferences.Editor editor;
+    PrivacyData newPrivacyData;
+    PrivacyManager privacyManager;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate...");
-        sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        editor = sharedPrefs.edit();
-        editor.clear();
-        editor.commit();
-        addPreferencesFromResource(R.xml.pref_privacy);
-    }
-
-    @Override
-    public void onStart() {
-        try {
-            privacyController = new PrivacyController(getActivity().getApplicationContext());
-            if (!privacyController.isAvailable()) getActivity().finish();
-        } catch (IOException e) {
-            //TODO: show alert dialog
-            getActivity().finish();
-        }
+        getPreferenceManager().getSharedPreferences().edit().clear().apply();
+        privacyConfig=ConfigurationManager.getInstance(getActivity()).configuration.privacy;
+        newPrivacyData=new PrivacyData();
         handler = new Handler();
-        setupPreferences();
+        addPreferencesFromResource(R.xml.pref_privacy);
+        try {
+            privacyManager=PrivacyManager.getInstance(getActivity());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         setupButtonSaveCancel();
-        super.onStart();
     }
 
-    @Override
-    public void onStop() {
-        super.onStop();
-    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -115,23 +101,16 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
         buttonStartStop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                PrivacyData privacyData;
-                Log.d(TAG, "button clicked..privacy=" + privacyController.isActive());
-                if (privacyController.isActive()) {
-                    privacyData = privacyController.getPrivacyData();
-                    durationSelected = privacyData.getDuration();
-                    privacyTypeSelected = privacyData.getPrivacyTypes();
-
+                if(privacyManager.isActive()){
+                    PrivacyData privacyData=privacyManager.getPrivacyData();
                     privacyData.setStatus(false);
-                    privacyController.writeToDataKit(privacyData);
-                    Toast.makeText(getActivity(), "Sensors are activated...", Toast.LENGTH_SHORT).show();
+                    privacyManager.insertPrivacy(privacyData);
+                    Toast.makeText(getActivity(), "Privacy Mode On...", Toast.LENGTH_SHORT).show();
 
                 } else {
-                    privacyData = preparePrivacyData();
-                    if (privacyData != null) {
-                        privacyController.writeToDataKit(privacyData);
-                        Toast.makeText(getActivity(), "Sensors are deactivated temporarily...", Toast.LENGTH_SHORT).show();
-                    }
+                    if(preparePrivacyData())
+                        privacyManager.insertPrivacy(newPrivacyData);
+                        Toast.makeText(getActivity(), "Privacy Mode Off...", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -144,32 +123,31 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
         });
     }
 
-    PrivacyData preparePrivacyData() {
-        PrivacyData privacyData = null;
-        if (durationSelected == null)
+    boolean preparePrivacyData() {
+        if(newPrivacyData.getDuration()==null) {
             AlertDialogs.showAlertDialog(getActivity(), "ERROR: Duration", "Duration is not set");
-        else if (privacyTypeSelected == null || privacyTypeSelected.size() == 0)
-            AlertDialogs.showAlertDialog(getActivity(), "ERROR: Privacy Type", "Privacy Type is not selected");
-        else {
-            privacyData = new PrivacyData();
-            privacyData.setDuration(durationSelected);
-            privacyData.setStartTimeStamp(DateTime.getDateTime());
-            privacyData.setStatus(true);
-            privacyData.setPrivacyTypes(privacyTypeSelected);
+            return false;
         }
-        return privacyData;
+        else if (newPrivacyData.getPrivacyTypes() == null || newPrivacyData.getPrivacyTypes().size() == 0) {
+            AlertDialogs.showAlertDialog(getActivity(), "ERROR: Privacy Type", "Privacy Type is not selected");
+            return false;
+        }
+        else {
+            newPrivacyData.setStartTimeStamp(DateTime.getDateTime());
+            newPrivacyData.setStatus(true);
+            return true;
+        }
     }
 
     void updateUI() {
         Preference preference = findPreference("status");
         preference.setEnabled(false);
         PreferenceCategory pc = (PreferenceCategory) findPreference("category_settings");
-        Log.d(TAG, "privacy=" + privacyController.isActive());
 
-        if (privacyController.isActive()) {
+        if (privacyManager.isActive()) {
             ((Button) getActivity().findViewById(R.id.button_1)).setText("Stop");
             pc.setEnabled(false);
-            Spannable summary = new SpannableString("ON (" + DateTime.convertTimestampToTimeStr(privacyController.getRemainingTime()) + ")");
+            Spannable summary = new SpannableString("ON (" + DateTime.convertTimestampToTimeStr(privacyManager.getRemainingTime()) + ")");
             summary.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getActivity(), R.color.red_700)), 0, summary.length(), 0);
             preference.setSummary(summary);
         } else {
@@ -194,7 +172,6 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
     @Override
     public void onResume() {
         handler.post(runnable);
-        sharedPrefs.getBoolean()
         super.onResume();
     }
 
@@ -203,16 +180,19 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
         handler.removeCallbacks(runnable);
         super.onPause();
     }
-
+    @Override
+    public void onStart(){
+        setupPreferences();
+        super.onStart();
+    }
 
     void setupPreferences() {
         setupDuration();
         setupPrivacyType();
     }
 
-
     void setupPrivacyType() {
-        final ArrayList<PrivacyType> privacyTypes = privacyController.getPrivacyConfiguration().getPrivacyType();
+        final ArrayList<PrivacyType> privacyTypes = privacyConfig.privacy_type_options;
         final MultiSelectListPreference listPreference = (MultiSelectListPreference) findPreference("privacy_type");
         String[] entries = new String[privacyTypes.size()];
         String[] entryValues = new String[privacyTypes.size()];
@@ -222,8 +202,13 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
         }
         listPreference.setEntries(entries);
         listPreference.setEntryValues(entryValues);
-        if (privacyController.isActive()) {
-            listPreference.setSummary(privacyController.getPrivacyData().getDuration().getTitle());
+        if (privacyManager.isActive()) {
+            String list="";
+            for(int i=0;i<privacyManager.getPrivacyData().getPrivacyTypes().size();i++){
+                if(!list.equals("")) list+=", ";
+                list+=privacyManager.getPrivacyData().getPrivacyTypes().get(i).getTitle();
+            }
+            listPreference.setSummary(list);
         } else {
             Spannable summary = new SpannableString("(Click Here)");
             summary.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getActivity(), R.color.red_700)), 0, summary.length(), 0);
@@ -232,56 +217,25 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
         listPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
-                return false;
-            }
-        });
-/*        listPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-            @Override
-            public boolean onPreferenceChange(Preference preference, Object newValue) {
-                int index = listPreference.findIndexOfValue(newValue.toString());
-                if (index >= 0) {
-                    preference.setSummary(listPreference.getEntries()[index]);
-                    listPreference.setValueIndex(index);
-                    for (int i = 0; i < durations.size(); i++)
-                        if (durations.get(i).getId().equals(newValue))
-                            durationSelected = durations.get(i);
-                } else preference.setSummary("(Click Here)");
-                return false;
-            }
-        });
-
-            CheckBoxPreference checkBoxPreference = new CheckBoxPreference(getActivity());
-            checkBoxPreference.setTitle(privacyTypes.get(i).getTitle());
-            checkBoxPreference.setSummary(privacyTypes.get(i).getSummary());
-            checkBoxPreference.setKey(privacyTypes.get(i).getId());
-            final int finalI = i;
-            checkBoxPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    ((CheckBoxPreference) preference).setChecked((Boolean) newValue);
-                    Log.d(TAG, "newvalue=" + newValue.toString());
-                    if ((Boolean) newValue) {
-                        privacyTypeSelected.add(privacyTypes.get(finalI));
-                    } else {
-                        privacyTypeSelected.remove(privacyTypes.get(finalI));
+                ArrayList<PrivacyType> privacyTypeSelected= new ArrayList<>();
+                String list="";
+                for (int i = 0; i < privacyTypes.size(); i++){
+                    if(((HashSet)newValue).contains(privacyTypes.get(i).getId())) {
+                        privacyTypeSelected.add(privacyTypes.get(i));
+                        if (!list.equals(""))
+                            list += ", ";
+                        list = list + privacyTypes.get(i).getTitle();
                     }
-                    for(int i=0;i<privacyTypeSelected.size();i++)
-                        Log.d(TAG,"i="+i+" "+privacyTypeSelected.get(i).getId());
-                    return (boolean) newValue;
                 }
-            });
-            if(privacyController.isActive() && privacyController.isPrivacyTypeExists(privacyTypes.get(i).getId())) {
-                checkBoxPreference.setChecked(true);
-                privacyTypeSelected.add(privacyTypes.get(i));
+                listPreference.setSummary(list);
+                newPrivacyData.setPrivacyTypes(privacyTypeSelected);
+                return false;
             }
-            else checkBoxPreference.setChecked(false);
-            preferenceCategory.addPreference(checkBoxPreference);
-        }
- */
+        });
     }
 
     void setupDuration() {
-        final ArrayList<Duration> durations = privacyController.getPrivacyConfiguration().getDuration();
+        final ArrayList<Duration> durations = privacyConfig.duration_options;
         final ListPreference listPreference = (ListPreference) findPreference("duration");
         String[] entries = new String[durations.size()];
         String[] entryValues = new String[durations.size()];
@@ -291,9 +245,8 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
         }
         listPreference.setEntries(entries);
         listPreference.setEntryValues(entryValues);
-        if (privacyController.isActive()) {
-            listPreference.setSummary(privacyController.getPrivacyData().getDuration().getTitle());
-//            listPreference.setValueIndex(listPreference.findIndexOfValue(privacyController.getPrivacyData().getDuration().getTitle()));
+        if (privacyManager.isActive()) {
+            listPreference.setSummary(privacyManager.getPrivacyData().getDuration().getTitle());
 
         } else {
             Spannable summary = new SpannableString("(Click Here)");
@@ -309,7 +262,7 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
                     listPreference.setValueIndex(index);
                     for (int i = 0; i < durations.size(); i++)
                         if (durations.get(i).getId().equals(newValue))
-                            durationSelected = durations.get(i);
+                            newPrivacyData.setDuration(durations.get(i));
                 }
                 return false;
             }

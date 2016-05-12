@@ -20,19 +20,18 @@ import android.widget.TextView;
 import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.core.CrashlyticsCore;
 
-import org.md2k.datakit.cerebralcortex.ActivityCerebralCortexSettings;
 import org.md2k.datakit.cerebralcortex.CerebralCortexController;
 import org.md2k.datakit.cerebralcortex.ServiceCerebralCortex;
-import org.md2k.datakit.configuration.ConfigurationManager;
-import org.md2k.datakit.privacy.PrivacyController;
+import org.md2k.datakit.privacy.PrivacyManager;
 import org.md2k.datakitapi.time.DateTime;
 import org.md2k.utilities.Apps;
-import org.md2k.utilities.FileManager;
 import org.md2k.utilities.UI.ActivityAbout;
 import org.md2k.utilities.UI.ActivityCopyright;
+import org.md2k.utilities.data_format.privacy.PrivacyType;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 
 import io.fabric.sdk.android.Fabric;
 
@@ -66,8 +65,7 @@ import io.fabric.sdk.android.Fabric;
 
 public class ActivityMain extends AppCompatActivity {
     private static final String TAG = ActivityMain.class.getSimpleName();
-    PrivacyController privacyController;
-    ConfigurationManager configurationManager;
+    PrivacyManager privacyManager;
 
     CerebralCortexController cerebralCortexController;
     CerebralCortexUpdateReceiver ccRcvr;
@@ -147,23 +145,19 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     void setupPrivacyUI() throws IOException {
-        privacyController = new PrivacyController(this);
+        privacyManager = PrivacyManager.getInstance(this);
         LinearLayout linearLayout = (LinearLayout) findViewById(R.id.ll_privacy);
-        if (!privacyController.isAvailable()) {
-            linearLayout.setVisibility(View.GONE);
-        } else {
-            linearLayout.setVisibility(View.VISIBLE);
-            updateUI();
+        linearLayout.setVisibility(View.VISIBLE);
+        updateUI();
 
-            Button button = (Button) findViewById(R.id.button_privacy);
-            button.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(ActivityMain.this, ActivityPrivacy.class);
-                    startActivity(intent);
-                }
-            });
-        }
+        Button button = (Button) findViewById(R.id.button_privacy);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(ActivityMain.this, ActivityPrivacy.class);
+                startActivity(intent);
+            }
+        });
     }
 
     public void updateCCUI() {
@@ -179,15 +173,14 @@ public class ActivityMain extends AppCompatActivity {
         }
     }
 
-    public void updateUI(){
-        if (!privacyController.isAvailable()) return;
-        TextView textViewStatus=((TextView) findViewById(R.id.textViewPrivacyStatus));
-        TextView textViewOption=((TextView) findViewById(R.id.textViewPrivacyOption));
+    public void updateUI() {
+        TextView textViewStatus = ((TextView) findViewById(R.id.textViewPrivacyStatus));
+        TextView textViewOption = ((TextView) findViewById(R.id.textViewPrivacyOption));
 
-        if (privacyController.isActive()) {
-            textViewStatus.setText("ON ("+ DateTime.convertTimestampToTimeStr(privacyController.getRemainingTime()) + ")");
-            textViewOption.setText(privacyController.getActiveList());
-            textViewStatus.setTextColor(ContextCompat.getColor(this,R.color.red_700));
+        if (privacyManager.isActive()) {
+            textViewStatus.setText("ON (" + DateTime.convertTimestampToTimeStr(privacyManager.getRemainingTime()) + ")");
+            textViewOption.setText(getPrivacyList(privacyManager.getPrivacyData().getPrivacyTypes()));
+            textViewStatus.setTextColor(ContextCompat.getColor(this, R.color.red_700));
             textViewOption.setTextColor(ContextCompat.getColor(this, R.color.red_200));
 
         } else {
@@ -196,16 +189,15 @@ public class ActivityMain extends AppCompatActivity {
             textViewStatus.setTextColor(ContextCompat.getColor(this, R.color.teal_700));
             textViewOption.setVisibility(View.GONE);
             findViewById(R.id.textViewPrivacyOptionTitle).setVisibility(View.GONE);
-
         }
-
     }
-
-    void updateSDCardSettingsText() {
-        configurationManager=new ConfigurationManager();
-        String option=configurationManager.configuration.database.location;
-        ((TextView) findViewById(R.id.textview_sdcard_settings)).setText(option);
-        ((TextView) findViewById(R.id.textview_location_sd)).setText(FileManager.getSelectedSDCard(this,option));
+    private String getPrivacyList(ArrayList<PrivacyType> privacyTypeArrayList){
+        String list="";
+        for(int i=0;i<privacyTypeArrayList.size();i++){
+            if(!list.equals("")) list=", ";
+            list+=privacyTypeArrayList.get(i).getTitle();
+        }
+        return list;
     }
 
     @Override
@@ -217,10 +209,8 @@ public class ActivityMain extends AppCompatActivity {
 
     @Override
     public void onResume() {
-        updateSDCardSettingsText();
         mHandler.post(runnable);
         LocalBroadcastManager.getInstance(this).registerReceiver(ccRcvr, new IntentFilter(org.md2k.datakit.cerebralcortex.Constants.CEREBRAL_CORTEX_STATUS));
-
         super.onResume();
     }
 
@@ -260,12 +250,7 @@ public class ActivityMain extends AppCompatActivity {
                 finish();
                 break;
             case R.id.action_settings:
-                intent = new Intent(this, ActivityDataKitSettings.class);
-                startActivity(intent);
-                break;
-
-            case R.id.action_cerebralcortex_settings:
-                intent = new Intent(this, ActivityCerebralCortexSettings.class);
+                intent = new Intent(this, ActivitySettings.class);
                 startActivity(intent);
                 break;
 
@@ -296,6 +281,4 @@ public class ActivityMain extends AppCompatActivity {
             textViewMessage.setText(intent.getStringExtra("CC_Upload"));
         }
     }
-
-
 }

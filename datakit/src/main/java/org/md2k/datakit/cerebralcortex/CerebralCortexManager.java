@@ -4,11 +4,10 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Handler;
 
-import org.md2k.datakit.cerebralcortex.config.Config;
-import org.md2k.datakit.cerebralcortex.config.ConfigManager;
+import org.md2k.datakit.configuration.Configuration;
+import org.md2k.datakit.configuration.ConfigurationManager;
 import org.md2k.utilities.Apps;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import static org.md2k.utilities.UI.AlertDialogs.showAlertDialog;
@@ -46,7 +45,7 @@ public class CerebralCortexManager {
     private static CerebralCortexWrapper task;
     private Context context;
     private boolean active;
-    private Config config;
+    private Configuration configuration;
     private Handler handler;
     Runnable publishData = new Runnable() {
         @Override
@@ -58,7 +57,7 @@ public class CerebralCortexManager {
                 try {
                     long time = Apps.serviceRunningTime(context.getApplicationContext(), org.md2k.datakit.Constants.SERVICE_NAME);
                     if (time > 0) {
-                        task = new CerebralCortexWrapper(context, config.getUrl(), config.getHistory_time(), config.getRestricted_datasource());
+                        task = new CerebralCortexWrapper(context, configuration.upload.url, configuration.upload.restricted_datasource);
                         task.execute();
                     }
                 } catch (IOException e) {
@@ -66,8 +65,7 @@ public class CerebralCortexManager {
                     e.printStackTrace();
                 }
             }
-
-            handler.postDelayed(publishData, config.getUpload_interval());
+            handler.postDelayed(publishData, configuration.upload.interval);
         }
     };
 
@@ -75,12 +73,7 @@ public class CerebralCortexManager {
         this.context = context;
         handler = new Handler();
         active = false;
-
-        try {
-            this.config = ConfigManager.readConfig();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+        configuration=ConfigurationManager.getInstance(context).configuration;
     }
 
     public static CerebralCortexManager getInstance(Context context) throws IOException {
@@ -91,7 +84,8 @@ public class CerebralCortexManager {
 
     void start() {
         active = true;
-        handler.post(publishData);
+        if(configuration.upload.enabled)
+            handler.post(publishData);
     }
 
     public boolean isActive() {
@@ -104,6 +98,6 @@ public class CerebralCortexManager {
     }
 
     public boolean isAvailable() {
-        return (this.config != null);
+        return (configuration != null);
     }
 }

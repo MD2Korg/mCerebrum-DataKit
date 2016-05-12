@@ -1,18 +1,8 @@
-package org.md2k.datakit.configuration;
+package org.md2k.datakit;
 
-
-import android.content.Context;
-
-import com.google.gson.Gson;
-
-import org.md2k.datakit.Constants;
-import org.md2k.datakit.R;
-import org.md2k.utilities.FileManager;
-
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.view.MenuItem;
 
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -40,36 +30,29 @@ import java.io.InputStreamReader;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public class ConfigurationManager {
-    public Configuration configuration;
-    private static ConfigurationManager instance=null;
-    public static ConfigurationManager getInstance(Context context){
-        if(instance==null) instance=new ConfigurationManager(context);
-        return instance;
-    }
-    private ConfigurationManager(Context context) {
-        read(context);
-    }
 
-    private void read(Context context) {
-        try {
-            configuration=FileManager.readJSON(Constants.CONFIG_DIRECTORY, Constants.CONFIG_FILENAME, Configuration.class);
-        } catch (FileNotFoundException e) {
-            readDefault(context);
+public class ActivitySettingsArchive extends AppCompatActivity {
+    private static final String TAG = ActivitySettingsArchive.class.getSimpleName();
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_settings_archive);
+        getFragmentManager().beginTransaction().replace(R.id.layout_preference_fragment,
+                new PrefsFragmentSettingsArchive()).commit();
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayShowTitleEnabled(true);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
     }
-
-    void readDefault(Context context) {
-        BufferedReader br;
-        br = new BufferedReader(new InputStreamReader(context.getResources().openRawResource(R.raw.config)));
-        Gson gson = new Gson();
-        configuration = gson.fromJson(br, Configuration.class);
-    }
-    public void write(){
-        try {
-            FileManager.writeJSON(Constants.CONFIG_DIRECTORY, Constants.CONFIG_FILENAME, configuration);
-        } catch (IOException e) {
-            e.printStackTrace();
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            // Respond to the action bar's Up/Home button
+            case android.R.id.home:
+                finish();
+                return true;
         }
+        return super.onOptionsItemSelected(item);
     }
 }
