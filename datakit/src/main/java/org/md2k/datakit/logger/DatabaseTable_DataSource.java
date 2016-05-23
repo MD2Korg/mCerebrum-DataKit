@@ -148,6 +148,7 @@ public class DatabaseTable_DataSource {
                     columns, selection, selectionArgs, null, null, null);
             if (mCursor.moveToFirst()) {
                 do {
+
                     DataSource curDataSource=fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_DATASOURCE)));
                     DataSourceClient dataSourceClient = new DataSourceClient(mCursor.getInt(mCursor.getColumnIndex(C_DS_ID)),
                             curDataSource, new Status(Status.DATASOURCE_EXIST));
@@ -156,7 +157,9 @@ public class DatabaseTable_DataSource {
                     dataSourceClients.add(dataSourceClient);
                 } while (mCursor.moveToNext());
             }
-        } finally {
+        } catch (Exception ignored){
+
+        } finally{
             if (mCursor != null && !mCursor.isClosed()) {
                 mCursor.close();
             }
