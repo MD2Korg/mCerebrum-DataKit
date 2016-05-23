@@ -58,6 +58,7 @@ public class PrefsFragmentSettingsDatabase extends PreferenceFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         configuration = ConfigurationManager.getInstance(getActivity()).configuration;
+        Log.d(TAG,"configuration="+configuration);
         getPreferenceManager().getSharedPreferences().edit().clear().apply();
         getPreferenceManager().getSharedPreferences().edit().putString("key_storage", configuration.database.location).apply();
         addPreferencesFromResource(R.xml.pref_settings_database);

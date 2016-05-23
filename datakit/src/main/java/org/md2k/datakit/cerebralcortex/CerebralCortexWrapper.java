@@ -94,15 +94,15 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
     private Gson gson = new GsonBuilder().serializeNulls().create();
 
     public CerebralCortexWrapper(Context context, String url, List<DataSource> restricted) throws IOException {
-        Configuration configuration=ConfigurationManager.getInstance(context).configuration;
+        Configuration configuration = ConfigurationManager.getInstance(context).configuration;
         this.context = context;
         this.requestURL = url;
         this.restricted = restricted;
         this.history_time = configuration.archive.interval;
-        if(configuration.archive.enabled) {
+        if (configuration.archive.enabled) {
             CCDIR = FileManager.getDirectory(context, configuration.archive.location) + org.md2k.datakit.Constants.ARCHIVE_DIRECTORY;
-        }else CCDIR=null;
-            dbLogger = DatabaseLogger.getInstance(context);
+        } else CCDIR = null;
+        dbLogger = DatabaseLogger.getInstance(context);
     }
 
     private static String readStream(InputStream in) {
@@ -151,7 +151,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
             }
         }
 
-        if(CCDIR!=null) {
+        if (CCDIR != null) {
             File ccdir = new File(CCDIR);
             if (!ccdir.exists())
                 ccdir.mkdirs();
@@ -266,7 +266,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
 
         messenger("Upload Complete");
         return true;
-        }
+    }
 
     private void archiveDataStream(boolean hf, DataSourceClient dsc, CerebralCortexDataSourceResponse ccdpResponse) {
         String dataResult = null;
@@ -309,7 +309,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
     }
 
     private void archiveJsonData(String data, int ds_id, String filename) {
-        if(CCDIR==null) return;
+        if (CCDIR == null) return;
         File outputDir = new File(CCDIR + "ds" + ds_id + "/");
         if (!outputDir.mkdirs()) {
             Log.e("Archive", "mkdir error" + outputDir);
@@ -492,7 +492,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
      * Upload method for publishing data to the Cerebral Cortex webservice
      *
      * @param requestURL URL
-     * @param json    String of data to send to Cerebral Cortex
+     * @param json       String of data to send to Cerebral Cortex
      */
     public String cerebralCortexAPI(String requestURL, String json) throws IOException {
         long totalst = System.currentTimeMillis();

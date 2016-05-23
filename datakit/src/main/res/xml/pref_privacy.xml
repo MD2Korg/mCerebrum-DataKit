@@ -11,9 +11,9 @@
         android:title="Settings">
         <ListPreference
             android:key="duration"
-            android:title="Duration" />
+            android:title="Set Privacy Duration" />
         <MultiSelectListPreference
             android:key="privacy_type"
-            android:title="Privacy Type" />
+            android:title="Set Privacy Type" />
     </PreferenceCategory>
 </PreferenceScreen>

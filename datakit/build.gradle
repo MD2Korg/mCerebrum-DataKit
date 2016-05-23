@@ -1,3 +1,5 @@
+version = '0.8.4'
+apply from: 'versioning.gradle'
 buildscript {
     repositories {
         maven { url 'https://maven.fabric.io/public' }
@@ -25,8 +27,8 @@ android {
     defaultConfig {
         minSdkVersion 19
         targetSdkVersion 21
-        versionCode 24
-        versionName '0.8.2'
+        versionCode buildVersionCode()
+        versionName version
     }
     packagingOptions {
         exclude 'META-INF/DEPENDENCIES'
@@ -50,7 +52,7 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(include: ['*.jar'], dir: 'libs')
     compile project(':datakitapi')
     compile project(':utilities')
     compile 'com.android.support:appcompat-v7:23.1.1'
