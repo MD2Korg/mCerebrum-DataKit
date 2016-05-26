@@ -16,9 +16,11 @@ import android.os.RemoteException;
 import android.support.v4.content.LocalBroadcastManager;
 import android.view.WindowManager;
 
+import org.md2k.datakit.cerebralcortex.ServiceCerebralCortex;
 import org.md2k.datakit.message.MessageController;
 import org.md2k.datakitapi.messagehandler.MessageType;
 import org.md2k.datakitapi.status.Status;
+import org.md2k.utilities.Apps;
 import org.md2k.utilities.Report.Log;
 
 import java.io.IOException;
@@ -81,6 +83,10 @@ public class ServiceDataKit extends Service {
 
     void stop() {
         Log.d(TAG, "stop()...");
+        if(Apps.isServiceRunning(this,"org.md2k.datakit.cerebralcortex.ServiceCerebralCortex")){
+            Intent intent=new Intent(this, ServiceCerebralCortex.class);
+            stopService(intent);
+        }
         if (messageController != null) {
             messageController.close();
             messageController = null;

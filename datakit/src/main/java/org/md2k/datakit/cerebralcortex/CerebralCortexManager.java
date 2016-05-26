@@ -94,6 +94,8 @@ public class CerebralCortexManager {
 
     void stop() {
         active = false;
+        if(task!=null)
+        task.cancel(true);
         handler.removeCallbacks(publishData);
     }
 

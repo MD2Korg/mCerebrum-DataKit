@@ -23,17 +23,17 @@ import java.util.ArrayList;
  * Copyright (c) 2015, The University of Memphis, MD2K Center
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
  * All rights reserved.
- *
+ * <p/>
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- *
+ * <p/>
  * * Redistributions of source code must retain the above copyright notice, this
  * list of conditions and the following disclaimer.
- *
+ * <p/>
  * * Redistributions in binary form must reproduce the above copyright notice,
  * this list of conditions and the following disclaimer in the documentation
  * and/or other materials provided with the distribution.
- *
+ * <p/>
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -47,7 +47,7 @@ import java.util.ArrayList;
  */
 public class DatabaseTable_DataSource {
     private static final String TAG = DatabaseTable_DataSource.class.getSimpleName();
-    private static String TABLE_NAME = "datasource";
+    private static String TABLE_NAME = "datasources";
     private static String C_DS_ID = "ds_id";
     private static String C_DATASOURCE_ID = "datasource_id";
     private static String C_DATASOURCE_TYPE = "datasource_type";
@@ -65,10 +65,8 @@ public class DatabaseTable_DataSource {
             C_PLATFORMAPP_ID + " TEXT, " + C_PLATFROMAPP_TYPE + " TEXT," +
             C_APPLICATION_ID + " TEXT, " + C_APPLICATION_TYPE + " TEXT," +
             C_CREATEDATETIME + " LONG, " + C_DATASOURCE + " BLOB not null);";
-    Kryo kryo;
 
     DatabaseTable_DataSource(SQLiteDatabase db) {
-        kryo=new Kryo();
         createIfNotExists(db);
     }
 
@@ -136,37 +134,37 @@ public class DatabaseTable_DataSource {
     }
 
     public ArrayList<DataSourceClient> findDataSource(SQLiteDatabase db, DataSource dataSource) {
+        Log.d(TAG,"findDataSource()..dataSource="+dataSource.getId()+" "+ dataSource.getType());
         ArrayList<DataSourceClient> dataSourceClients = new ArrayList<>();
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
         queryBuilder.setTables(TABLE_NAME);
         String[] columns = new String[]{C_DS_ID, C_DATASOURCE};
         String selection = prepareSelection(dataSource);
+        Log.d(TAG,"findDataSource()...selection = "+selection);
         String[] selectionArgs = prepareSelectionArgs(dataSource);
-        Cursor mCursor = null;
-        try {
-            mCursor = db.query(TABLE_NAME,
-                    columns, selection, selectionArgs, null, null, null);
-            if (mCursor.moveToFirst()) {
-                do {
-
-                    DataSource curDataSource=fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_DATASOURCE)));
-                    DataSourceClient dataSourceClient = new DataSourceClient(mCursor.getInt(mCursor.getColumnIndex(C_DS_ID)),
-                            curDataSource, new Status(Status.DATASOURCE_EXIST));
+        if(selectionArgs!=null){
+            for(int i=0;i<selectionArgs.length;i++)
+                Log.d(TAG,"findDataSource()...selectionArgs["+i+"]="+selectionArgs[i]);
+        }
+        Cursor mCursor = db.query(TABLE_NAME, columns, selection, selectionArgs, null, null, null);
+        if (mCursor.moveToFirst()) {
+            Log.d(TAG,"findDataSource()...mCursor..not Empty");
+            do {
+                byte[] bytes=mCursor.getBlob(mCursor.getColumnIndex(C_DATASOURCE));
+                Log.d(TAG, "findDataSource()...blob_size="+bytes.length);
+                DataSource curDataSource = fromBytes(bytes);
+                DataSourceClient dataSourceClient = new DataSourceClient(mCursor.getInt(mCursor.getColumnIndex(C_DS_ID)),
+                        curDataSource, new Status(Status.DATASOURCE_EXIST));
 //                    DataSourceClient dataSourceClient = new DataSourceClient(mCursor.getInt(mCursor.getColumnIndex(C_DS_ID)),
 //                            DataSource.fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_DATASOURCE))), new Status(Status.DATASOURCE_EXIST));
-                    dataSourceClients.add(dataSourceClient);
-                } while (mCursor.moveToNext());
-            }
-        } catch (Exception ignored){
-
-        } finally{
-            if (mCursor != null && !mCursor.isClosed()) {
-                mCursor.close();
-            }
+                dataSourceClients.add(dataSourceClient);
+            } while (mCursor.moveToNext());
         }
+        mCursor.close();
         return dataSourceClients;
     }
-    public void removeAll(SQLiteDatabase db){
+
+    public void removeAll(SQLiteDatabase db) {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
     }
 
@@ -203,17 +201,22 @@ public class DatabaseTable_DataSource {
         cValues.put(C_DATASOURCE, dataSourceArray);
         return cValues;
     }
-    byte[] toBytes(DataSource dataSource){
+
+    private byte[] toBytes(DataSource dataSource) {
+        Kryo kryo=new Kryo();
         byte[] bytes;
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         Output output = new Output(baos);
         kryo.writeClassAndObject(output, dataSource);
         output.close();
-        bytes=baos.toByteArray();
+        bytes = baos.toByteArray();
         Log.d(TAG, "datasource_bytes: size=" + bytes.length + " content=" + bytes.toString());
         return bytes;
     }
-    DataSource fromBytes(byte[] bytes){
+
+    private DataSource fromBytes(byte[] bytes) {
+        Kryo kryo=new Kryo();
+        Log.d(TAG,"fromBytes size="+bytes.length);
         Input input = new Input(new ByteArrayInputStream(bytes));
         DataSource curDataSource = (DataSource) kryo.readClassAndObject(input);
         input.close();
