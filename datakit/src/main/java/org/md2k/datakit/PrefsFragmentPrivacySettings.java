@@ -65,11 +65,17 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
     Handler handler;
     PrivacyData newPrivacyData;
     PrivacyManager privacyManager;
+    long remainingTime;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate...");
+        if(getActivity().getIntent().hasExtra("REMAINING_TIME")){
+            remainingTime=getActivity().getIntent().getLongExtra("REMAINING_TIME",Long.MAX_VALUE);
+        }else{
+            remainingTime=Long.MAX_VALUE;
+        }
         getPreferenceManager().getSharedPreferences().edit().clear().apply();
         privacyConfig=ConfigurationManager.getInstance(getActivity()).configuration.privacy;
         newPrivacyData=new PrivacyData();
@@ -108,9 +114,10 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
                     Toast.makeText(getActivity(), "Privacy Mode Off...", Toast.LENGTH_SHORT).show();
 
                 } else {
-                    if(preparePrivacyData())
+                    if(preparePrivacyData()) {
                         privacyManager.insertPrivacy(newPrivacyData);
-                        Toast.makeText(getActivity(), "Privacy Mode On´...", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getActivity(), "Privacy Mode On...", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
         });
@@ -237,14 +244,16 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
     void setupDuration() {
         final ArrayList<Duration> durations = privacyConfig.duration_options;
         final ListPreference listPreference = (ListPreference) findPreference("duration");
-        String[] entries = new String[durations.size()];
-        String[] entryValues = new String[durations.size()];
+        ArrayList<String> entries = new ArrayList<>();
+        ArrayList<String> entryValues = new ArrayList<>();
         for (int i = 0; i < durations.size(); i++) {
-            entries[i] = durations.get(i).getTitle();
-            entryValues[i] = durations.get(i).getId();
+            if(durations.get(i).getValue()<=remainingTime) {
+                entries.add(durations.get(i).getTitle());
+                entryValues.add(durations.get(i).getId());
+            }
         }
-        listPreference.setEntries(entries);
-        listPreference.setEntryValues(entryValues);
+        listPreference.setEntries(entries.toArray(new String[entries.size()]));
+        listPreference.setEntryValues(entryValues.toArray(new String[entryValues.size()]));
         if (privacyManager.isActive()) {
             listPreference.setSummary(privacyManager.getPrivacyData().getDuration().getTitle());
 

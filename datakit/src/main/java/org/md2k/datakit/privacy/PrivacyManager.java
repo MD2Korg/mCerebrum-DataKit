@@ -95,28 +95,13 @@ public class PrivacyManager {
         return instance;
     }
 
-    private DataSource createDataSource(String dataSourceType, String platformType) {
-        Platform platform;
-        if (platformType == null || platformType.length() == 0)
-            platform = null;
-        else platform = new PlatformBuilder().setType(platformType).build();
-        if (dataSourceType == null || dataSourceType.length() == 0)
-            return new DataSourceBuilder().setPlatform(platform).build();
-        else return new DataSourceBuilder().setType(dataSourceType).setPlatform(platform).build();
-    }
-
     void createPrivacyList() {
         if(!isActive()) return;
         listPrivacyListDsId.clear();
-        String dataSourceType;
-        String platformType;
         int id;
         for (int i = 0; i < privacyData.getPrivacyTypes().size(); i++) {
-            for (int j = 0; j < privacyData.getPrivacyTypes().get(i).getSource().size(); j++) {
-                dataSourceType = privacyData.getPrivacyTypes().get(i).getSource().get(j).getDatasource_type();
-                platformType = privacyData.getPrivacyTypes().get(i).getSource().get(j).getPlatform_type();
-                Log.d(TAG,"search...dataSourceType="+dataSourceType+" platformType="+platformType);
-                ArrayList<DataSourceClient> dataSourceClients = routingManager.find(createDataSource(dataSourceType, platformType));
+            for (int j = 0; j < privacyData.getPrivacyTypes().get(i).getDatasource().size(); j++) {
+                ArrayList<DataSourceClient> dataSourceClients = routingManager.find(privacyData.getPrivacyTypes().get(i).getDatasource().get(j));
                 for (int k = 0; k < dataSourceClients.size(); k++) {
                     Log.d(TAG,"id="+dataSourceClients.get(k).getDs_id());
                     id = dataSourceClients.get(k).getDs_id();

@@ -414,7 +414,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         }
         try {
             return LoganSquare.parse(dataSourceResult, CerebralCortexDataSourceResponse.class);
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
