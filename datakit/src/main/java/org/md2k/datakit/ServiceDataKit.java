@@ -1,6 +1,5 @@
 package org.md2k.datakit;
 
-import android.app.AlertDialog;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -14,7 +13,6 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.support.v4.content.LocalBroadcastManager;
-import android.view.WindowManager;
 
 import org.md2k.datakit.cerebralcortex.ServiceCerebralCortex;
 import org.md2k.datakit.message.MessageController;
@@ -22,6 +20,7 @@ import org.md2k.datakitapi.messagehandler.MessageType;
 import org.md2k.datakitapi.status.Status;
 import org.md2k.utilities.Apps;
 import org.md2k.utilities.Report.Log;
+import org.md2k.utilities.UI.AlertDialogs;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -122,8 +121,12 @@ public class ServiceDataKit extends Service {
             messageController = MessageController.getInstance(getApplicationContext());
             mMessenger = new Messenger(incomingHandler);
         } catch (IOException e) {
-            showAlertDialog(this, e.getMessage());
-            e.printStackTrace();
+            AlertDialogs.AlertDialog(this, "Error", e.getMessage(), R.drawable.ic_error_red_50dp, "Ok", null, null, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+
+                }
+            });
         }
     }
 
@@ -136,21 +139,6 @@ public class ServiceDataKit extends Service {
         messengers.remove(messenger);
         Log.d(TAG, "name=" + pName + " messenger=" + messenger);
         return super.onUnbind(intent);
-    }
-
-    static void showAlertDialog(final Context context, String message) {
-        AlertDialog alertDialog = new AlertDialog.Builder(context)
-                .setTitle("Error")
-                .setIcon(R.drawable.ic_error_red_50dp)
-                .setMessage(message)
-                .setNegativeButton("Ok", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                    }
-                })
-                .create();
-        alertDialog.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
-        alertDialog.show();
     }
 
     @Override

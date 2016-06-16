@@ -1,5 +1,6 @@
 package org.md2k.datakit;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
@@ -9,7 +10,6 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.SwitchPreference;
-import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -68,7 +68,7 @@ public class PrefsFragmentSettingsArchive extends PreferenceFragment {
             clearArchive();
     }
     void clearArchive() {
-        AlertDialogs.showAlertDialogConfirm(getActivity(), "Delete Archive Files?", "Delete Archive Files?\n\nData can't be recovered after deletion", "Yes", "Cancel", new DialogInterface.OnClickListener() {
+        AlertDialogs.AlertDialog(getActivity(), "Delete Archive Files?", "Delete Archive Files?\n\nData can't be recovered after deletion",R.drawable.ic_delete_red_48dp, "Yes", "Cancel",null, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 if (which == AlertDialog.BUTTON_POSITIVE) {

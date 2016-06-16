@@ -23,6 +23,7 @@ import org.md2k.datakit.cerebralcortex.config.ConfigManager;
 import org.md2k.datakitapi.source.datasource.DataSourceType;
 import org.md2k.utilities.Apps;
 import org.md2k.utilities.Report.Log;
+import org.md2k.utilities.UI.AlertDialogs;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -59,26 +60,6 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
     private static final String TAG = PrefsFragmentCerebralCortexSettings.class.getSimpleName();
     Config defaultConfig;
     Config config;
-    DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-        @Override
-        public void onClick(DialogInterface dialog, int which) {
-            switch (which) {
-                case DialogInterface.BUTTON_POSITIVE:
-                    Intent intent = new Intent(getActivity(), ServiceCerebralCortex.class);
-                    getActivity().stopService(intent);
-                    saveConfigurationFile();
-                    intent = new Intent(getActivity(), ServiceCerebralCortex.class);
-                    getActivity().startService(intent);
-                    getActivity().finish();
-                    break;
-
-                case DialogInterface.BUTTON_NEGATIVE:
-                    Toast.makeText(getActivity(), "!!! Error: Configuration file is not saved.", Toast.LENGTH_LONG).show();
-                    getActivity().finish();
-                    break;
-            }
-        }
-    };
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -299,9 +280,26 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 if (Apps.isServiceRunning(getActivity(), ServiceCerebralCortex.class.getName())) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                    builder.setMessage("Save configuration file and restart the DataExporter Service?").setPositiveButton("Yes", dialogClickListener)
-                            .setNegativeButton("No", dialogClickListener).show();
+                    AlertDialogs.AlertDialog(getActivity(), "Save and Restart?", "Save configuration file and restart Data Uploader App?", R.drawable.ic_info_teal_48dp, "Yes", "Cancel", null, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            switch (which) {
+                                case DialogInterface.BUTTON_POSITIVE:
+                                    Intent intent = new Intent(getActivity(), ServiceCerebralCortex.class);
+                                    getActivity().stopService(intent);
+                                    saveConfigurationFile();
+                                    intent = new Intent(getActivity(), ServiceCerebralCortex.class);
+                                    getActivity().startService(intent);
+                                    getActivity().finish();
+                                    break;
+
+                                case DialogInterface.BUTTON_NEGATIVE:
+                                    Toast.makeText(getActivity(), "!!! Error: Configuration file is not saved.", Toast.LENGTH_LONG).show();
+                                    getActivity().finish();
+                                    break;
+                            }
+                        }
+                    });
                 } else {
                     saveConfigurationFile();
                     getActivity().finish();

@@ -1,16 +1,17 @@
 package org.md2k.datakit.cerebralcortex;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.AsyncTask;
 import android.os.Handler;
 
+import org.md2k.datakit.R;
 import org.md2k.datakit.configuration.Configuration;
 import org.md2k.datakit.configuration.ConfigurationManager;
 import org.md2k.utilities.Apps;
+import org.md2k.utilities.UI.AlertDialogs;
 
 import java.io.IOException;
-
-import static org.md2k.utilities.UI.AlertDialogs.showAlertDialog;
 
 
 /*
@@ -61,8 +62,12 @@ public class CerebralCortexManager {
                         task.execute();
                     }
                 } catch (IOException e) {
-                    showAlertDialog(context, "Error:", e.getMessage());
-                    e.printStackTrace();
+                    AlertDialogs.AlertDialog(context, "Error", e.getMessage(), R.drawable.ic_error_red_50dp, "Ok", null, null, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+
+                        }
+                    });
                 }
             }
             handler.postDelayed(publishData, configuration.upload.interval);

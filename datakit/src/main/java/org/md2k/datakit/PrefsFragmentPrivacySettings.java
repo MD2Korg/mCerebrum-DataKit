@@ -1,5 +1,6 @@
 package org.md2k.datakit;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.ListPreference;
@@ -132,11 +133,20 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
 
     boolean preparePrivacyData() {
         if(newPrivacyData.getDuration()==null) {
-            AlertDialogs.showAlertDialog(getActivity(), "ERROR: Duration", "Duration is not set");
+            AlertDialogs.AlertDialog(getActivity(), "ERROR: Duration", "Duration is not set", R.drawable.ic_error_red_50dp, "Ok", null, null, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+
+                }
+            });
             return false;
         }
         else if (newPrivacyData.getPrivacyTypes() == null || newPrivacyData.getPrivacyTypes().size() == 0) {
-            AlertDialogs.showAlertDialog(getActivity(), "ERROR: Privacy Type", "Privacy Type is not selected");
+            AlertDialogs.AlertDialog(getActivity(), "ERROR: Privacy Type", "Privacy Type is not selected", R.drawable.ic_error_red_50dp, "Ok", null, null, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                }
+            });
             return false;
         }
         else {
