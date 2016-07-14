@@ -226,7 +226,7 @@ public class DatabaseTable_Data {
     }
 
     public ArrayList<DataType> queryHFlastN(SQLiteDatabase db, int ds_id, int last_n_sample) {
-        insertDB(db, HIGHFREQ_TABLE_NAME, cValues);
+        insertDB(db, HIGHFREQ_TABLE_NAME, hfValues);
         ArrayList<DataType> dataTypes = new ArrayList<>();
         String sql = "select datetime, sample from rawdata where datasource_id=" + Integer.toString(ds_id) + " ORDER by _id DESC limit " + Integer.toString(last_n_sample);
         Cursor mCursor = db.rawQuery(sql, null);
@@ -279,7 +279,7 @@ public class DatabaseTable_Data {
     }
 
     public ArrayList<RowObject> queryHFSyncedData(SQLiteDatabase db, int ds_id, long ageLimit, int limit) {
-        insertDB(db, HIGHFREQ_TABLE_NAME, cValues);
+        insertDB(db, HIGHFREQ_TABLE_NAME, hfValues);
         ArrayList<RowObject> rowObjects = new ArrayList<>();
         String sql = "select _id, datetime, sample from rawdata where cc_sync = 1 and datasource_id=" + Integer.toString(ds_id) + " and datetime <= " + ageLimit + " LIMIT " + Integer.toString(limit);
         Cursor mCursor = db.rawQuery(sql, null);
@@ -304,7 +304,7 @@ public class DatabaseTable_Data {
     }
 
     public boolean removeHFSyncedData(SQLiteDatabase db, int dsid, long lastSyncKey) {
-        insertDB(db, HIGHFREQ_TABLE_NAME, cValues);
+        insertDB(db, HIGHFREQ_TABLE_NAME, hfValues);
         String[] args = new String[]{Long.toString(lastSyncKey), Integer.toString(dsid)};
         db.delete(HIGHFREQ_TABLE_NAME, "cc_sync = 1 AND _id <= ? AND datasource_id = ?", args);
         return true;
@@ -323,7 +323,7 @@ public class DatabaseTable_Data {
     }
 
     public boolean setHFSyncedBit(SQLiteDatabase db, int dsid, long lastSyncKey) {
-        insertDB(db, HIGHFREQ_TABLE_NAME, cValues);
+        insertDB(db, HIGHFREQ_TABLE_NAME, hfValues);
         ContentValues values = new ContentValues();
         int bit = 1;
         values.put("cc_sync", bit);
@@ -333,7 +333,7 @@ public class DatabaseTable_Data {
     }
 
     public ArrayList<RowObject> queryHFLastKey(SQLiteDatabase db, int ds_id, int limit) {
-        insertDB(db, HIGHFREQ_TABLE_NAME, cValues);
+        insertDB(db, HIGHFREQ_TABLE_NAME, hfValues);
         ArrayList<RowObject> rowObjects = new ArrayList<>();
         String sql = "select _id, datetime, sample from rawdata where cc_sync = 0 and datasource_id=" + Integer.toString(ds_id) + " LIMIT " + Integer.toString(limit);
         Cursor mCursor = db.rawQuery(sql, null);
