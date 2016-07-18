@@ -25,6 +25,8 @@ import org.md2k.datakit.cerebralcortex.ServiceCerebralCortex;
 import org.md2k.datakit.privacy.PrivacyManager;
 import org.md2k.datakitapi.time.DateTime;
 import org.md2k.utilities.Apps;
+import org.md2k.utilities.FileManager;
+import org.md2k.utilities.Report.LogStorage;
 import org.md2k.utilities.UI.ActivityAbout;
 import org.md2k.utilities.UI.ActivityCopyright;
 import org.md2k.utilities.data_format.privacy.PrivacyType;
@@ -108,6 +110,10 @@ public class ActivityMain extends AppCompatActivity {
 
             if (getSupportActionBar() != null)
                 getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+            //Enable logcat offline storage for warnings and errors
+            LogStorage.startLogFileStorageProcess(FileManager.getDirectory(getApplicationContext(), FileManager.EXTERNAL_SDCARD_PREFERRED), getApplicationContext().getPackageName());
+
         } catch (IOException e) {
             e.printStackTrace();
         }

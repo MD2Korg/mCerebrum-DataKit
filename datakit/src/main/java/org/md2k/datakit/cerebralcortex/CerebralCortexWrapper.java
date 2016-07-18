@@ -147,6 +147,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                 dbLogger = DatabaseLogger.getInstance(this.context);
             } catch (IOException e) {
                 e.printStackTrace();
+                Log.e("CerebralCortex", "DataKit not available");
                 return false;
             }
         }
@@ -171,7 +172,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
 
         if (uInfo != null) {
             if (uInfo.user_id.contentEquals("") || uInfo.uuid.contentEquals("")) {
-                messenger("uInfo field contains a blank");
+                messenger("uInfo field is empty");
                 return false;
             }
         } else {
@@ -180,7 +181,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         }
         if (sInfo != null) {
             if (sInfo.id.contentEquals("") || sInfo.name.contentEquals("")) {
-                messenger("sInfo field contains a blank");
+                messenger("sInfo field is empty");
                 return false;
             }
         } else {
@@ -195,6 +196,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
             uiResponse = registerUser(gson.toJson(new UserInfoCC(uInfo)));
         } catch (IOException e) {
             messenger("User Info Registration Error");
+            Log.e("CerebralCortex", "User Info Registration failed");
             e.printStackTrace();
             return false;
         }
@@ -205,13 +207,15 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         try {
             siResponse = registerStudy(gson.toJson(new StudyInfoCC(sInfo)));
         } catch (IOException e) {
-            messenger("User Info Registration Error");
+            messenger("Study Info Registration Error");
+            Log.e("CerebralCortex", "Study Info Registration failed");
             e.printStackTrace();
             return false;
         }
 
         if (siResponse == null || uiResponse == null) {
             messenger("Registration has failed");
+            Log.e("CerebralCortex", "Registration failed");
             return false;
         }
         messenger("Registered study");
@@ -222,8 +226,8 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         try {
             prResult = cerebralCortexAPI(requestURL + "studies/register_participant", gson.toJson(pr));
         } catch (IOException e) {
-            Log.d("CerebralCortex", "Register participant error: " + e);
-            Log.d("CerebralCortex", prResult);
+            Log.e("CerebralCortex", "Register participant error: " + e);
+            Log.e("CerebralCortex", prResult);
             return false;
         }
         if (prResult == null) {
@@ -232,7 +236,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         }
         if (prResult.contains("Invalid participant or study id")) {
             messenger("Register participant error: ");
-            Log.d("CerebralCortex", prResult);
+            Log.e("CerebralCortex", prResult);
             return false;
         }
         messenger("Registered participant in study");
@@ -311,9 +315,8 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
     private void archiveJsonData(String data, int ds_id, String filename) {
         if (CCDIR == null) return;
         File outputDir = new File(CCDIR + "ds" + ds_id + "/");
-        if (!outputDir.mkdirs()) {
-            Log.e("Archive", "mkdir error" + outputDir);
-        }
+        outputDir.mkdirs();
+
         File outputfile = new File(outputDir + "/" + filename);
         if (!outputfile.exists()) {
             try {
@@ -325,6 +328,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                 writer.close();
                 output.close();
             } catch (IOException e) {
+                Log.e("CerebralCortex", "JSON Archive failed" + e);
                 e.printStackTrace();
             }
         } else {
@@ -387,7 +391,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                         cont = true;
                     }
                 } catch (IOException e) {
-                    Log.d("CerebralCortex", "Bulk load error: " + e);
+                    Log.e("CerebralCortex", "Bulk load error: " + e);
                     messenger("Bulk load error");
                     break;
                 }
@@ -409,7 +413,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         try {
             dataSourceResult = cerebralCortexAPI(requestURL + "datasources/register", gson.toJson(ccdp));
         } catch (IOException e) {
-            Log.d("CerebralCortex", "Datasource registration error: " + e);
+            Log.e("CerebralCortex", "Datasource registration error: " + e);
 
         }
         try {
