@@ -141,6 +141,8 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
 
     private boolean publishDataKitData() {
 
+        Log.w("CerebralCortex", "Starting publishdataKitData");
+
         //Ensure that the database is available
         if (dbLogger == null) {
             try {
