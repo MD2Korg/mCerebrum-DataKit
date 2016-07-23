@@ -13,6 +13,7 @@ import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
 import org.md2k.datakitapi.datatype.DataTypeLong;
 import org.md2k.datakitapi.datatype.RowObject;
 import org.md2k.datakitapi.status.Status;
+import org.md2k.utilities.Report.Log;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -198,7 +199,13 @@ public class DatabaseTable_Data {
                 columns, selection, selectionArgs, null, null, null);
         if (mCursor.moveToFirst()) {
             do {
-                dataTypes.add(fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE))));
+                try {
+                    dataTypes.add(fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE))));
+                } catch (Exception e) {
+                    Log.e("DataKit", "Object failed deserialization");
+                    Log.e("DataKit", "DataSourceID: " + ds_id + " Row: " + mCursor.getLong(mCursor.getColumnIndex(C_ID)));
+                    e.printStackTrace();
+                }
             } while (mCursor.moveToNext());
         }
         if (mCursor != null && !mCursor.isClosed()) {
@@ -216,7 +223,13 @@ public class DatabaseTable_Data {
         Cursor mCursor = db.query(TABLE_NAME, columns, selection, selectionArgs, null, null, "_id DESC", String.valueOf(last_n_sample));
         if (mCursor.moveToFirst()) {
             do {
-                dataTypes.add(fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE))));
+                try {
+                    dataTypes.add(fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE))));
+                } catch (Exception e) {
+                    Log.e("DataKit", "Object failed deserialization");
+                    Log.e("DataKit", "DataSourceID: " + ds_id + " Row: " + mCursor.getLong(mCursor.getColumnIndex(C_ID)));
+                    e.printStackTrace();
+                }
             } while (mCursor.moveToNext());
         }
         if (!mCursor.isClosed()) {
@@ -251,8 +264,14 @@ public class DatabaseTable_Data {
         Cursor mCursor = db.rawQuery(sql, null);
         if (mCursor.moveToFirst()) {
             do {
-                DataType dt = fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE)));
-                rowObjects.add(new RowObject(mCursor.getLong(mCursor.getColumnIndex(C_ID)), dt));
+                try {
+                    DataType dt = fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE)));
+                    rowObjects.add(new RowObject(mCursor.getLong(mCursor.getColumnIndex(C_ID)), dt));
+                } catch (Exception e) {
+                    Log.e("DataKit", "Object failed deserialization");
+                    Log.e("DataKit", "DataSourceID: " + ds_id + " Row: " + mCursor.getLong(mCursor.getColumnIndex(C_ID)));
+                    e.printStackTrace();
+                }
             } while (mCursor.moveToNext());
         }
         if (!mCursor.isClosed()) {
@@ -268,8 +287,14 @@ public class DatabaseTable_Data {
         Cursor mCursor = db.rawQuery(sql, null);
         if (mCursor.moveToFirst()) {
             do {
-                DataType dt = fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE)));
-                rowObjects.add(new RowObject(mCursor.getLong(mCursor.getColumnIndex(C_ID)), dt));
+                try {
+                    DataType dt = fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE)));
+                    rowObjects.add(new RowObject(mCursor.getLong(mCursor.getColumnIndex(C_ID)), dt));
+                } catch (Exception e) {
+                    Log.e("DataKit", "Object failed deserialization");
+                    Log.e("DataKit", "DataSourceID: " + ds_id + " Row: " + mCursor.getLong(mCursor.getColumnIndex(C_ID)));
+                    e.printStackTrace();
+                }
             } while (mCursor.moveToNext());
         }
         if (!mCursor.isClosed()) {
