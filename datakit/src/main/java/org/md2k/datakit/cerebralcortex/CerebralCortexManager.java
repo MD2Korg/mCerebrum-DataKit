@@ -52,6 +52,9 @@ public class CerebralCortexManager {
         @Override
         public void run() {
 
+            if (task != null && task.lastUpload < (System.currentTimeMillis() - 360000)) {
+                task.cancel(true);
+            }
             if (task != null && task.getStatus() == AsyncTask.Status.RUNNING) {
                 handler.removeCallbacks(publishData);
             } else {
