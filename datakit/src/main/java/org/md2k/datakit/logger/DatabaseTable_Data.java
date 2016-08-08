@@ -18,7 +18,6 @@ import org.md2k.utilities.Report.Log;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
-import java.util.List;
 
 /*
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -78,11 +77,10 @@ public class DatabaseTable_Data {
             C_SAMPLE + " BLOB not null);";
     private static String C_COUNT = "c";
     private static long WAITTIME = 5 * 1000L; // 5 second;
-    ArrayList<ContentValues> cValues = new ArrayList<ContentValues>();
-    ArrayList<ContentValues> hfValues = new ArrayList<ContentValues>();
+    ArrayList<ContentValues> cValues = new ArrayList<ContentValues>(250);
+    ArrayList<ContentValues> hfValues = new ArrayList<ContentValues>(5000);
     long lastUnlock = 0;
     Kryo kryo;
-
 
     DatabaseTable_Data(SQLiteDatabase db) {
         kryo = new Kryo();
@@ -105,13 +103,17 @@ public class DatabaseTable_Data {
         db.execSQL(SQL_CREATE_HF_CC_INDEX);
     }
 
-    private Status insertDB(SQLiteDatabase db, String tableName, List<ContentValues> data) {
+    private Status insertDB(SQLiteDatabase db, String tableName, ArrayList<ContentValues> data) {
         try {
 
             if (data.size() == 0)
                 return new Status(Status.SUCCESS);
 
+
+            long st = System.currentTimeMillis();
             db.beginTransaction();
+
+            Log.d("INSERTDB", "Buffer Size: " + data.size() + " (" + tableName + ")");
             for (int i = 0; i < data.size(); i++)
                 db.insert(tableName, null, data.get(i));
             data.clear();
@@ -119,6 +121,7 @@ public class DatabaseTable_Data {
                 db.setTransactionSuccessful();
             } finally {
                 db.endTransaction();
+                Log.d("INSERTDB", "Transaction Time: " + (System.currentTimeMillis() - st));
             }
         } catch (Exception e) {
             return new Status(Status.INTERNAL_ERROR);
@@ -142,7 +145,7 @@ public class DatabaseTable_Data {
         Status status = new Status(Status.SUCCESS);
         ContentValues contentValues = prepareDataHF(dataSourceId, dataType);
         hfValues.add(contentValues);
-        if (dataType.getDateTime() - lastUnlock >= WAITTIME) {
+        if (dataType.getDateTime() - lastUnlock >= WAITTIME * 3) {
             status = insertDB(db, HIGHFREQ_TABLE_NAME, hfValues);
             lastUnlock = dataType.getDateTime();
         }
@@ -240,6 +243,7 @@ public class DatabaseTable_Data {
 
     public ArrayList<DataType> queryHFlastN(SQLiteDatabase db, int ds_id, int last_n_sample) {
         insertDB(db, HIGHFREQ_TABLE_NAME, hfValues);
+        long st = System.currentTimeMillis();
         ArrayList<DataType> dataTypes = new ArrayList<>();
         String sql = "select datetime, sample from rawdata where datasource_id=" + Integer.toString(ds_id) + " ORDER by _id DESC limit " + Integer.toString(last_n_sample);
         Cursor mCursor = db.rawQuery(sql, null);
@@ -253,12 +257,16 @@ public class DatabaseTable_Data {
         if (!mCursor.isClosed()) {
             mCursor.close();
         }
+
+        Log.d("QUERYDB", "HF Query Last N: " + (System.currentTimeMillis() - st));
+
         return dataTypes;
     }
 
 
     public ArrayList<RowObject> queryLastKey(SQLiteDatabase db, int ds_id, int limit) {
         insertDB(db, TABLE_NAME, cValues);
+        long st = System.currentTimeMillis();
         ArrayList<RowObject> rowObjects = new ArrayList<>();
         String sql = "select _id, sample from data where cc_sync = 0 and datasource_id=" + Integer.toString(ds_id) + " LIMIT " + Integer.toString(limit);
         Cursor mCursor = db.rawQuery(sql, null);
@@ -277,12 +285,14 @@ public class DatabaseTable_Data {
         if (!mCursor.isClosed()) {
             mCursor.close();
         }
+
+        Log.d("QUERYDB", "HF Query Last Key: " + (System.currentTimeMillis() - st));
         return rowObjects;
     }
 
     public ArrayList<RowObject> querySyncedData(SQLiteDatabase db, int ds_id, long ageLimit, int limit) {
         insertDB(db, TABLE_NAME, cValues);
-        ArrayList<RowObject> rowObjects = new ArrayList<>();
+        ArrayList<RowObject> rowObjects = new ArrayList<>(limit);
         String sql = "select _id, sample from data where cc_sync = 1 and datasource_id=" + Integer.toString(ds_id) + " and datetime <= " + ageLimit + " LIMIT " + Integer.toString(limit);
         Cursor mCursor = db.rawQuery(sql, null);
         if (mCursor.moveToFirst()) {
@@ -305,19 +315,25 @@ public class DatabaseTable_Data {
 
     public ArrayList<RowObject> queryHFSyncedData(SQLiteDatabase db, int ds_id, long ageLimit, int limit) {
         insertDB(db, HIGHFREQ_TABLE_NAME, hfValues);
-        ArrayList<RowObject> rowObjects = new ArrayList<>();
+        long st = System.currentTimeMillis();
+        ArrayList<RowObject> rowObjects = new ArrayList<>(limit);
+        Log.d("query_HF", "RowObjects Size: " + rowObjects.size());
         String sql = "select _id, datetime, sample from rawdata where cc_sync = 1 and datasource_id=" + Integer.toString(ds_id) + " and datetime <= " + ageLimit + " LIMIT " + Integer.toString(limit);
         Cursor mCursor = db.rawQuery(sql, null);
+        Log.d("query_HF", "Query time: " + (System.currentTimeMillis() - st));
         if (mCursor.moveToFirst()) {
             do {
                 byte[] data = mCursor.getBlob(mCursor.getColumnIndex(C_SAMPLE));
                 DataTypeDoubleArray dt = DataTypeDoubleArray.fromRawBytes(mCursor.getLong(mCursor.getColumnIndex(C_DATETIME)), data);
                 rowObjects.add(new RowObject(mCursor.getLong(mCursor.getColumnIndex(C_ID)), dt));
+                if ((rowObjects.size() % 10000) == 0)
+                    Log.d("query_HF", "Array creation time: " + rowObjects.size() + " (" + (System.currentTimeMillis() - st) + ")");
             } while (mCursor.moveToNext());
         }
         if (!mCursor.isClosed()) {
             mCursor.close();
         }
+        Log.d("QUERYDB", "HF Query Synced Data: " + (System.currentTimeMillis() - st));
         return rowObjects;
     }
 

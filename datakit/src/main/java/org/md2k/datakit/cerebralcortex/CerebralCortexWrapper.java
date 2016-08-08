@@ -169,21 +169,30 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                 }
 
                 messenger("Archiving datastream " + dsc.getDs_id());
-                String data = new GsonBuilder().setPrettyPrinting().create().toJson(ccdata);
-                String filename = dsc.getDs_id() + "_" + objects.get(0).data.getDateTime() + ".json.gz";
-                archiveJsonData(data, dsc.getDs_id(), filename);
+                long st = System.currentTimeMillis();
+                String data = null;
+                try {
+                    data = LoganSquare.serialize(ccdata);
+                    Log.d("GSON", "Json transformation: " + (System.currentTimeMillis() - st));
+                    String filename = dsc.getDs_id() + "_" + objects.get(0).data.getDateTime() + ".json.gz";
+                    archiveJsonData(data, dsc.getDs_id(), filename);
+                    Log.d("GSON", "Archive complete: " + (System.currentTimeMillis() - st));
 
-                messenger("Pruning datastream data " + dsc.getDs_id());
-                if (!hf) {
-                    dbLogger.removeSyncedData(dsc.getDs_id(), key);
-                } else {
-                    dbLogger.removeHFSyncedData(dsc.getDs_id(), key);
-                }
-                if (objects.size() == BLOCK_SIZE_LIMIT) {
-                    cont = true;
+                    messenger("Pruning datastream data " + dsc.getDs_id());
+                    if (!hf) {
+                        dbLogger.removeSyncedData(dsc.getDs_id(), key);
+                    } else {
+                        dbLogger.removeHFSyncedData(dsc.getDs_id(), key);
+                    }
+                    if (objects.size() == BLOCK_SIZE_LIMIT) {
+                        cont = true;
+                    }
+
+                    lastUpload = System.currentTimeMillis();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
 
-                lastUpload = System.currentTimeMillis();
 
             }
         }
@@ -240,7 +249,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
             }
 
             if (objects.size() > 0) {
-                messenger("Offloading data: " + dsc.getDs_id() + "(" + count + ")");
+                messenger("Offloading data: " + dsc.getDs_id() + "(Remaining: " + count + ")");
 
                 long key = objects.get(objects.size() - 1).rowKey;
                 for (RowObject obj : objects) {
@@ -248,22 +257,22 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                 }
 
                 try {
-                    messenger("JSON upload started: " + dsc.getDs_id() + "(" + ccdata.data.size() + ")");
-                    String data = gson.toJson(ccdata);
+                    messenger("JSON upload started: " + dsc.getDs_id() + "(Size: " + ccdata.data.size() + ")");
+                    String data = LoganSquare.serialize(ccdata);
                     dataResult = cerebralCortexAPI(requestURL + APIendpoint, data);
                     if (dataResult == null) {
                         break;
                     }
                     CerebralCortexDataResponse ccdr = LoganSquare.parse(dataResult, CerebralCortexDataResponse.class);
                     if (ccdr.count > 0) {
-                        messenger("Uploaded " + dsc.getDs_id() + "(" + ccdr.count + ")");
+                        messenger("Uploaded " + dsc.getDs_id() + "(Size: " + ccdr.count + ")");
                         if (!hf) {
                             dbLogger.setSyncedBit(dsc.getDs_id(), key);
                         } else {
                             dbLogger.setHFSyncedBit(dsc.getDs_id(), key);
                         }
                         lastUpload = System.currentTimeMillis();
-                        messenger("CloudSync " + dsc.getDs_id() + "(" + (count - ccdr.count) + ")");
+                        messenger("CloudSync " + dsc.getDs_id() + "(Remaining: " + (count - ccdr.count) + ")");
                     }
                     if (ccdr.count == BLOCK_SIZE_LIMIT) {
                         cont = true;
@@ -479,21 +488,21 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
             for (DataSourceClient dsc : dataSourceClients) {
                 CerebralCortexDataSourceResponse ccdpResponse = registerDataSource(uiResponse, dsc);
                 if (ccdpResponse.status.contains("ok") && !restricted.contains(dsc)) {
-                    messenger("Registered datastream: " + dsc.getDs_id());
+                    messenger("Registered datastream: " + dsc.getDs_id() + " (" + dsc.getDataSource().getId() + ":" + dsc.getDataSource().getType() + ")");
                     validDataSources.put(dsc, ccdpResponse);
                 }
             }
 
             for (Map.Entry<DataSourceClient, CerebralCortexDataSourceResponse> entry : validDataSources.entrySet()) {
 
-                messenger("Publishing data for " + entry.getKey().getDs_id());
+                messenger("Publishing data for " + entry.getKey().getDs_id() + " (" + entry.getKey().getDataSource().getId() + ":" + entry.getKey().getDataSource().getType() + ")");
                 publishDataStream(false, entry.getKey(), entry.getValue());
                 publishDataStream(true, entry.getKey(), entry.getValue());
                 Thread.sleep(1); //To generate InterruptedException as necessary
             }
 
             for (Map.Entry<DataSourceClient, CerebralCortexDataSourceResponse> entry : validDataSources.entrySet()) {
-                messenger("Archiving data for " + entry.getKey().getDs_id());
+                messenger("Archiving data for " + entry.getKey().getDs_id() + " (" + entry.getKey().getDataSource().getId() + ":" + entry.getKey().getDataSource().getType() + ")");
                 //Only prune HF data
                 archiveDataStream(true, entry.getKey(), entry.getValue());
                 Thread.sleep(1); //To generate InterruptedException as necessary
