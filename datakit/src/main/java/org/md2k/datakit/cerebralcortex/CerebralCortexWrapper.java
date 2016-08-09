@@ -258,8 +258,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
 
                 try {
                     messenger("JSON upload started: " + dsc.getDs_id() + "(Size: " + ccdata.data.size() + ")");
-                    String data = LoganSquare.serialize(ccdata);
-
+                    String data = new GsonBuilder().setPrettyPrinting().create().toJson(ccdata);
                     String filename = dsc.getDs_id() + "_" + objects.get(0).data.getDateTime() + ".json.gz";
                     archiveJsonData(data, dsc.getDs_id(), filename);
 
@@ -292,7 +291,8 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                 if (hf) {
                     messenger("Pruning datastream data " + dsc.getDs_id());
                     long pruneKey = dbLogger.queryHFPrunePoint(dsc.getDs_id(), System.currentTimeMillis() - history_time, 1);
-                    dbLogger.removeHFSyncedData(dsc.getDs_id(), pruneKey);
+                    if (pruneKey > 0)
+                        dbLogger.removeHFSyncedData(dsc.getDs_id(), pruneKey);
                 }
 
             }

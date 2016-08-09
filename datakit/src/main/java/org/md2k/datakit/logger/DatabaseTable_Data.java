@@ -293,7 +293,7 @@ public class DatabaseTable_Data {
     public long queryPrunePoint(SQLiteDatabase db, int ds_id, long ageLimit, int cc_sync) {
         insertDB(db, TABLE_NAME, cValues);
         long result = -1;
-        String sql = "select max(_id) from data where cc_sync = " + Integer.toString(cc_sync) + " and datasource_id=" + Integer.toString(ds_id) + " and datetime <= " + ageLimit;
+        String sql = "select max(_id) as _id from data where cc_sync = " + Integer.toString(cc_sync) + " and datasource_id=" + Integer.toString(ds_id) + " and datetime <= " + ageLimit;
         Cursor mCursor = db.rawQuery(sql, null);
         if (mCursor.moveToFirst()) {
             do {
@@ -314,7 +314,7 @@ public class DatabaseTable_Data {
     public long queryHFPrunePoint(SQLiteDatabase db, int ds_id, long ageLimit, int cc_sync) {
         insertDB(db, HIGHFREQ_TABLE_NAME, hfValues);
         long result = -1;
-        String sql = "select max(_id) from rawdata where cc_sync = " + Integer.toString(cc_sync) + " and datasource_id=" + Integer.toString(ds_id) + " and datetime <= " + ageLimit;
+        String sql = "select max(_id) as _id from rawdata where cc_sync = " + Integer.toString(cc_sync) + " and datasource_id=" + Integer.toString(ds_id) + " and datetime <= " + ageLimit;
         Cursor mCursor = db.rawQuery(sql, null);
         if (mCursor.moveToFirst()) {
             do {
