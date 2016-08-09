@@ -125,6 +125,14 @@ public class DatabaseLogger extends SQLiteOpenHelper {
         return databaseTable_data.queryHFSyncedData(db, ds_id, ageLimit, limit);
     }
 
+    public long queryPrunePoint(int ds_id, long ageLimit, int cc_sync) {
+        return databaseTable_data.queryPrunePoint(db, ds_id, ageLimit, cc_sync);
+    }
+
+    public long queryHFPrunePoint(int ds_id, long ageLimit, int cc_sync) {
+        return databaseTable_data.queryHFPrunePoint(db, ds_id, ageLimit, cc_sync);
+    }
+
     public ArrayList<RowObject> queryHFLastKey(int ds_id, int limit) {
         return databaseTable_data.queryHFLastKey(db, ds_id, limit);
     }

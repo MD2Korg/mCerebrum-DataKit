@@ -290,6 +290,51 @@ public class DatabaseTable_Data {
         return rowObjects;
     }
 
+    public long queryPrunePoint(SQLiteDatabase db, int ds_id, long ageLimit, int cc_sync) {
+        insertDB(db, TABLE_NAME, cValues);
+        long result = -1;
+        String sql = "select max(_id) from data where cc_sync = " + Integer.toString(cc_sync) + " and datasource_id=" + Integer.toString(ds_id) + " and datetime <= " + ageLimit;
+        Cursor mCursor = db.rawQuery(sql, null);
+        if (mCursor.moveToFirst()) {
+            do {
+                try {
+                    result = mCursor.getLong(mCursor.getColumnIndex(C_ID));
+                } catch (Exception e) {
+                    Log.e("DataKit", "ID Lookup failed: " + result);
+                    e.printStackTrace();
+                }
+            } while (mCursor.moveToNext());
+        }
+        if (!mCursor.isClosed()) {
+            mCursor.close();
+        }
+        return result;
+    }
+
+    public long queryHFPrunePoint(SQLiteDatabase db, int ds_id, long ageLimit, int cc_sync) {
+        insertDB(db, HIGHFREQ_TABLE_NAME, hfValues);
+        long result = -1;
+        String sql = "select max(_id) from rawdata where cc_sync = " + Integer.toString(cc_sync) + " and datasource_id=" + Integer.toString(ds_id) + " and datetime <= " + ageLimit;
+        Cursor mCursor = db.rawQuery(sql, null);
+        if (mCursor.moveToFirst()) {
+            do {
+                try {
+                    result = mCursor.getLong(mCursor.getColumnIndex(C_ID));
+                } catch (Exception e) {
+                    Log.e("DataKit", "ID Lookup failed: " + result);
+                    e.printStackTrace();
+                }
+            } while (mCursor.moveToNext());
+        }
+        if (!mCursor.isClosed()) {
+            mCursor.close();
+        }
+        return result;
+    }
+
+
+
+
     public ArrayList<RowObject> querySyncedData(SQLiteDatabase db, int ds_id, long ageLimit, int limit) {
         insertDB(db, TABLE_NAME, cValues);
         ArrayList<RowObject> rowObjects = new ArrayList<>(limit);
