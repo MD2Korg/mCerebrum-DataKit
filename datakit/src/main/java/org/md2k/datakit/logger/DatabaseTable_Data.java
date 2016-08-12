@@ -126,7 +126,6 @@ public class DatabaseTable_Data {
         ContentValues contentValues = prepareData(dataSourceId, dataType);
         cValues.add(contentValues);
         if (dataType.getDateTime() - lastUnlock >= WAITTIME) {
-            gzLogger.insert(cValues);
             status = insertDB(db, TABLE_NAME, cValues);
             lastUnlock = dataType.getDateTime();
         }
