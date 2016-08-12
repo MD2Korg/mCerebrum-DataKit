@@ -33,7 +33,6 @@ import org.md2k.datakit.configuration.ConfigurationManager;
 import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
 import org.md2k.datakitapi.status.Status;
 import org.md2k.utilities.FileManager;
-import org.md2k.utilities.Report.Log;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -72,10 +71,9 @@ public class gzipLogger {
             dta = DataTypeDoubleArray.fromRawBytes((long) value.get(C_DATETIME), (byte[]) value.get(C_SAMPLE));
 
             if (!outputStreams.containsKey(ds_id)) {
-                //Open file and keep pointer into outputStreams
                 File outputDir = new File(RAWDIR + "raw" + ds_id + "/");
                 outputDir.mkdirs();
-                String date = new SimpleDateFormat("yyyyMMdd").format(new Date(System.currentTimeMillis()));
+                String date = new SimpleDateFormat("yyyyMMddhh").format(new Date(System.currentTimeMillis()));
                 String filename = date + "_" + ds_id + ".csv.gz";
                 File outputfile = new File(outputDir + "/" + filename);
 
@@ -121,8 +119,6 @@ public class gzipLogger {
             }
         }
         outputStreams.clear();
-
-        Log.d("gzipLogger", "hfValues Size: " + hfValues.size());
         return new Status(Status.SUCCESS);
     }
 }
