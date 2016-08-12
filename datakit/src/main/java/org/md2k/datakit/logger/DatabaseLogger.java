@@ -55,12 +55,15 @@ public class DatabaseLogger extends SQLiteOpenHelper {
     DatabaseTable_Data databaseTable_data = null;
     SQLiteDatabase db = null;
 
+    gzipLogger gzLogger = null;
+
     public DatabaseLogger(Context context, String path) {
         super(context, path, null, 1);
         db = this.getWritableDatabase();
         Log.d(TAG, "DataBaseLogger() db isopen=" + db.isOpen() + " readonly=" + db.isReadOnly() + " isWriteAheadLoggingEnabled=" + db.isWriteAheadLoggingEnabled());
         databaseTable_dataSource = new DatabaseTable_DataSource(db);
-        databaseTable_data = new DatabaseTable_Data(db);
+        gzLogger = new gzipLogger(context);
+        databaseTable_data = new DatabaseTable_Data(db, gzLogger);
     }
 
     public static DatabaseLogger getInstance(Context context) throws IOException {
@@ -98,7 +101,7 @@ public class DatabaseLogger extends SQLiteOpenHelper {
     }
 
     public Status insertHF(int dataSourceId, DataTypeDoubleArray dataType) {
-        return databaseTable_data.insertHF(db, dataSourceId, dataType);
+        return databaseTable_data.insertHF(dataSourceId, dataType);
     }
 
     public ArrayList<DataType> query(int ds_id, long startTimestamp, long endTimestamp) {
@@ -109,9 +112,6 @@ public class DatabaseLogger extends SQLiteOpenHelper {
         return databaseTable_data.query(db, ds_id, last_n_sample);
     }
 
-    public ArrayList<DataType> queryHFlastN(int ds_id, int last_n_sample) {
-        return databaseTable_data.queryHFlastN(db, ds_id, last_n_sample);
-    }
 
     public ArrayList<RowObject> queryLastKey(int ds_id, int limit) {
         return databaseTable_data.queryLastKey(db, ds_id, limit);
@@ -121,36 +121,12 @@ public class DatabaseLogger extends SQLiteOpenHelper {
         return databaseTable_data.querySyncedData(db, ds_id, ageLimit, limit);
     }
 
-    public ArrayList<RowObject> queryHFSyncedData(int ds_id, long ageLimit, int limit) {
-        return databaseTable_data.queryHFSyncedData(db, ds_id, ageLimit, limit);
-    }
-
-    public long queryPrunePoint(int ds_id, long ageLimit, int cc_sync) {
-        return databaseTable_data.queryPrunePoint(db, ds_id, ageLimit, cc_sync);
-    }
-
-    public long queryHFPrunePoint(int ds_id, long ageLimit, int cc_sync) {
-        return databaseTable_data.queryHFPrunePoint(db, ds_id, ageLimit, cc_sync);
-    }
-
-    public ArrayList<RowObject> queryHFLastKey(int ds_id, int limit) {
-        return databaseTable_data.queryHFLastKey(db, ds_id, limit);
-    }
-
     public boolean setSyncedBit(int ds_id, long key) {
         return databaseTable_data.setSyncedBit(db, ds_id, key);
     }
 
     public boolean removeSyncedData(int ds_id, long key) {
         return databaseTable_data.removeSyncedData(db, ds_id, key);
-    }
-
-    public boolean removeHFSyncedData(int ds_id, long key) {
-        return databaseTable_data.removeHFSyncedData(db, ds_id, key);
-    }
-
-    public boolean setHFSyncedBit(int ds_id, long key) {
-        return databaseTable_data.setHFSyncedBit(db, ds_id, key);
     }
 
     public DataTypeLong querySize() {
@@ -178,10 +154,7 @@ public class DatabaseLogger extends SQLiteOpenHelper {
     }
 
     public DataTypeLong queryCount(int ds_id, boolean unsynced) {
-        return databaseTable_data.queryCount(db, DatabaseTable_Data.TABLE_NAME, ds_id, unsynced);
+        return databaseTable_data.queryCount(db, ds_id, unsynced);
     }
 
-    public DataTypeLong queryHFCount(int ds_id, boolean unsynced) {
-        return databaseTable_data.queryCount(db, DatabaseTable_Data.HIGHFREQ_TABLE_NAME, ds_id, unsynced);
-    }
 }
