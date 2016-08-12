@@ -81,11 +81,13 @@ public class MessageController {
                 bundle.putParcelable(DataSourceClient.class.getSimpleName(), dataSourceClient);
                 bundle.putParcelable(Status.class.getSimpleName(),dataSourceClient.getStatus());
                 return prepareMessage(bundle, MessageType.REGISTER);
+
             case MessageType.UNREGISTER:
                 status = privacyManager.unregister(incomingMessage.getData().getInt("ds_id"));
                 bundle = new Bundle();
                 bundle.putParcelable(Status.class.getSimpleName(), status);
                 return prepareMessage(bundle, MessageType.UNREGISTER);
+
             case MessageType.FIND:
                 incomingMessage.getData().setClassLoader(DataSource.class.getClassLoader());
                 ArrayList<DataSourceClient> dataSourceClients = privacyManager.find((DataSource) incomingMessage.getData().getParcelable(DataSource.class.getSimpleName()));
@@ -93,14 +95,17 @@ public class MessageController {
                 bundle.putParcelableArrayList(DataSourceClient.class.getSimpleName(), dataSourceClients);
                 bundle.putParcelable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
                 return prepareMessage(bundle, MessageType.FIND);
+
             case MessageType.INSERT:
                 incomingMessage.getData().setClassLoader(DataType.class.getClassLoader());
                 privacyManager.insert(incomingMessage.getData().getInt("ds_id"), (DataType) incomingMessage.getData().getParcelable(DataType.class.getSimpleName()));
                 return null;
+
             case MessageType.INSERT_HIGH_FREQUENCY:
                 incomingMessage.getData().setClassLoader(DataTypeDoubleArray.class.getClassLoader());
                 privacyManager.insertHF(incomingMessage.getData().getInt("ds_id"), (DataTypeDoubleArray) incomingMessage.getData().getParcelable(DataTypeDoubleArray.class.getSimpleName()));
                 return null;
+
             case MessageType.QUERYSIZE:
                 DataTypeLong object = null;
                 object = privacyManager.querySize();
@@ -108,6 +113,7 @@ public class MessageController {
                 bundle.putParcelable(DataTypeLong.class.getSimpleName(), object);
                 bundle.putParcelable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
                 return prepareMessage(bundle, MessageType.QUERYSIZE);
+
             case MessageType.QUERY:
                 ArrayList<DataType> dataTypes=null;
                 if (incomingMessage.getData().containsKey("starttimestamp"))
@@ -119,15 +125,6 @@ public class MessageController {
                 bundle.putParcelable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
                 return prepareMessage(bundle, MessageType.QUERY);
 
-//            case MessageType.QUERYHFLASTN:
-//                ArrayList<DataType> HFdataTypes = null;
-//                HFdataTypes = privacyManager.queryHFlastN(incomingMessage.getData().getInt("ds_id"), incomingMessage.getData().getInt("last_n_sample"));
-//                bundle = new Bundle();
-//                bundle.putParcelableArrayList(DataType.class.getSimpleName(), HFdataTypes);
-//                bundle.putParcelable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
-//                return prepareMessage(bundle, MessageType.QUERYHFLASTN);
-
-
             case MessageType.QUERYPRIMARYKEY:
                 ArrayList<RowObject> objectTypes=null;
                 objectTypes = privacyManager.queryLastKey(incomingMessage.getData().getInt("ds_id"), incomingMessage.getData().getInt("limit"));
@@ -136,19 +133,12 @@ public class MessageController {
                 bundle.putParcelable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
                 return prepareMessage(bundle, MessageType.QUERYPRIMARYKEY);
 
-//            case MessageType.QUERYHFPRIMARYKEY:
-//                ArrayList<RowObject> objectHFTypes = null;
-//                objectHFTypes = privacyManager.queryHFLastKey(incomingMessage.getData().getInt("ds_id"), incomingMessage.getData().getInt("limit"));
-//                bundle = new Bundle();
-//                bundle.putParcelableArrayList(RowObject.class.getSimpleName(), objectHFTypes);
-//                bundle.putParcelable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
-//                return prepareMessage(bundle, MessageType.QUERYHFPRIMARYKEY);
-
             case MessageType.SUBSCRIBE:
                 Status statusSubscribe = privacyManager.subscribe(incomingMessage.getData().getInt("ds_id"), incomingMessage.replyTo);
                 bundle = new Bundle();
                 bundle.putParcelable(Status.class.getSimpleName(), statusSubscribe);
                 return prepareMessage(bundle, MessageType.SUBSCRIBE);
+
             case MessageType.UNSUBSCRIBE:
                 Status statusUnsubscribe = privacyManager.unsubscribe(incomingMessage.getData().getInt("ds_id"), incomingMessage.replyTo);
                 bundle = new Bundle();
