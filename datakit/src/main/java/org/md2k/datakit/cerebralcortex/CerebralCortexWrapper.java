@@ -140,64 +140,6 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         LocalBroadcastManager.getInstance(this.context).sendBroadcast(intent);
     }
 
-
-//    private void archiveDataStream(boolean hf, DataSourceClient dsc, CerebralCortexDataSourceResponse ccdpResponse) {
-//        String dataResult = null;
-//        boolean cont = true;
-//
-//        while (cont) {
-//            cont = false;
-//
-//            CerebralCortexData ccdata = new CerebralCortexData(ccdpResponse.datastream_id);
-//
-//            //Computed Data Store
-//            List<RowObject> objects;
-//            long count = 0L;
-//            long BLOCK_SIZE_LIMIT;
-//            if (!hf) {
-//                objects = dbLogger.querySyncedData(dsc.getDs_id(), System.currentTimeMillis() - history_time, Constants.DATA_BLOCK_SIZE_LIMIT);
-//                BLOCK_SIZE_LIMIT = Constants.DATA_BLOCK_SIZE_LIMIT;
-//            } else {
-//                objects = dbLogger.queryHFSyncedData(dsc.getDs_id(), System.currentTimeMillis() - history_time, Constants.HF_DATA_BLOCK_SIZE_LIMIT);
-//                BLOCK_SIZE_LIMIT = Constants.HF_DATA_BLOCK_SIZE_LIMIT;
-//            }
-//
-//            if (objects.size() > 0) {
-//                long key = objects.get(objects.size() - 1).rowKey;
-//                for (RowObject obj : objects) {
-//                    ccdata.data.add(obj.toArrayForm());
-//                }
-//
-//                messenger("Archiving datastream " + dsc.getDs_id());
-//                long st = System.currentTimeMillis();
-//                String data = null;
-//                try {
-//                    data = LoganSquare.serialize(ccdata);
-//                    Log.d("GSON", "Json transformation: " + (System.currentTimeMillis() - st));
-//                    String filename = dsc.getDs_id() + "_" + objects.get(0).data.getDateTime() + ".json.gz";
-//                    archiveJsonData(data, dsc.getDs_id(), filename);
-//                    Log.d("GSON", "Archive complete: " + (System.currentTimeMillis() - st));
-//
-//                    messenger("Pruning datastream data " + dsc.getDs_id());
-//                    if (!hf) {
-//                        dbLogger.removeSyncedData(dsc.getDs_id(), key);
-//                    } else {
-//                        dbLogger.removeHFSyncedData(dsc.getDs_id(), key);
-//                    }
-//                    if (objects.size() == BLOCK_SIZE_LIMIT) {
-//                        cont = true;
-//                    }
-//
-//                    lastUpload = System.currentTimeMillis();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//
-//
-//            }
-//        }
-//    }
-
     private void archiveJsonData(String data, int ds_id, String filename) {
         if (CCDIR == null) return;
         File outputDir = new File(CCDIR + "ds" + ds_id + "/");
@@ -241,60 +183,52 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                 objects = dbLogger.queryLastKey(dsc.getDs_id(), Constants.DATA_BLOCK_SIZE_LIMIT);
                 count = dbLogger.queryCount(dsc.getDs_id(), true).getSample();
                 BLOCK_SIZE_LIMIT = Constants.DATA_BLOCK_SIZE_LIMIT;
-            } else {
-                APIendpoint = "rawdatapoints/bulkload";
-                objects = dbLogger.queryHFLastKey(dsc.getDs_id(), Constants.HF_DATA_BLOCK_SIZE_LIMIT);
-                count = dbLogger.queryHFCount(dsc.getDs_id(), true).getSample();
-                BLOCK_SIZE_LIMIT = Constants.HF_DATA_BLOCK_SIZE_LIMIT;
-            }
 
-            if (objects.size() > 0) {
-                messenger("Offloading data: " + dsc.getDs_id() + "(Remaining: " + count + ")");
 
-                long key = objects.get(objects.size() - 1).rowKey;
-                for (RowObject obj : objects) {
-                    ccdata.data.add(obj.toArrayForm());
-                }
+                if (objects.size() > 0) {
+                    messenger("Offloading data: " + dsc.getDs_id() + "(Remaining: " + count + ")");
 
-                try {
-                    messenger("JSON upload started: " + dsc.getDs_id() + "(Size: " + ccdata.data.size() + ")");
-                    String data = new GsonBuilder().setPrettyPrinting().create().toJson(ccdata);
-                    String filename = dsc.getDs_id() + "_" + objects.get(0).data.getDateTime() + ".json.gz";
-                    archiveJsonData(data, dsc.getDs_id(), filename);
+                    long key = objects.get(objects.size() - 1).rowKey;
+                    for (RowObject obj : objects) {
+                        ccdata.data.add(obj.toArrayForm());
+                    }
 
-                    dataResult = cerebralCortexAPI(requestURL + APIendpoint, data);
+                    try {
+                        messenger("JSON upload started: " + dsc.getDs_id() + "(Size: " + ccdata.data.size() + ")");
+                        String data = new GsonBuilder().setPrettyPrinting().create().toJson(ccdata);
+                        String filename = dsc.getDs_id() + "_" + objects.get(0).data.getDateTime() + ".json.gz";
+                        archiveJsonData(data, dsc.getDs_id(), filename);
 
-                    if (dataResult == null) {
+                        dataResult = cerebralCortexAPI(requestURL + APIendpoint, data);
+
+                        if (dataResult == null) {
+                            break;
+                        }
+                        CerebralCortexDataResponse ccdr = LoganSquare.parse(dataResult, CerebralCortexDataResponse.class);
+                        if (ccdr.count > 0) {
+                            messenger("Uploaded " + dsc.getDs_id() + "(Size: " + ccdr.count + ")");
+                            dbLogger.setSyncedBit(dsc.getDs_id(), key);
+                            lastUpload = System.currentTimeMillis();
+                            messenger("CloudSync " + dsc.getDs_id() + "(Remaining: " + (count - ccdr.count) + ")");
+                        }
+
+                        if (ccdr.count == BLOCK_SIZE_LIMIT) {
+                            cont = true;
+                        }
+                    } catch (IOException e) {
+                        Log.e("CerebralCortex", "Bulk load error: " + e);
+                        messenger("Bulk load error");
                         break;
                     }
-                    CerebralCortexDataResponse ccdr = LoganSquare.parse(dataResult, CerebralCortexDataResponse.class);
-                    if (ccdr.count > 0) {
-                        messenger("Uploaded " + dsc.getDs_id() + "(Size: " + ccdr.count + ")");
-                        if (!hf) {
-                            dbLogger.setSyncedBit(dsc.getDs_id(), key);
-                        } else {
-                            dbLogger.setHFSyncedBit(dsc.getDs_id(), key);
-                        }
-                        lastUpload = System.currentTimeMillis();
-                        messenger("CloudSync " + dsc.getDs_id() + "(Remaining: " + (count - ccdr.count) + ")");
-                    }
 
-                    if (ccdr.count == BLOCK_SIZE_LIMIT) {
-                        cont = true;
-                    }
-                } catch (IOException e) {
-                    Log.e("CerebralCortex", "Bulk load error: " + e);
-                    messenger("Bulk load error");
-                    break;
+//                    if (hf) {
+//                        messenger("Pruning datastream data " + dsc.getDs_id());
+//                        long pruneKey = dbLogger.queryHFPrunePoint(dsc.getDs_id(), System.currentTimeMillis() - history_time, 1);
+//                        if (pruneKey > 0)
+//                            dbLogger.removeHFSyncedData(dsc.getDs_id(), pruneKey);
+//                    }
+
                 }
-
-                if (hf) {
-                    messenger("Pruning datastream data " + dsc.getDs_id());
-                    long pruneKey = dbLogger.queryHFPrunePoint(dsc.getDs_id(), System.currentTimeMillis() - history_time, 1);
-                    if (pruneKey > 0)
-                        dbLogger.removeHFSyncedData(dsc.getDs_id(), pruneKey);
-                }
-
             }
         }
     }

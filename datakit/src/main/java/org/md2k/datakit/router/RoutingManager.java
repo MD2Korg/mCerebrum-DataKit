@@ -89,17 +89,11 @@ public class RoutingManager {
         return databaseLogger.query(ds_id, last_n_sample);
     }
 
-    public ArrayList<DataType> queryHFlastN(int ds_id, int last_n_sample) {
-        return databaseLogger.queryHFlastN(ds_id, last_n_sample);
-    }
 
     public ArrayList<RowObject> queryLastKey(int ds_id, int limit) {
         return databaseLogger.queryLastKey(ds_id, limit);
     }
 
-    public ArrayList<RowObject> queryHFLastKey(int ds_id, int limit) {
-        return databaseLogger.queryHFLastKey(ds_id, limit);
-    }
 
     public DataTypeLong querySize() {
         return databaseLogger.querySize();

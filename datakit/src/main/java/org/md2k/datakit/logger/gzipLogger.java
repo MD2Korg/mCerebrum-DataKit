@@ -33,6 +33,7 @@ import org.md2k.datakit.configuration.ConfigurationManager;
 import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
 import org.md2k.datakitapi.status.Status;
 import org.md2k.utilities.FileManager;
+import org.md2k.utilities.Report.Log;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -45,6 +46,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 
 public class gzipLogger {
@@ -101,7 +103,7 @@ public class gzipLogger {
                 double[] samples = dta.getSample();
                 for (int i = 0; i < samples.length - 1; i++)
                     outputStreams.get(ds_id).write(samples[i] + ",");
-                outputStreams.get(ds_id).write(samples[samples.length] + "\n");
+                outputStreams.get(ds_id).write(samples[samples.length - 1] + "\n");
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -111,6 +113,16 @@ public class gzipLogger {
 
         }
 
+        for (Map.Entry<Integer, Writer> e : outputStreams.entrySet()) {
+            try {
+                e.getValue().close();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+        }
+        outputStreams.clear();
+
+        Log.d("gzipLogger", "hfValues Size: " + hfValues.size());
         return new Status(Status.SUCCESS);
     }
 }

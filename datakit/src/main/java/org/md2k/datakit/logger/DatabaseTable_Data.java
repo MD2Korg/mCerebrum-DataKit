@@ -126,6 +126,7 @@ public class DatabaseTable_Data {
         ContentValues contentValues = prepareData(dataSourceId, dataType);
         cValues.add(contentValues);
         if (dataType.getDateTime() - lastUnlock >= WAITTIME) {
+            gzLogger.insert(cValues);
             status = insertDB(db, TABLE_NAME, cValues);
             lastUnlock = dataType.getDateTime();
         }
@@ -138,6 +139,7 @@ public class DatabaseTable_Data {
         hfValues.add(contentValues);
         if (dataType.getDateTime() - lastUnlock >= WAITTIME * 3) {
             status = gzLogger.insert(hfValues);
+            hfValues.clear();
             lastUnlock = dataType.getDateTime();
         }
         return status;
