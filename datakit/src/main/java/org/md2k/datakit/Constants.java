@@ -34,5 +34,6 @@ public class Constants {
     public static final String CONFIG_FILENAME = "config.json";
     public static final String DATABASE_FILENAME="database.db";
     public static final String ARCHIVE_DIRECTORY="cerebralcortex/";
+    public static final String RAW_DIRECTORY = "raw/";
     public static String SERVICE_NAME = "org.md2k.datakit.ServiceDataKit";
 }

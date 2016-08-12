@@ -74,12 +74,6 @@ public class PrivacyManager {
             deactivate();
         }
     };
-    public boolean isActive(){
-        if (privacyData == null|| !privacyData.isStatus() || getRemainingTime()<=0)
-            return false;
-        else return true;
-    }
-
     private PrivacyManager(Context context) throws IOException {
         Log.d(TAG,"PrivacyManager()..constructor()..");
         this.context = context;
@@ -93,6 +87,12 @@ public class PrivacyManager {
         if (instance == null)
             instance = new PrivacyManager(context);
         return instance;
+    }
+
+    public boolean isActive() {
+        if (privacyData == null || !privacyData.isStatus() || getRemainingTime() <= 0)
+            return false;
+        else return true;
     }
 
     void createPrivacyList() {
@@ -182,16 +182,8 @@ public class PrivacyManager {
         return routingManager.query(ds_id, last_n_sample);
     }
 
-    public ArrayList<DataType> queryHFlastN(int ds_id, int last_n_sample) {
-        return routingManager.queryHFlastN(ds_id, last_n_sample);
-    }
-
     public ArrayList<RowObject> queryLastKey(int ds_id, int limit) {
         return routingManager.queryLastKey(ds_id, limit);
-    }
-
-    public ArrayList<RowObject> queryHFLastKey(int ds_id, int limit) {
-        return routingManager.queryHFLastKey(ds_id, limit);
     }
 
     public DataTypeLong querySize() {
