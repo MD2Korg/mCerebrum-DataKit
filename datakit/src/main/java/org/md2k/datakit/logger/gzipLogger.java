@@ -73,7 +73,7 @@ public class gzipLogger {
             if (!outputStreams.containsKey(ds_id)) {
                 File outputDir = new File(RAWDIR + "raw" + ds_id + "/");
                 outputDir.mkdirs();
-                String date = new SimpleDateFormat("yyyyMMddhh").format(new Date(System.currentTimeMillis()));
+                String date = new SimpleDateFormat("yyyyMMddHH").format(new Date(System.currentTimeMillis()));
                 String filename = date + "_" + ds_id + ".csv.gz";
                 File outputfile = new File(outputDir + "/" + filename);
 

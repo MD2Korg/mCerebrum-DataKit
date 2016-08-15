@@ -444,7 +444,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
 
                 messenger("Publishing data for " + entry.getKey().getDs_id() + " (" + entry.getKey().getDataSource().getId() + ":" + entry.getKey().getDataSource().getType() + ")");
                 publishDataStream(false, entry.getKey(), entry.getValue());
-                publishDataStream(true, entry.getKey(), entry.getValue());
+//                publishDataStream(true, entry.getKey(), entry.getValue());
                 Thread.sleep(1); //To generate InterruptedException as necessary
             }
 
