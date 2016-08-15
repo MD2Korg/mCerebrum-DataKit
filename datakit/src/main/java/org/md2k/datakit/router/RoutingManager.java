@@ -104,13 +104,14 @@ public class RoutingManager {
         return new Status(statusCode);
     }
 
-    public Status subscribe(int ds_id, Messenger reply) {
-        int statusCode = publishers.subscribe(ds_id, reply);
+    public Status subscribe(int ds_id, String packageName, Messenger reply) {
+        int statusCode = publishers.subscribe(ds_id, packageName, reply);
+        Log.d(TAG,"subscribe_status="+statusCode+" ds_id="+ds_id+" package_name="+packageName);
         return  new Status(statusCode);
     }
 
-    public Status unsubscribe(int ds_id, Messenger reply) {
-        int statusCode = publishers.unsubscribe(ds_id, reply);
+    public Status unsubscribe(int ds_id, String packageName, Messenger reply) {
+        int statusCode = publishers.unsubscribe(ds_id, packageName,  reply);
         return new Status(statusCode);
     }
 

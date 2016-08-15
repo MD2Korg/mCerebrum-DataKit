@@ -74,6 +74,12 @@ public class PrivacyManager {
             deactivate();
         }
     };
+    public boolean isActive(){
+        if (privacyData == null|| !privacyData.isStatus() || getRemainingTime()<=0)
+            return false;
+        else return true;
+    }
+
     private PrivacyManager(Context context) throws IOException {
         Log.d(TAG,"PrivacyManager()..constructor()..");
         this.context = context;
@@ -87,12 +93,6 @@ public class PrivacyManager {
         if (instance == null)
             instance = new PrivacyManager(context);
         return instance;
-    }
-
-    public boolean isActive() {
-        if (privacyData == null || !privacyData.isStatus() || getRemainingTime() <= 0)
-            return false;
-        else return true;
     }
 
     void createPrivacyList() {
@@ -193,12 +193,12 @@ public class PrivacyManager {
         return routingManager.unregister(ds_id);
     }
 
-    public Status subscribe(int ds_id, Messenger reply) {
-        return routingManager.subscribe(ds_id, reply);
+    public Status subscribe(int ds_id, String packageName, Messenger reply) {
+        return routingManager.subscribe(ds_id, packageName, reply);
     }
 
-    public Status unsubscribe(int ds_id, Messenger reply) {
-        return routingManager.unsubscribe(ds_id, reply);
+    public Status unsubscribe(int ds_id, String packageName, Messenger reply) {
+        return routingManager.unsubscribe(ds_id, packageName, reply);
     }
 
     public ArrayList<DataSourceClient> find(DataSource dataSource) {

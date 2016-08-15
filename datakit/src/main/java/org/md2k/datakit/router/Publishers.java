@@ -91,19 +91,21 @@ public class Publishers {
         return publishers.indexOfKey(ds_id) >= 0;
     }
 
-    public int subscribe(int ds_id, Messenger reply) {
+    public int subscribe(int ds_id, String packageName, Messenger reply) {
+        if(ds_id==-1 || packageName==null) return Status.DATASOURCE_INVALID;
+
         int status = addSubscriber(ds_id);
         if (status == Status.SUCCESS)
-            status = publishers.get(ds_id).add(new MessageSubscriber(reply));
+            status = publishers.get(ds_id).add(new MessageSubscriber(packageName, reply));
 
         return status;
     }
 
-    public int unsubscribe(int ds_id, Messenger reply) {
+    public int unsubscribe(int ds_id, String packageName, Messenger reply) {
         if (!isExist(ds_id))
             return Status.DATASOURCE_NOT_EXIST;
 
-        return publishers.get(ds_id).remove(new MessageSubscriber(reply));
+        return publishers.get(ds_id).remove(new MessageSubscriber(packageName, reply));
     }
 
     public void close() {

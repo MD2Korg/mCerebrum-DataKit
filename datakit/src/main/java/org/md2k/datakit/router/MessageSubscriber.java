@@ -37,7 +37,9 @@ import org.md2k.datakitapi.messagehandler.MessageType;
 public class MessageSubscriber{
     private static final String TAG = MessageSubscriber.class.getSimpleName();
     Messenger reply;
-    public MessageSubscriber(Messenger reply){
+    String packageName;
+    public MessageSubscriber(String packageName, Messenger reply){
+        this.packageName=packageName;
         this.reply=reply;
     }
     public boolean update(int ds_id,DataType data) {

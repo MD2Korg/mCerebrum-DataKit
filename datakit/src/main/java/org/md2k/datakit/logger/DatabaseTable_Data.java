@@ -136,7 +136,7 @@ public class DatabaseTable_Data {
         Status status = new Status(Status.SUCCESS);
         ContentValues contentValues = prepareDataHF(dataSourceId, dataType);
         hfValues.add(contentValues);
-        if (dataType.getDateTime() - lastUnlock >= WAITTIME * 3) {
+        if (dataType.getDateTime() - lastUnlock >= WAITTIME) {
             status = gzLogger.insert(hfValues);
             hfValues.clear();
             lastUnlock = dataType.getDateTime();

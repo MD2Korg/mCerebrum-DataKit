@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.os.Message;
 
 import org.md2k.datakit.privacy.PrivacyManager;
+import org.md2k.datakitapi.Constants;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
 import org.md2k.datakitapi.datatype.DataTypeLong;
@@ -79,78 +80,69 @@ public class MessageController {
                 DataSourceClient dataSourceClient = privacyManager.register((DataSource) incomingMessage.getData().getParcelable(DataSource.class.getSimpleName()));
                 bundle = new Bundle();
                 bundle.putParcelable(DataSourceClient.class.getSimpleName(), dataSourceClient);
-                bundle.putParcelable(Status.class.getSimpleName(),dataSourceClient.getStatus());
-                return prepareMessage(bundle, MessageType.REGISTER);
-
+                return prepareMessage(incomingMessage, bundle);
             case MessageType.UNREGISTER:
-                status = privacyManager.unregister(incomingMessage.getData().getInt("ds_id"));
+                status = privacyManager.unregister(incomingMessage.getData().getInt(Constants.RC_DSID));
                 bundle = new Bundle();
                 bundle.putParcelable(Status.class.getSimpleName(), status);
-                return prepareMessage(bundle, MessageType.UNREGISTER);
-
+                return prepareMessage(incomingMessage, bundle);
+            case MessageType.SUBSCRIBE:
+                Status statusSubscribe = privacyManager.subscribe(incomingMessage.getData().getInt(Constants.RC_DSID), incomingMessage.getData().getString(Constants.PACKAGE_NAME), incomingMessage.replyTo);
+                bundle = new Bundle();
+                bundle.putParcelable(Status.class.getSimpleName(), statusSubscribe);
+                return prepareMessage(incomingMessage, bundle);
+            case MessageType.UNSUBSCRIBE:
+                Status statusUnsubscribe = privacyManager.unsubscribe(incomingMessage.getData().getInt(Constants.RC_DSID),incomingMessage.getData().getString(Constants.PACKAGE_NAME), incomingMessage.replyTo);
+                bundle = new Bundle();
+                bundle.putParcelable(Status.class.getSimpleName(), statusUnsubscribe);
+                return prepareMessage(incomingMessage, bundle);
             case MessageType.FIND:
                 incomingMessage.getData().setClassLoader(DataSource.class.getClassLoader());
                 ArrayList<DataSourceClient> dataSourceClients = privacyManager.find((DataSource) incomingMessage.getData().getParcelable(DataSource.class.getSimpleName()));
                 bundle = new Bundle();
                 bundle.putParcelableArrayList(DataSourceClient.class.getSimpleName(), dataSourceClients);
-                bundle.putParcelable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
-                return prepareMessage(bundle, MessageType.FIND);
-
+                return prepareMessage(incomingMessage, bundle);
             case MessageType.INSERT:
                 incomingMessage.getData().setClassLoader(DataType.class.getClassLoader());
-                privacyManager.insert(incomingMessage.getData().getInt("ds_id"), (DataType) incomingMessage.getData().getParcelable(DataType.class.getSimpleName()));
+                privacyManager.insert(incomingMessage.getData().getInt(Constants.RC_DSID), (DataType) incomingMessage.getData().getParcelable(DataType.class.getSimpleName()));
                 return null;
 
             case MessageType.INSERT_HIGH_FREQUENCY:
                 incomingMessage.getData().setClassLoader(DataTypeDoubleArray.class.getClassLoader());
-                privacyManager.insertHF(incomingMessage.getData().getInt("ds_id"), (DataTypeDoubleArray) incomingMessage.getData().getParcelable(DataTypeDoubleArray.class.getSimpleName()));
+                privacyManager.insertHF(incomingMessage.getData().getInt(Constants.RC_DSID), (DataTypeDoubleArray) incomingMessage.getData().getParcelable(DataTypeDoubleArray.class.getSimpleName()));
                 return null;
 
             case MessageType.QUERYSIZE:
-                DataTypeLong object = null;
-                object = privacyManager.querySize();
+                DataTypeLong object = privacyManager.querySize();
                 bundle = new Bundle();
                 bundle.putParcelable(DataTypeLong.class.getSimpleName(), object);
-                bundle.putParcelable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
-                return prepareMessage(bundle, MessageType.QUERYSIZE);
-
+                return prepareMessage(incomingMessage, bundle);
             case MessageType.QUERY:
                 ArrayList<DataType> dataTypes=null;
-                if (incomingMessage.getData().containsKey("starttimestamp"))
-                    dataTypes = privacyManager.query(incomingMessage.getData().getInt("ds_id"), incomingMessage.getData().getLong("starttimestamp"), incomingMessage.getData().getLong("endtimestamp"));
-                else if (incomingMessage.getData().containsKey("last_n_sample"))
-                    dataTypes = privacyManager.query(incomingMessage.getData().getInt("ds_id"), incomingMessage.getData().getInt("last_n_sample"));
+                if (incomingMessage.getData().containsKey(Constants.RC_STARTTIMESTAMP))
+                    dataTypes = privacyManager.query(incomingMessage.getData().getInt(Constants.RC_DSID), incomingMessage.getData().getLong(Constants.RC_STARTTIMESTAMP), incomingMessage.getData().getLong(Constants.RC_ENDTIMESTAMP));
+                else if (incomingMessage.getData().containsKey(Constants.RC_LAST_N_SAMPLE))
+                    dataTypes = privacyManager.query(incomingMessage.getData().getInt(Constants.RC_DSID), incomingMessage.getData().getInt(Constants.RC_LAST_N_SAMPLE));
                 bundle = new Bundle();
                 bundle.putParcelableArrayList(DataType.class.getSimpleName(), dataTypes);
-                bundle.putParcelable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
-                return prepareMessage(bundle, MessageType.QUERY);
+                return prepareMessage(incomingMessage, bundle);
+
 
             case MessageType.QUERYPRIMARYKEY:
                 ArrayList<RowObject> objectTypes=null;
-                objectTypes = privacyManager.queryLastKey(incomingMessage.getData().getInt("ds_id"), incomingMessage.getData().getInt("limit"));
+                objectTypes = privacyManager.queryLastKey(incomingMessage.getData().getInt(Constants.RC_DSID), incomingMessage.getData().getInt(Constants.RC_LIMIT));
                 bundle = new Bundle();
                 bundle.putParcelableArrayList(RowObject.class.getSimpleName(), objectTypes);
-                bundle.putParcelable(Status.class.getSimpleName(), new Status(Status.SUCCESS));
-                return prepareMessage(bundle, MessageType.QUERYPRIMARYKEY);
+                return prepareMessage(incomingMessage, bundle);
 
-            case MessageType.SUBSCRIBE:
-                Status statusSubscribe = privacyManager.subscribe(incomingMessage.getData().getInt("ds_id"), incomingMessage.replyTo);
-                bundle = new Bundle();
-                bundle.putParcelable(Status.class.getSimpleName(), statusSubscribe);
-                return prepareMessage(bundle, MessageType.SUBSCRIBE);
-
-            case MessageType.UNSUBSCRIBE:
-                Status statusUnsubscribe = privacyManager.unsubscribe(incomingMessage.getData().getInt("ds_id"), incomingMessage.replyTo);
-                bundle = new Bundle();
-                bundle.putParcelable(Status.class.getSimpleName(), statusUnsubscribe);
-                return prepareMessage(bundle, MessageType.UNSUBSCRIBE);
         }
         return null;
     }
 
-    public Message prepareMessage(Bundle bundle, int messageType) {
+    public Message prepareMessage(Message incomingMessage, Bundle bundle) {
         Message message = Message.obtain(null, 0, 0, 0);
-        message.what = messageType;
+        message.what = incomingMessage.what;
+        message.arg1=incomingMessage.arg1;
         message.setData(bundle);
         return message;
     }
