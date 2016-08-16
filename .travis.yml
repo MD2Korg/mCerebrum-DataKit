@@ -25,7 +25,7 @@ deploy:
   provider: releases
   api_key:
     secure: cIm0wHJyBBd8CB1k1S/fT+Bao+zOD7YkWETaoVK7Bl3g3qPXXtSvHTiqoP6oEAgT2MeR+ND4MvlooC7WcahjZs9FgRiezmhotCN8iW6rZUroirXiFDxC+0J8TyTmBBNUDovbGQZXtEbfMApAQZA2BBBCat15G+7o40jO7sNjRG8eBMbbmKj8jeytSLKP4J01SYEJYOIgz/cibddweF6ZKOgNWgQp6hOmaxMMUPSzzF916YSCkiHFkohMMt6YNAPfP7kTrhqIzZzHN+bftWToIgMwlTjovW+NwArVJJF3k10NCw1HN3H/hnZhsBU5+uifV5lUhFagd7Bbp23nFO45qvHUE1jzp+08S+Z6OhfIAJyivudiDLm/aU46345NfoBvGkYE8hFm/EIe8AD1Ft8X7yZWXwDwhLDrAAqo9EVKgz86N1I72aiTcXPkPtBrolG6AtrkMh23qS+w3igW5qFsp9gkAJW4rrP1R1DJzb2EKgHFNXpFjcqpH+czr4forBNFQ1855/1OFY6dqzE92EGK0JUU5gjkX5hwNxSLjtE92ZDxbzlcHtg3AuynsjoeS5b9cij4Hqs+Pu6aqolp0GWmN6sal6xHC6ZzU9+4O/K2YNl34XHvRBYmmkYDyQCIrQnsiNoLL0Dtzr1kBYYOvM9Fpzq7LzgPV+QBzBdvax0IYcA=
-  file: "datakit/build/outputs/apk/datakit*.apk"
+  file: "datakit/build/outputs/apk/datakit*.*.*.apk"
   on:
     repo: MD2Korg/mCerebrum-DataKit
     tags: true
