@@ -15,7 +15,7 @@ android:
   - extra-android-support
   - extra-android-m2repository
 before_install:
-- openssl aes-256-cbc -K $encrypted_058df639d3fc_key -iv $encrypted_058df639d3fc_iv -in release-key.keystore.enc -out release-key.keystore -d
+- openssl aes-256-cbc -K $encrypted_058df639d3fc_key -iv $encrypted_058df639d3fc_iv -in datakit/release-key.keystore.enc -out datakit/release-key.keystore -d
 - git clone https://github.com/MD2Korg/mCerebrum-Utilities.git /home/travis/build/MD2Korg/mCerebrum-Utilities
 - git clone https://github.com/MD2Korg/mCerebrum-DataKitAPI.git /home/travis/build/MD2Korg/mCerebrum-DataKitAPI
 script:
