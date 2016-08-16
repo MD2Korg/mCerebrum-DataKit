@@ -30,6 +30,17 @@ android {
         versionCode buildVersionCode()
         versionName version
     }
+
+
+    signingConfigs {
+        release {
+            storeFile file(MD2K_RELEASE_STORE_FILE)
+            storePassword MD2K_RELEASE_STORE_PASSWORD
+            keyAlias MD2K_RELEASE_KEY_ALIAS
+            keyPassword MD2K_RELEASE_KEY_PASSWORD
+        }
+    }
+
     packagingOptions {
         exclude 'META-INF/DEPENDENCIES'
         exclude 'META-INF/NOTICE'
@@ -39,7 +50,8 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            signingConfig getSigningConfig()
+//            signingConfig getSigningConfig()
+            signingConfig signingConfigs.release
             applicationVariants.all { variant ->
                 variant.outputs.each { output ->
                     output.outputFile = new File(output.outputFile.parent, output.outputFile.name.replace("-release", "${variant.versionName}"))
