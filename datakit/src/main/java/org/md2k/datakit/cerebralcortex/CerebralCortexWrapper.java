@@ -508,4 +508,55 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
 
         return result;
     }
+
+    /**
+     * Upload method for publishing data to the Cerebral Cortex webservice
+     *
+     * @param requestURL URL
+     * @param json       String of data to send to Cerebral Cortex
+     */
+    public String cerebralCortexAPI_RAWFile(String requestURL, File file) throws IOException {
+        long totalst = System.currentTimeMillis();
+        String result = null;
+
+
+        GzipCompressingEntity entity = new GzipCompressingEntity(new StringEntityHC4(json));
+
+        URL url = new URL(requestURL);
+
+        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+        try {
+            urlConnection.setRequestMethod("POST");
+
+            urlConnection.setRequestProperty("Accept", "application/json");
+            urlConnection.setRequestProperty("Content-Encoding", "gzip");
+            urlConnection.setRequestProperty("Content-Type", "application/json");
+            urlConnection.setRequestProperty("Connection", "Keep-Alive");
+            urlConnection.setRequestProperty("Cache-Control", "no-cache");
+
+            urlConnection.setConnectTimeout(60000);
+            urlConnection.setReadTimeout(60000);
+
+            urlConnection.setDoOutput(true);
+            urlConnection.setDoInput(true);
+
+            urlConnection.setUseCaches(false);
+
+//            urlConnection.setRequestProperty("Content-Length", "" + entity.getContentLength()); //Breaks in Android 4.4.x
+
+            entity.writeTo(urlConnection.getOutputStream());
+
+
+            if (urlConnection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
+                return readStream(urlConnection.getInputStream());
+            }
+        } catch (Exception e) {
+            Log.e("Cerebral Cortx API", "POST Error: " + e + "(" + requestURL + ")");
+        } finally {
+            urlConnection.disconnect();
+        }
+        Log.d("TIMING", "CerebralCortexAPI CALL: " + (System.currentTimeMillis() - totalst));
+
+        return result;
+    }
 }

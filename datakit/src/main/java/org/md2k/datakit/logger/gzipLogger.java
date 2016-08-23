@@ -98,6 +98,7 @@ public class gzipLogger {
             try {
 
                 outputStreams.get(ds_id).write(dta.getDateTime() + ",");
+                outputStreams.get(ds_id).write(dta.)
                 double[] samples = dta.getSample();
                 for (int i = 0; i < samples.length - 1; i++)
                     outputStreams.get(ds_id).write(samples[i] + ",");
