@@ -48,6 +48,7 @@ import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.Time;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -253,8 +254,8 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
 
         File[] files = directory.listFiles(ff);
 
-
         if (files != null) {
+            Arrays.sort(files);
             if (files.length > 1) { //Check for multiple files.  The last file is the current one and should not be moved/copied
                 for (int i = 0; i < files.length - 1; i++) {
                     Log.d(TAG, files[i].getAbsolutePath());
