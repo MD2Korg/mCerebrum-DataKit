@@ -32,6 +32,7 @@ import org.md2k.datakit.configuration.Configuration;
 import org.md2k.datakit.configuration.ConfigurationManager;
 import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
 import org.md2k.datakitapi.status.Status;
+import org.md2k.datakitapi.time.DateTime;
 import org.md2k.utilities.FileManager;
 
 import java.io.File;
@@ -56,6 +57,7 @@ public class gzipLogger {
     private static String C_DATASOURCE_ID = "datasource_id";
     private HashMap<Integer, Writer> outputStreams;
     private String RAWDIR = "";
+    private long tz = DateTime.getTimeZoneOffset();
 
     public gzipLogger(Context context) {
         outputStreams = new HashMap<>();
@@ -98,6 +100,7 @@ public class gzipLogger {
             try {
 
                 outputStreams.get(ds_id).write(dta.getDateTime() + ",");
+                outputStreams.get(ds_id).write("" + tz + ",");
                 double[] samples = dta.getSample();
                 for (int i = 0; i < samples.length - 1; i++)
                     outputStreams.get(ds_id).write(samples[i] + ",");
