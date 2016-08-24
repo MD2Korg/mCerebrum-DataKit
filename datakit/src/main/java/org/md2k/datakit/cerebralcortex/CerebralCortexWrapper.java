@@ -371,6 +371,16 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         Log.d("CerebralCortex", "Progress Update:" + ints[0]);
     }
 
+
+    private boolean inRestrictedList(DataSourceClient dsc) {
+        for (DataSource d : restricted) {
+            if (dsc.getDataSource().getType().equals(d.getType())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     protected Boolean doInBackground(Void... voids) {
         try {
@@ -484,7 +494,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
             Map<DataSourceClient, CerebralCortexDataSourceResponse> validDataSources = new HashMap<>();
             for (DataSourceClient dsc : dataSourceClients) {
                 CerebralCortexDataSourceResponse ccdpResponse = registerDataSource(uiResponse, dsc);
-                if (ccdpResponse.status.contains("ok") && !restricted.contains(dsc)) {
+                if (ccdpResponse.status.contains("ok") && !inRestrictedList(dsc)) {
                     messenger("Registered datastream: " + dsc.getDs_id() + " (" + dsc.getDataSource().getId() + ":" + dsc.getDataSource().getType() + ")");
                     validDataSources.put(dsc, ccdpResponse);
                 }
