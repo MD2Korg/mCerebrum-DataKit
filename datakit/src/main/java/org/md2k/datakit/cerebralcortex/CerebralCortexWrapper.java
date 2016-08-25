@@ -246,6 +246,8 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
     private void publishDataFiles(DataSourceClient dsc, CerebralCortexDataSourceResponse ccdpResponse) {
         final String APIendpoint = "rawdatapoints/bulkload";
 
+        CerebralCortexData ccdata = new CerebralCortexData(ccdpResponse.datastream_id);
+
         File directory = new File(raw_directory + "/raw" + dsc.getDs_id());
 
         FilenameFilter ff = new FilenameFilter() {
@@ -266,7 +268,7 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                     Log.d(TAG, files[i].getAbsolutePath());
                     String dataResult = null;
                     try {
-                        dataResult = cerebralCortexAPI_RAWFile(requestURL + APIendpoint, dsc.getDs_id(), files[i]);
+                        dataResult = cerebralCortexAPI_RAWFile(requestURL + APIendpoint, new Long(ccdata.datastream_id).intValue(), files[i]);
                         if (dataResult == null) {
                             Log.e(TAG, "Cerebral Cortex API call is null: " + dsc.getDs_id());
                             break;
@@ -507,14 +509,14 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
 
             for (Map.Entry<DataSourceClient, CerebralCortexDataSourceResponse> entry : validDataSources.entrySet()) {
 
-                messenger("Publishing data for " + entry.getKey().getDs_id() + " (" + entry.getKey().getDataSource().getId() + ":" + entry.getKey().getDataSource().getType() + ")");
+                messenger("Publishing data for " + entry.getKey().getDs_id() + " (" + entry.getKey().getDataSource().getId() + ":" + entry.getKey().getDataSource().getType() + ") to " + entry.getValue().datastream_id);
                 publishDataStream(entry.getKey(), entry.getValue());
                 Thread.sleep(1); //To generate InterruptedException as necessary
             }
 
             for (Map.Entry<DataSourceClient, CerebralCortexDataSourceResponse> entry : validDataSources.entrySet()) {
 
-                messenger("Publishing raw data for " + entry.getKey().getDs_id() + " (" + entry.getKey().getDataSource().getId() + ":" + entry.getKey().getDataSource().getType() + ")");
+                messenger("Publishing raw data for " + entry.getKey().getDs_id() + " (" + entry.getKey().getDataSource().getId() + ":" + entry.getKey().getDataSource().getType() + ") to " + entry.getValue().datastream_id);
                 publishDataFiles(entry.getKey(), entry.getValue());
                 Thread.sleep(1); //To generate InterruptedException as necessary
             }
