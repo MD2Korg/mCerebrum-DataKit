@@ -100,6 +100,11 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
     private final long history_time;
     public long lastUpload;
     DatabaseLogger dbLogger = null;
+    OkHttpClient client = new OkHttpClient.Builder()
+            .connectTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(180, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .build();
     private Context context;
     private String requestURL;
     private List<DataSource> restricted;
@@ -272,7 +277,6 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                             if (files[i].renameTo(newFile)) {
                                 Log.d(TAG, "Successfully renamed file: " + files[i].getAbsolutePath());
                             }
-
                         }
                         Log.d(TAG, "Uploaded Raw count: " + ccdr.count);
                     } catch (IOException e) {
@@ -505,6 +509,12 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
 
                 messenger("Publishing data for " + entry.getKey().getDs_id() + " (" + entry.getKey().getDataSource().getId() + ":" + entry.getKey().getDataSource().getType() + ")");
                 publishDataStream(entry.getKey(), entry.getValue());
+                Thread.sleep(1); //To generate InterruptedException as necessary
+            }
+
+            for (Map.Entry<DataSourceClient, CerebralCortexDataSourceResponse> entry : validDataSources.entrySet()) {
+
+                messenger("Publishing raw data for " + entry.getKey().getDs_id() + " (" + entry.getKey().getDataSource().getId() + ":" + entry.getKey().getDataSource().getType() + ")");
                 publishDataFiles(entry.getKey(), entry.getValue());
                 Thread.sleep(1); //To generate InterruptedException as necessary
             }
@@ -579,13 +589,6 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
     public String cerebralCortexAPI_RAWFile(String requestURL, Integer datastreamID, File file) throws IOException {
         long totalst = System.currentTimeMillis();
         String result = null;
-
-
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .writeTimeout(120, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
-                .build();
 
         RequestBody requestBody = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
