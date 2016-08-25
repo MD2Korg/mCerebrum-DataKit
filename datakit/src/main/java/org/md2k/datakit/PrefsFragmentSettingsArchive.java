@@ -161,7 +161,7 @@ public class PrefsFragmentSettingsArchive extends PreferenceFragment {
     void setupSize() {
         Preference preference = findPreference("key_file_size");
         String location = getPreferenceManager().getSharedPreferences().getString("key_storage", configuration.archive.location);
-        long fileSize = FileManager.getFileSize(getActivity(), location);
+        long fileSize = FileManager.getFileSize(getActivity(), location, Constants.RAW_DIRECTORY);
         preference.setSummary(FileManager.formatSize(fileSize));
     }
 

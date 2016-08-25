@@ -148,7 +148,7 @@ public class PrefsFragmentSettingsDatabase extends PreferenceFragment {
     void setupDatabaseSize() {
         Preference preference = findPreference("key_file_size");
         String location = getPreferenceManager().getSharedPreferences().getString("key_storage", configuration.database.location);
-        long fileSize = FileManager.getFileSize(getActivity(), location);
+        long fileSize = FileManager.getFileSize(getActivity(), location, Constants.DATABASE_FILENAME);
         preference.setSummary(FileManager.formatSize(fileSize));
     }
 
