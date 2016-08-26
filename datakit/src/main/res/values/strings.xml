@@ -13,4 +13,6 @@
     <string name="title_cerebralcortex">Cerebral Cortex</string>
     <string name="cerebralcortex_status">Status:</string>
     <string name="toggle">Toggle</string>
+    <string name="button_close">Close</string>
+    <string name="button_save">Save</string>
 </resources>

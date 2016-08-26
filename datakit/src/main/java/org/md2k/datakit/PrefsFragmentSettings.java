@@ -1,6 +1,10 @@
 package org.md2k.datakit;
 
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
@@ -9,6 +13,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.Toast;
+
+import org.md2k.datakit.configuration.ConfigurationManager;
+import org.md2k.utilities.FileManager;
+import org.md2k.utilities.UI.AlertDialogs;
 
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -38,15 +47,68 @@ import android.widget.ListView;
  */
 public class PrefsFragmentSettings extends PreferenceFragment {
 
-    private static final String TAG = PrefsFragmentSettings.class.getSimpleName();
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.pref_settings);
         setBackButton();
         setPreferences();
+        if(getActivity().getIntent().getBooleanExtra("delete",false))
+            clearData();
     }
+    void clearData() {
+        AlertDialogs.AlertDialog(getActivity(), "Delete Archive Files?", "Delete Database & Archive Files?\n\nData can't be recovered after deletion",R.drawable.ic_delete_red_48dp, "Yes", "Cancel",null, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if (which == AlertDialog.BUTTON_POSITIVE) {
+                    new DeleteDataAsyncTask().execute();
+                }else{
+                    if(getActivity().getIntent().getBooleanExtra("delete",false))
+                        getActivity().finish();
+                }
+            }
+        });
+    }
+    class DeleteDataAsyncTask extends AsyncTask<String, String, String> {
+        private ProgressDialog dialog;
+
+        DeleteDataAsyncTask() {
+            dialog = new ProgressDialog(getActivity());
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            // Shows Progress Bar Dialog and then call doInBackground method
+            dialog.setMessage("Deleting database & archive files. Please wait...");
+            dialog.show();
+        }
+
+        @Override
+        protected String doInBackground(String... strings) {
+            try {
+                String location = ConfigurationManager.getInstance(getActivity()).configuration.archive.location;
+                String directory = FileManager.getDirectory(getActivity(), location);
+                FileManager.deleteDirectory(directory);
+            } catch (Exception ignored) {
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String file_url) {
+            if (dialog.isShowing()) {
+                dialog.dismiss();
+            }
+            Toast.makeText(getActivity(), "Archive files is Deleted", Toast.LENGTH_LONG).show();
+            if(getActivity().getIntent().getBooleanExtra("delete",false))
+                getActivity().finish();
+            else
+                setPreferences();
+
+        }
+    }
+
     public void setPreferences(){
         setPreferenceDatabase();
         setPreferenceArchive();
@@ -89,6 +151,7 @@ public class PrefsFragmentSettings extends PreferenceFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View v=super.onCreateView(inflater, container,savedInstanceState);
+        assert v != null;
         ListView lv = (ListView) v.findViewById(android.R.id.list);
         lv.setPadding(0, 0, 0, 0);
 
@@ -96,7 +159,7 @@ public class PrefsFragmentSettings extends PreferenceFragment {
     }
     private void setBackButton() {
         final Button button = (Button) getActivity().findViewById(R.id.button_1);
-        button.setText("Close");
+        button.setText(R.string.button_close);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 getActivity().finish();

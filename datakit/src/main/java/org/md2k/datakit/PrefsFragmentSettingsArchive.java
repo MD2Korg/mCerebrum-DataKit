@@ -50,7 +50,6 @@ import org.md2k.utilities.UI.AlertDialogs;
  */
 public class PrefsFragmentSettingsArchive extends PreferenceFragment {
 
-    private static final String TAG = PrefsFragmentSettingsArchive.class.getSimpleName();
     Configuration configuration;
 
     @Override
@@ -101,6 +100,7 @@ public class PrefsFragmentSettingsArchive extends PreferenceFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View v = super.onCreateView(inflater, container, savedInstanceState);
+        assert v != null;
         ListView lv = (ListView) v.findViewById(android.R.id.list);
         lv.setPadding(0, 0, 0, 0);
 
@@ -109,7 +109,7 @@ public class PrefsFragmentSettingsArchive extends PreferenceFragment {
 
     private void setBackButton() {
         final Button button = (Button) getActivity().findViewById(R.id.button_1);
-        button.setText("Close");
+        button.setText(R.string.button_close);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 getActivity().finish();
@@ -119,14 +119,14 @@ public class PrefsFragmentSettingsArchive extends PreferenceFragment {
 
     private void setSaveButton() {
         final Button button = (Button) getActivity().findViewById(R.id.button_2);
-        button.setText("Save");
+        button.setText(R.string.button_save);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 SharedPreferences sharedPreferences = getPreferenceManager().getSharedPreferences();
                 configuration.archive.enabled = sharedPreferences.getBoolean("key_enabled", configuration.archive.enabled);
                 configuration.archive.location = sharedPreferences.getString("key_storage", configuration.archive.location);
                 configuration.archive.interval = Long.parseLong(sharedPreferences.getString("key_interval", String.valueOf(configuration.archive.interval)));
-                if (configuration.archive.enabled == true && (configuration.archive.location == null || configuration.archive.interval == 0)) {
+                if (configuration.archive.enabled && (configuration.archive.location == null || configuration.archive.interval == 0)) {
                     Toast.makeText(getActivity(), "Not Saved...not all values are set properly", Toast.LENGTH_LONG).show();
                     return;
                 }
@@ -212,7 +212,9 @@ public class PrefsFragmentSettingsArchive extends PreferenceFragment {
                 String location = ConfigurationManager.getInstance(getActivity()).configuration.archive.location;
                 String filename = FileManager.getDirectory(getActivity(), location) + Constants.ARCHIVE_DIRECTORY;
                 FileManager.deleteFile(filename);
-            } catch (Exception e) {
+                String filename1 = FileManager.getDirectory(getActivity(), location) + Constants.RAW_DIRECTORY;
+                FileManager.deleteFile(filename1);
+            } catch (Exception ignored) {
             }
             return null;
         }

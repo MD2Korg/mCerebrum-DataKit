@@ -212,7 +212,7 @@ public class PrefsFragmentSettingsDatabase extends PreferenceFragment {
                 String location = ConfigurationManager.getInstance(getActivity()).configuration.database.location;
                 String filename = FileManager.getDirectory(getActivity(), location) + Constants.DATABASE_FILENAME;
                 FileManager.deleteFile(filename);
-            } catch (Exception e) {
+            } catch (Exception ignored) {
             }
             return null;
         }
