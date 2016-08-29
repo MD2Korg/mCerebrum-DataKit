@@ -1,4 +1,6 @@
-package org.md2k.datakit.logger;/*
+package org.md2k.datakit.logger;
+
+/*
  * Copyright (c) 2016, The University of Memphis, MD2K Center
  * All rights reserved.
  *
@@ -43,18 +45,17 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 
 public class gzipLogger {
 
-    private static final int BUFFER_SIZE = 4096;
-    private static String C_DATETIME = "datetime";
-    private static String C_SAMPLE = "sample";
-    private static String C_DATASOURCE_ID = "datasource_id";
+    private static final String C_DATETIME = "datetime";
+    private static final String C_SAMPLE = "sample";
+    private static final String C_DATASOURCE_ID = "datasource_id";
     private HashMap<Integer, Writer> outputStreams;
     private String RAWDIR = "";
     private long tz = DateTime.getTimeZoneOffset();
@@ -65,21 +66,22 @@ public class gzipLogger {
         RAWDIR = FileManager.getDirectory(context, configuration.database.location) + Constants.RAW_DIRECTORY;
     }
 
-    public Status insert(ArrayList<ContentValues> hfValues) {
+    public Status insert(ContentValues[] hfValues, int hfValueCount) {
         int ds_id;
         DataTypeDoubleArray dta;
-        for (ContentValues value : hfValues) {
+        for (int ii=0;ii<hfValueCount;ii++) {
+            ContentValues value=hfValues[ii];
             ds_id = (int) value.get(C_DATASOURCE_ID);
             dta = DataTypeDoubleArray.fromRawBytes((long) value.get(C_DATETIME), (byte[]) value.get(C_SAMPLE));
 
             if (!outputStreams.containsKey(ds_id)) {
                 File outputDir = new File(RAWDIR + "raw" + ds_id + "/");
                 outputDir.mkdirs();
-                String date = new SimpleDateFormat("yyyyMMddHH").format(new Date(System.currentTimeMillis()));
+                String date = new SimpleDateFormat("yyyyMMddHH", Locale.US).format(new Date(System.currentTimeMillis()));
                 String filename = date + "_" + ds_id + ".csv.gz";
                 File outputfile = new File(outputDir + "/" + filename);
 
-                FileOutputStream output = null;
+                FileOutputStream output;
                 try {
                     output = new FileOutputStream(outputfile, true);
                     Writer writer = new OutputStreamWriter(new GZIPOutputStream(output), "UTF-8");
@@ -110,8 +112,6 @@ public class gzipLogger {
                 e.printStackTrace();
                 return new Status(Status.INTERNAL_ERROR);
             }
-
-
         }
 
         for (Map.Entry<Integer, Writer> e : outputStreams.entrySet()) {

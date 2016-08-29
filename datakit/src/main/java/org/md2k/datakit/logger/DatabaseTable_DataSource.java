@@ -18,6 +18,7 @@ import org.md2k.utilities.Report.Log;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -70,7 +71,7 @@ public class DatabaseTable_DataSource {
         createIfNotExists(db);
     }
 
-    private String[] prepareSelectionArgs(DataSource dataSource) {
+    private synchronized String[] prepareSelectionArgs(DataSource dataSource) {
         ArrayList<String> selectionArgs = new ArrayList<>();
         if (dataSource.getId() != null) selectionArgs.add(dataSource.getId());
         if (dataSource.getType() != null) selectionArgs.add(dataSource.getType());
@@ -87,11 +88,10 @@ public class DatabaseTable_DataSource {
         if (dataSource.getApplication() != null && dataSource.getApplication().getType() != null)
             selectionArgs.add(dataSource.getApplication().getType());
         if (selectionArgs.size() == 0) return null;
-        String[] stringArray = selectionArgs.toArray(new String[selectionArgs.size()]);
-        return stringArray;
+        return selectionArgs.toArray(new String[selectionArgs.size()]);
     }
 
-    private String prepareSelection(DataSource dataSource) {
+    private synchronized String prepareSelection(DataSource dataSource) {
         String selection = "";
         if (dataSource.getId() != null) {
             if (!selection.equals("")) selection += " AND ";
@@ -129,11 +129,11 @@ public class DatabaseTable_DataSource {
         return selection;
     }
 
-    public void createIfNotExists(SQLiteDatabase db) {
+    public synchronized void createIfNotExists(SQLiteDatabase db) {
         db.execSQL(SQL_CREATE_DATASOURCE);
     }
 
-    public ArrayList<DataSourceClient> findDataSource(SQLiteDatabase db, DataSource dataSource) {
+    public synchronized ArrayList<DataSourceClient> findDataSource(SQLiteDatabase db, DataSource dataSource) {
         Log.d(TAG,"findDataSource()..dataSource="+dataSource.getId()+" "+ dataSource.getType());
         ArrayList<DataSourceClient> dataSourceClients = new ArrayList<>();
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
@@ -164,11 +164,11 @@ public class DatabaseTable_DataSource {
         return dataSourceClients;
     }
 
-    public void removeAll(SQLiteDatabase db) {
+    public synchronized void removeAll(SQLiteDatabase db) {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
     }
 
-    public DataSourceClient register(SQLiteDatabase db, DataSource dataSource) {
+    public synchronized DataSourceClient register(SQLiteDatabase db, DataSource dataSource) {
         ContentValues cValues = prepareDataSource(dataSource);
         int newRowId;
         newRowId = (int) db.insert(TABLE_NAME, null, cValues);
@@ -177,7 +177,7 @@ public class DatabaseTable_DataSource {
         } else return new DataSourceClient(newRowId, dataSource, new Status(Status.SUCCESS));
     }
 
-    public ContentValues prepareDataSource(DataSource dataSource) {
+    public synchronized ContentValues prepareDataSource(DataSource dataSource) {
 //        byte[] dataSourceArray = dataSource.toBytes();
         byte[] dataSourceArray = toBytes(dataSource);
 
@@ -202,7 +202,7 @@ public class DatabaseTable_DataSource {
         return cValues;
     }
 
-    private byte[] toBytes(DataSource dataSource) {
+    private synchronized byte[] toBytes(DataSource dataSource) {
         Kryo kryo=new Kryo();
         byte[] bytes;
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -210,11 +210,11 @@ public class DatabaseTable_DataSource {
         kryo.writeClassAndObject(output, dataSource);
         output.close();
         bytes = baos.toByteArray();
-        Log.d(TAG, "datasource_bytes: size=" + bytes.length + " content=" + bytes.toString());
+        Log.d(TAG, "datasource_bytes: size=" + bytes.length + " content=" + Arrays.toString(bytes));
         return bytes;
     }
 
-    private DataSource fromBytes(byte[] bytes) {
+    private synchronized DataSource fromBytes(byte[] bytes) {
         Kryo kryo=new Kryo();
         Log.d(TAG,"fromBytes size="+bytes.length);
         Input input = new Input(new ByteArrayInputStream(bytes));

@@ -48,7 +48,6 @@ import java.util.ArrayList;
  */
 
 public class DatabaseTable_Data {
-    private static final String TAG = DatabaseTable_Data.class.getSimpleName();
 
     public static String TABLE_NAME = "data";
     private static String C_ID = "_id";
@@ -56,6 +55,8 @@ public class DatabaseTable_Data {
     private static String C_DATETIME = "datetime";
     private static String C_SAMPLE = "sample";
     private static String C_DATASOURCE_ID = "datasource_id";
+    private static final int CVALUE_LIMIT = 250;
+    private static final int HFVALUE_LIMIT = 5000;
 
     private static final String SQL_CREATE_DATA_INDEX = "CREATE INDEX IF NOT EXISTS index_datasource_id on " + TABLE_NAME + " (" + C_DATASOURCE_ID + ");";
     private static final String SQL_CREATE_CC_INDEX = "CREATE INDEX IF NOT EXISTS index_cc_datasource_id on " + TABLE_NAME + " (" + C_DATASOURCE_ID + ", " + C_CLOUD_SYNC_BIT + ");";
@@ -68,9 +69,11 @@ public class DatabaseTable_Data {
             C_SAMPLE + " BLOB not null);";
 
     private static String C_COUNT = "c";
-    private static long WAITTIME = 5 * 1000L; // 5 second;
-    ArrayList<ContentValues> cValues = new ArrayList<ContentValues>(250);
-    ArrayList<ContentValues> hfValues = new ArrayList<ContentValues>(5000);
+    private static final long WAITTIME = 5 * 1000L; // 5 second;
+    private ContentValues[] cValues = new ContentValues[CVALUE_LIMIT];
+    private ContentValues[] hfValues = new ContentValues[HFVALUE_LIMIT];
+    private int cValueCount = 0;
+    private int hfValueCount = 0;
     long lastUnlock = 0;
     Kryo kryo;
 
@@ -83,31 +86,31 @@ public class DatabaseTable_Data {
         gzLogger = gzl;
     }
 
-    public void removeAll(SQLiteDatabase db) {
+    public synchronized void removeAll(SQLiteDatabase db) {
         db.execSQL("DROP INDEX index_datasource_id");
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
     }
 
-    public void createIfNotExists(SQLiteDatabase db) {
+    public synchronized void createIfNotExists(SQLiteDatabase db) {
         db.execSQL(SQL_CREATE_DATA);
         db.execSQL(SQL_CREATE_DATA_INDEX);
         db.execSQL(SQL_CREATE_CC_INDEX);
     }
 
-    private Status insertDB(SQLiteDatabase db, String tableName, ArrayList<ContentValues> data) {
+    private synchronized Status insertDB(SQLiteDatabase db, String tableName) {
         try {
 
-            if (data.size() == 0)
+            if (cValueCount == 0)
                 return new Status(Status.SUCCESS);
 
 
             long st = System.currentTimeMillis();
             db.beginTransaction();
 
-            Log.d("INSERTDB", "Buffer Size: " + data.size() + " (" + tableName + ")");
-            for (int i = 0; i < data.size(); i++)
-                db.insert(tableName, null, data.get(i));
-            data.clear();
+            Log.d("INSERTDB", "Buffer Size: " + cValueCount + " (" + tableName + ")");
+            for (int i = 0; i < cValueCount; i++)
+                db.insert(tableName, null, cValues[i]);
+            cValueCount = 0;
             try {
                 db.setTransactionSuccessful();
             } finally {
@@ -121,31 +124,32 @@ public class DatabaseTable_Data {
     }
 
 
-    public Status insert(SQLiteDatabase db, int dataSourceId, DataType dataType) {
+    public synchronized Status insert(SQLiteDatabase db, int dataSourceId, DataType dataType) {
         Status status = new Status(Status.SUCCESS);
+        if (dataType.getDateTime() - lastUnlock >= WAITTIME || cValueCount >= CVALUE_LIMIT) {
+            status = insertDB(db, TABLE_NAME);
+            cValueCount=0;
+            lastUnlock = dataType.getDateTime();
+        }
         ContentValues contentValues = prepareData(dataSourceId, dataType);
-        cValues.add(contentValues);
-        if (dataType.getDateTime() - lastUnlock >= WAITTIME) {
-            status = insertDB(db, TABLE_NAME, cValues);
-            lastUnlock = dataType.getDateTime();
-        }
+        cValues[cValueCount++] = contentValues;
         return status;
     }
 
-    public Status insertHF(int dataSourceId, DataTypeDoubleArray dataType) {
+    public synchronized Status insertHF(int dataSourceId, DataTypeDoubleArray dataType) {
         Status status = new Status(Status.SUCCESS);
-        ContentValues contentValues = prepareDataHF(dataSourceId, dataType);
-        hfValues.add(contentValues);
-        if (dataType.getDateTime() - lastUnlock >= WAITTIME) {
-            status = gzLogger.insert(hfValues);
-            hfValues.clear();
+        if (dataType.getDateTime() - lastUnlock >= WAITTIME || hfValueCount >= HFVALUE_LIMIT) {
+            status = gzLogger.insert(hfValues, hfValueCount);
+            hfValueCount = 0;
             lastUnlock = dataType.getDateTime();
         }
+        ContentValues contentValues = prepareDataHF(dataSourceId, dataType);
+        hfValues[hfValueCount++] = contentValues;
         return status;
     }
 
 
-    public ContentValues prepareDataHF(int dataSourceId, DataTypeDoubleArray dataType) {
+    public synchronized ContentValues prepareDataHF(int dataSourceId, DataTypeDoubleArray dataType) {
         ContentValues contentValues = new ContentValues();
         byte[] dataTypeArray = dataType.toRawBytes();
 
@@ -156,7 +160,7 @@ public class DatabaseTable_Data {
     }
 
 
-    private String[] prepareSelectionArgs(int ds_id, long starttimestamp, long endtimestamp) {
+    private synchronized String[] prepareSelectionArgs(int ds_id, long starttimestamp, long endtimestamp) {
         ArrayList<String> selectionArgs = new ArrayList<>();
         selectionArgs.add(String.valueOf(ds_id));
         selectionArgs.add(String.valueOf(starttimestamp));
@@ -164,32 +168,33 @@ public class DatabaseTable_Data {
         return selectionArgs.toArray(new String[selectionArgs.size()]);
     }
 
-    private String[] prepareSelectionArgs(int ds_id) {
+    private synchronized String[] prepareSelectionArgs(int ds_id) {
         ArrayList<String> selectionArgs = new ArrayList<>();
         selectionArgs.add(String.valueOf(ds_id));
         return selectionArgs.toArray(new String[selectionArgs.size()]);
     }
 
-    private String prepareSelection() {
-        String selection = "";
+    private synchronized String prepareSelection() {
+        String selection;
         selection = C_DATASOURCE_ID + "=? AND " + C_DATETIME + " >=? AND " + C_DATETIME + " <=?";
         return selection;
     }
 
-    private String prepareSelectionLastSamples() {
-        String selection = "";
+    private synchronized String prepareSelectionLastSamples() {
+        String selection;
         selection = C_DATASOURCE_ID + "=?";
         return selection;
     }
 
 
-    public ArrayList<DataType> query(SQLiteDatabase db, int ds_id, long starttimestamp, long endtimestamp) {
-        insertDB(db, TABLE_NAME, cValues);
+    public synchronized ArrayList<DataType> query(SQLiteDatabase db, int ds_id, long starttimestamp, long endtimestamp) {
+        insertDB(db, TABLE_NAME);
+        Cursor mCursor;
         ArrayList<DataType> dataTypes = new ArrayList<>();
         String[] columns = new String[]{C_SAMPLE};
         String selection = prepareSelection();
         String[] selectionArgs = prepareSelectionArgs(ds_id, starttimestamp, endtimestamp);
-        Cursor mCursor = db.query(TABLE_NAME,
+        mCursor = db.query(TABLE_NAME,
                 columns, selection, selectionArgs, null, null, null);
         if (mCursor.moveToFirst()) {
             do {
@@ -202,14 +207,12 @@ public class DatabaseTable_Data {
                 }
             } while (mCursor.moveToNext());
         }
-        if (mCursor != null && !mCursor.isClosed()) {
-            mCursor.close();
-        }
+        mCursor.close();
         return dataTypes;
     }
 
-    public ArrayList<DataType> query(SQLiteDatabase db, int ds_id, int last_n_sample) {
-        insertDB(db, TABLE_NAME, cValues);
+    public synchronized ArrayList<DataType> query(SQLiteDatabase db, int ds_id, int last_n_sample) {
+        insertDB(db, TABLE_NAME);
         ArrayList<DataType> dataTypes = new ArrayList<>();
         String[] columns = new String[]{C_SAMPLE};
         String selection = prepareSelectionLastSamples();
@@ -226,15 +229,13 @@ public class DatabaseTable_Data {
                 }
             } while (mCursor.moveToNext());
         }
-        if (!mCursor.isClosed()) {
-            mCursor.close();
-        }
+        mCursor.close();
         return dataTypes;
     }
 
 
-    public ArrayList<RowObject> queryLastKey(SQLiteDatabase db, int ds_id, int limit) {
-        insertDB(db, TABLE_NAME, cValues);
+    public synchronized ArrayList<RowObject> queryLastKey(SQLiteDatabase db, int ds_id, int limit) {
+        insertDB(db, TABLE_NAME);
         long st = System.currentTimeMillis();
         ArrayList<RowObject> rowObjects = new ArrayList<>();
         String sql = "select _id, sample from data where cc_sync = 0 and datasource_id=" + Integer.toString(ds_id) + " LIMIT " + Integer.toString(limit);
@@ -251,16 +252,14 @@ public class DatabaseTable_Data {
                 }
             } while (mCursor.moveToNext());
         }
-        if (!mCursor.isClosed()) {
-            mCursor.close();
-        }
+        mCursor.close();
 
         Log.d("QUERYDB", "HF Query Last Key: " + (System.currentTimeMillis() - st));
         return rowObjects;
     }
 
-    public ArrayList<RowObject> querySyncedData(SQLiteDatabase db, int ds_id, long ageLimit, int limit) {
-        insertDB(db, TABLE_NAME, cValues);
+    public synchronized ArrayList<RowObject> querySyncedData(SQLiteDatabase db, int ds_id, long ageLimit, int limit) {
+        insertDB(db, TABLE_NAME);
         ArrayList<RowObject> rowObjects = new ArrayList<>(limit);
         String sql = "select _id, sample from data where cc_sync = 1 and datasource_id=" + Integer.toString(ds_id) + " and datetime <= " + ageLimit + " LIMIT " + Integer.toString(limit);
         Cursor mCursor = db.rawQuery(sql, null);
@@ -276,22 +275,20 @@ public class DatabaseTable_Data {
                 }
             } while (mCursor.moveToNext());
         }
-        if (!mCursor.isClosed()) {
-            mCursor.close();
-        }
+        mCursor.close();
         return rowObjects;
     }
 
 
-    public boolean removeSyncedData(SQLiteDatabase db, int dsid, long lastSyncKey) {
-        insertDB(db, TABLE_NAME, cValues);
+    public synchronized boolean removeSyncedData(SQLiteDatabase db, int dsid, long lastSyncKey) {
+        insertDB(db, TABLE_NAME);
         String[] args = new String[]{Long.toString(lastSyncKey), Integer.toString(dsid)};
         db.delete(TABLE_NAME, "cc_sync = 1 AND _id <= ? AND datasource_id = ?", args);
         return true;
     }
 
-    public boolean setSyncedBit(SQLiteDatabase db, int dsid, long lastSyncKey) {
-        insertDB(db, TABLE_NAME, cValues);
+    public synchronized boolean setSyncedBit(SQLiteDatabase db, int dsid, long lastSyncKey) {
+        insertDB(db, TABLE_NAME);
         ContentValues values = new ContentValues();
         int bit = 1;
         values.put("cc_sync", bit);
@@ -302,8 +299,8 @@ public class DatabaseTable_Data {
     }
 
 
-    public DataTypeLong querySize(SQLiteDatabase db) {
-        insertDB(db, TABLE_NAME, cValues);
+    public synchronized DataTypeLong querySize(SQLiteDatabase db) {
+        insertDB(db, TABLE_NAME);
         String sql = "select count(_id)as c from data";
         Cursor mCursor = db.rawQuery(sql, null);
         DataTypeLong count = new DataTypeLong(0L, 0L);
@@ -312,13 +309,11 @@ public class DatabaseTable_Data {
                 count = new DataTypeLong(0L, mCursor.getLong(mCursor.getColumnIndex(C_COUNT)));
             } while (mCursor.moveToNext());
         }
-        if (!mCursor.isClosed()) {
-            mCursor.close();
-        }
+        mCursor.close();
         return count;
     }
 
-    public DataTypeLong queryCount(SQLiteDatabase db, int ds_id, boolean unsynced) {
+    public synchronized DataTypeLong queryCount(SQLiteDatabase db, int ds_id, boolean unsynced) {
         String sql = "select count(_id)as c from " + TABLE_NAME + " where " + C_DATASOURCE_ID + " = " + ds_id;
         if (unsynced)
             sql += " and " + C_CLOUD_SYNC_BIT + " = 0";
@@ -329,13 +324,11 @@ public class DatabaseTable_Data {
                 count = new DataTypeLong(0L, mCursor.getLong(mCursor.getColumnIndex(C_COUNT)));
             } while (mCursor.moveToNext());
         }
-        if (!mCursor.isClosed()) {
-            mCursor.close();
-        }
+        mCursor.close();
         return count;
     }
 
-    public ContentValues prepareData(int dataSourceId, DataType dataType) {
+    public synchronized ContentValues prepareData(int dataSourceId, DataType dataType) {
         ContentValues contentValues = new ContentValues();
 
         byte[] dataTypeArray = toBytes(dataType);
@@ -347,12 +340,11 @@ public class DatabaseTable_Data {
     }
 
 
-
-    public void commit(SQLiteDatabase db) {
-        insertDB(db, TABLE_NAME, cValues);
+    public synchronized void commit(SQLiteDatabase db) {
+        insertDB(db, TABLE_NAME);
     }
 
-    byte[] toBytes(DataType dataType) {
+    private synchronized byte[] toBytes(DataType dataType) {
         byte[] bytes;
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         Output output = new Output(baos);
@@ -362,7 +354,7 @@ public class DatabaseTable_Data {
         return bytes;
     }
 
-    DataType fromBytes(byte[] bytes) {
+    private synchronized DataType fromBytes(byte[] bytes) {
         Input input = new Input(new ByteArrayInputStream(bytes));
         DataType dataType = (DataType) kryo.readClassAndObject(input);
         input.close();

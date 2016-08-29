@@ -77,6 +77,9 @@ public class DatabaseLogger extends SQLiteOpenHelper {
         }
         return instance;
     }
+    public static boolean isAlive(){
+        return instance != null;
+    }
 
     public void removeAll() {
         //TODO: need to check crashes
