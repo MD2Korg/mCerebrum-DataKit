@@ -251,9 +251,9 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         FilenameFilter ff = new FilenameFilter() {
             @Override
             public boolean accept(File dir, String filename) {
-                if (!filename.contains("_archive"))
-                    return true;
-                return false;
+                if (filename.contains("_archive") || filename.contains("_corrupt"))
+                    return false;
+                return true;
             }
         };
 
@@ -276,6 +276,11 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
                             File newFile = new File(files[i].getAbsolutePath().replace(".csv.gz", "_archive.csv.gz"));
                             if (files[i].renameTo(newFile)) {
                                 Log.d(TAG, "Successfully renamed file: " + files[i].getAbsolutePath());
+                            }
+                        } else if (ccdr.status.contains("error") && ccdr.message.contains("Unrecoverable")) {
+                            File newFile = new File(files[i].getAbsolutePath().replace(".csv.gz", "_corrupt.csv.gz"));
+                            if (files[i].renameTo(newFile)) {
+                                Log.d(TAG, "Successfully renamed corrupt file: " + files[i].getAbsolutePath());
                             }
                         }
                         Log.d(TAG, "Uploaded Raw count: " + ccdr.count);
