@@ -90,6 +90,9 @@ public class PrefsFragmentSettings extends PreferenceFragment {
                 String location = ConfigurationManager.getInstance(getActivity()).configuration.archive.location;
                 String directory = FileManager.getDirectory(getActivity(), location);
                 FileManager.deleteDirectory(directory);
+                location = ConfigurationManager.getInstance(getActivity()).configuration.database.location;
+                directory = FileManager.getDirectory(getActivity(), location);
+                FileManager.deleteDirectory(directory);
             } catch (Exception ignored) {
             }
             return null;
