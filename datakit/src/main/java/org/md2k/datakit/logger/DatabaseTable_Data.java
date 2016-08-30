@@ -49,6 +49,7 @@ import java.util.ArrayList;
 
 public class DatabaseTable_Data {
 
+    private static final String TAG = DatabaseTable_Data.class.getSimpleName();
     public static String TABLE_NAME = "data";
     private static String C_ID = "_id";
     private static String C_CLOUD_SYNC_BIT = "cc_sync";
@@ -107,7 +108,7 @@ public class DatabaseTable_Data {
             long st = System.currentTimeMillis();
             db.beginTransaction();
 
-            Log.d("INSERTDB", "Buffer Size: " + cValueCount + " (" + tableName + ")");
+            Log.w("INSERTDB", "Buffer Size: " + cValueCount + " (" + tableName + ")");
             for (int i = 0; i < cValueCount; i++)
                 db.insert(tableName, null, cValues[i]);
             cValueCount = 0;
@@ -115,7 +116,7 @@ public class DatabaseTable_Data {
                 db.setTransactionSuccessful();
             } finally {
                 db.endTransaction();
-                Log.d("INSERTDB", "Transaction Time: " + (System.currentTimeMillis() - st));
+                Log.w("INSERTDB", "Transaction Time: " + (System.currentTimeMillis() - st));
             }
         } catch (Exception e) {
             return new Status(Status.INTERNAL_ERROR);
@@ -188,6 +189,7 @@ public class DatabaseTable_Data {
 
 
     public synchronized ArrayList<DataType> query(SQLiteDatabase db, int ds_id, long starttimestamp, long endtimestamp) {
+        long totalst = System.currentTimeMillis();
         insertDB(db, TABLE_NAME);
         Cursor mCursor;
         ArrayList<DataType> dataTypes = new ArrayList<>();
@@ -208,10 +210,13 @@ public class DatabaseTable_Data {
             } while (mCursor.moveToNext());
         }
         mCursor.close();
+        Log.w(TAG, "Query: starttime="+starttimestamp+" endtime="+ endtimestamp+" Size="+dataTypes.size()+" QueryTime: " + (System.currentTimeMillis() - totalst));
+
         return dataTypes;
     }
 
     public synchronized ArrayList<DataType> query(SQLiteDatabase db, int ds_id, int last_n_sample) {
+        long totalst = System.currentTimeMillis();
         insertDB(db, TABLE_NAME);
         ArrayList<DataType> dataTypes = new ArrayList<>();
         String[] columns = new String[]{C_SAMPLE};
@@ -230,13 +235,14 @@ public class DatabaseTable_Data {
             } while (mCursor.moveToNext());
         }
         mCursor.close();
+        Log.w(TAG, "Query: id="+ds_id+" last_n_sample="+last_n_sample+" Size="+dataTypes.size()+" QueryTime: " + (System.currentTimeMillis() - totalst));
         return dataTypes;
     }
 
 
     public synchronized ArrayList<RowObject> queryLastKey(SQLiteDatabase db, int ds_id, int limit) {
+        long totalst = System.currentTimeMillis();
         insertDB(db, TABLE_NAME);
-        long st = System.currentTimeMillis();
         ArrayList<RowObject> rowObjects = new ArrayList<>();
         String sql = "select _id, sample from data where cc_sync = 0 and datasource_id=" + Integer.toString(ds_id) + " LIMIT " + Integer.toString(limit);
         Cursor mCursor = db.rawQuery(sql, null);
@@ -254,11 +260,12 @@ public class DatabaseTable_Data {
         }
         mCursor.close();
 
-        Log.d("QUERYDB", "HF Query Last Key: " + (System.currentTimeMillis() - st));
+        Log.w(TAG, "QueryLastKey: Size="+rowObjects.size()+" QueryTime: " + (System.currentTimeMillis() - totalst));
         return rowObjects;
     }
 
     public synchronized ArrayList<RowObject> querySyncedData(SQLiteDatabase db, int ds_id, long ageLimit, int limit) {
+        long totalst = System.currentTimeMillis();
         insertDB(db, TABLE_NAME);
         ArrayList<RowObject> rowObjects = new ArrayList<>(limit);
         String sql = "select _id, sample from data where cc_sync = 1 and datasource_id=" + Integer.toString(ds_id) + " and datetime <= " + ageLimit + " LIMIT " + Integer.toString(limit);
@@ -276,6 +283,7 @@ public class DatabaseTable_Data {
             } while (mCursor.moveToNext());
         }
         mCursor.close();
+        Log.w(TAG, "QuerySyncedData: Size="+rowObjects.size()+" QueryTime: " + (System.currentTimeMillis() - totalst));
         return rowObjects;
     }
 
@@ -300,6 +308,7 @@ public class DatabaseTable_Data {
 
 
     public synchronized DataTypeLong querySize(SQLiteDatabase db) {
+        long totalst = System.currentTimeMillis();
         insertDB(db, TABLE_NAME);
         String sql = "select count(_id)as c from data";
         Cursor mCursor = db.rawQuery(sql, null);
@@ -310,10 +319,12 @@ public class DatabaseTable_Data {
             } while (mCursor.moveToNext());
         }
         mCursor.close();
+        Log.w(TAG, "QuerySize="+count+" QueryTime: " + (System.currentTimeMillis() - totalst));
         return count;
     }
 
     public synchronized DataTypeLong queryCount(SQLiteDatabase db, int ds_id, boolean unsynced) {
+        long totalst = System.currentTimeMillis();
         String sql = "select count(_id)as c from " + TABLE_NAME + " where " + C_DATASOURCE_ID + " = " + ds_id;
         if (unsynced)
             sql += " and " + C_CLOUD_SYNC_BIT + " = 0";
@@ -325,6 +336,7 @@ public class DatabaseTable_Data {
             } while (mCursor.moveToNext());
         }
         mCursor.close();
+        Log.w(TAG, "QueryCount="+count+" QueryTime: " + (System.currentTimeMillis() - totalst));
         return count;
     }
 
