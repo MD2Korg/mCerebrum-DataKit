@@ -10,8 +10,6 @@ import com.bluelinelabs.logansquare.LoganSquare;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import org.apache.http.client.entity.GzipCompressingEntity;
-import org.apache.http.entity.StringEntityHC4;
 import org.md2k.datakit.cerebralcortex.communication.CerebralCortexData;
 import org.md2k.datakit.cerebralcortex.communication.CerebralCortexDataResponse;
 import org.md2k.datakit.cerebralcortex.communication.CerebralCortexDataSource;
@@ -45,8 +43,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.sql.Time;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -54,8 +50,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPOutputStream;
-
-import javax.net.ssl.HttpsURLConnection;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -97,7 +91,6 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
     private static final String TAG = CerebralCortexWrapper.class.getSimpleName();
     public static String CCDIR = "";
     private static String raw_directory = "";
-    private final long history_time;
     public long lastUpload;
     OkHttpClient client = new OkHttpClient.Builder()
             .connectTimeout(60, TimeUnit.SECONDS)
@@ -114,7 +107,6 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         this.context = context;
         this.requestURL = url;
         this.restricted = restricted;
-        this.history_time = configuration.archive.interval;
         raw_directory = FileManager.getDirectory(context, configuration.database.location) + org.md2k.datakit.Constants.RAW_DIRECTORY;
         if (configuration.archive.enabled) {
             CCDIR = FileManager.getDirectory(context, configuration.archive.location) + org.md2k.datakit.Constants.ARCHIVE_DIRECTORY;
@@ -547,43 +539,31 @@ public class CerebralCortexWrapper extends AsyncTask<Void, Integer, Boolean> {
         long totalst = System.currentTimeMillis();
         String result = null;
 
-
-        GzipCompressingEntity entity = new GzipCompressingEntity(new StringEntityHC4(json));
-
-        URL url = new URL(requestURL);
-
-        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-        try {
-            urlConnection.setRequestMethod("POST");
-
-            urlConnection.setRequestProperty("Accept", "application/json");
-            urlConnection.setRequestProperty("Content-Encoding", "gzip");
-            urlConnection.setRequestProperty("Content-Type", "application/json");
-            urlConnection.setRequestProperty("Connection", "Keep-Alive");
-            urlConnection.setRequestProperty("Cache-Control", "no-cache");
-
-            urlConnection.setConnectTimeout(60000);
-            urlConnection.setReadTimeout(60000);
-
-            urlConnection.setDoOutput(true);
-            urlConnection.setDoInput(true);
-
-            urlConnection.setUseCaches(false);
-
-            entity.writeTo(urlConnection.getOutputStream());
+        RequestBody body = RequestBody.create(MediaType.parse("application/json"), json);
 
 
-            if (urlConnection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
-                return readStream(urlConnection.getInputStream());
-            }
-        } catch (Exception e) {
-            Log.e("Cerebral Cortex API", "POST Error: " + e + "(" + requestURL + ")");
-        } finally {
-            urlConnection.disconnect();
-        }
+        OkHttpClient gzipClient = new OkHttpClient.Builder()
+                .addInterceptor(new GzipRequestInterceptor())
+                .build();
+
+
+        Request request = new Request.Builder()
+                .url(requestURL)
+                .post(body)
+                .addHeader("Accept", "application/json")
+                .addHeader("Content-Type", "application/json")
+                .build();
+
+        Response response = gzipClient.newCall(request).execute();
+
+        if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+
+        result = response.body().string();
+
         Log.d("TIMING", "CerebralCortexAPI CALL: " + (System.currentTimeMillis() - totalst));
 
         return result;
+
     }
 
     /**
