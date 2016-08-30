@@ -59,8 +59,7 @@ public class CerebralCortexManager {
                     if (time > 0) {
                         task = new CerebralCortexWrapper(context, configuration.upload.url, configuration.upload.restricted_datasource);
                         task.setPriority(Thread.MIN_PRIORITY);
-                        task.
-                                task.start();
+                        task.start();
                     }
                 } catch (IOException e) {
                     AlertDialogs.AlertDialog(context, "Error", e.getMessage(), R.drawable.ic_error_red_50dp, "Ok", null, null, new DialogInterface.OnClickListener() {
