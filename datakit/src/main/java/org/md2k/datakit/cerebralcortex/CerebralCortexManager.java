@@ -2,7 +2,6 @@ package org.md2k.datakit.cerebralcortex;
 
 import android.content.Context;
 import android.content.DialogInterface;
-import android.os.AsyncTask;
 import android.os.Handler;
 
 import org.md2k.datakit.R;
@@ -52,17 +51,16 @@ public class CerebralCortexManager {
         @Override
         public void run() {
 
-            if (task != null && task.lastUpload < (System.currentTimeMillis() - 360000)) {
-                task.cancel(true);
-            }
-            if (task != null && task.getStatus() == AsyncTask.Status.RUNNING) {
+            if (task != null) {
                 handler.removeCallbacks(publishData);
             } else {
                 try {
                     long time = Apps.serviceRunningTime(context.getApplicationContext(), org.md2k.datakit.Constants.SERVICE_NAME);
                     if (time > 0) {
                         task = new CerebralCortexWrapper(context, configuration.upload.url, configuration.upload.restricted_datasource);
-                        task.execute();
+                        task.setPriority(Thread.MIN_PRIORITY);
+                        task.
+                                task.start();
                     }
                 } catch (IOException e) {
                     AlertDialogs.AlertDialog(context, "Error", e.getMessage(), R.drawable.ic_error_red_50dp, "Ok", null, null, new DialogInterface.OnClickListener() {
@@ -102,8 +100,7 @@ public class CerebralCortexManager {
 
     void stop() {
         active = false;
-        if(task!=null)
-        task.cancel(true);
+        task.
         handler.removeCallbacks(publishData);
     }
 
