@@ -123,9 +123,13 @@ public class DatabaseTable_Data {
         }
         return new Status(Status.SUCCESS);
     }
+    public synchronized Status insert(SQLiteDatabase db, int dataSourceId, DataType[] dataType) {
+        for (DataType aDataType : dataType) insert(db, dataSourceId, aDataType);
+        return new Status(Status.SUCCESS);
+    }
 
 
-    public synchronized Status insert(SQLiteDatabase db, int dataSourceId, DataType dataType) {
+    private synchronized Status insert(SQLiteDatabase db, int dataSourceId, DataType dataType) {
         Status status = new Status(Status.SUCCESS);
         if (dataType.getDateTime() - lastUnlock >= WAITTIME || cValueCount >= CVALUE_LIMIT) {
             status = insertDB(db, TABLE_NAME);
@@ -136,8 +140,12 @@ public class DatabaseTable_Data {
         cValues[cValueCount++] = contentValues;
         return status;
     }
+    public synchronized Status insertHF(int dataSourceId, DataTypeDoubleArray[] dataType) {
+        for (DataTypeDoubleArray aDataType : dataType) insertHF(dataSourceId, aDataType);
+        return new Status(Status.SUCCESS);
+    }
 
-    public synchronized Status insertHF(int dataSourceId, DataTypeDoubleArray dataType) {
+    private synchronized Status insertHF(int dataSourceId, DataTypeDoubleArray dataType) {
         Status status = new Status(Status.SUCCESS);
         if (dataType.getDateTime() - lastUnlock >= WAITTIME || hfValueCount >= HFVALUE_LIMIT) {
             status = gzLogger.insert(hfValues, hfValueCount);

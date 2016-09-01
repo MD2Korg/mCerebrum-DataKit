@@ -60,12 +60,12 @@ public class Publisher {
         this.databaseSubscriber = databaseSubscriber;
     }
 
-    public Status receivedData(DataType dataType) {
-        return notifyAllObservers(dataType, false);
+    public Status receivedData(DataType[] dataTypes) {
+        return notifyAllObservers(dataTypes, false);
     }
 
-    public Status receivedDataHF(DataTypeDoubleArray dataType) {
-        return notifyAllObservers(dataType, true);
+    public Status receivedDataHF(DataTypeDoubleArray[] dataTypes) {
+        return notifyAllObservers(dataTypes, true);
     }
 
     boolean isExists(MessageSubscriber subscriber) {
@@ -92,19 +92,19 @@ public class Publisher {
         return Status.SUCCESS;
     }
 
-    public Status notifyAllObservers(DataType dataType, boolean highFrequency) {
+    public Status notifyAllObservers(DataType[] dataTypes, boolean highFrequency) {
         Status status = new Status(Status.SUCCESS);
         if (databaseSubscriber != null) {
             if (highFrequency) {
-                status = databaseSubscriber.insertHF(ds_id, (DataTypeDoubleArray) dataType);
+                status = databaseSubscriber.insertHF(ds_id, (DataTypeDoubleArray[]) dataTypes);
             } else {
-                status = databaseSubscriber.insert(ds_id, dataType);
+                status = databaseSubscriber.insert(ds_id, dataTypes);
             }
         }
 
         for (Iterator<MessageSubscriber> iterator = messageSubscribers.iterator(); iterator.hasNext(); ) {
             MessageSubscriber subscriber = iterator.next();
-            if (!subscriber.update(ds_id, dataType))
+            if (!subscriber.update(ds_id, dataTypes))
                 iterator.remove();
         }
         return status;

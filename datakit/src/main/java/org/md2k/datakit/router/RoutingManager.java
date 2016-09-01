@@ -75,12 +75,12 @@ public class RoutingManager {
         }
         return dataSourceClient;
     }
-    public Status insert(int ds_id, DataType dataType){
-        return publishers.receivedData(ds_id, dataType);
+    public Status insert(int ds_id, DataType[] dataTypes){
+        return publishers.receivedData(ds_id, dataTypes);
     }
 
-    public Status insertHF(int ds_id, DataTypeDoubleArray dataType) {
-        return publishers.receivedDataHF(ds_id, dataType);
+    public Status insertHF(int ds_id, DataTypeDoubleArray[] dataTypes) {
+        return publishers.receivedDataHF(ds_id, dataTypes);
     }
     public ArrayList<DataType> query(int ds_id,long starttimestamp, long endtimestamp){
         return databaseLogger.query(ds_id, starttimestamp, endtimestamp);

@@ -42,9 +42,9 @@ public class MessageSubscriber{
         this.packageName=packageName;
         this.reply=reply;
     }
-    public boolean update(int ds_id,DataType data) {
+    public boolean update(int ds_id,DataType[] data) {
         Bundle bundle=new Bundle();
-        bundle.putParcelable(DataType.class.getSimpleName(), data);
+        bundle.putParcelableArray(DataType.class.getSimpleName(), data);
         bundle.putInt("ds_id",ds_id);
         Message message=prepareMessage(bundle, MessageType.SUBSCRIBED_DATA);
         try {

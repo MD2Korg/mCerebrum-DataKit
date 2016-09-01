@@ -3,6 +3,7 @@ package org.md2k.datakit.message;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Message;
+import android.os.Parcelable;
 
 import org.md2k.datakit.privacy.PrivacyManager;
 import org.md2k.datakitapi.Constants;
@@ -103,13 +104,23 @@ public class MessageController {
                 bundle.putParcelableArrayList(DataSourceClient.class.getSimpleName(), dataSourceClients);
                 return prepareMessage(incomingMessage, bundle);
             case MessageType.INSERT:
-                incomingMessage.getData().setClassLoader(DataType.class.getClassLoader());
-                privacyManager.insert(incomingMessage.getData().getInt(Constants.RC_DSID), (DataType) incomingMessage.getData().getParcelable(DataType.class.getSimpleName()));
+                incomingMessage.getData().setClassLoader(DataType[].class.getClassLoader());
+                Parcelable[] parcelables=incomingMessage.getData().getParcelableArray(DataType.class.getSimpleName());
+                assert parcelables != null;
+                DataType[] dataTypesInsert=new DataType[parcelables.length];
+                for(int i=0;i<parcelables.length;i++)
+                    dataTypesInsert[i]= (DataType) parcelables[i];
+                privacyManager.insert(incomingMessage.getData().getInt(Constants.RC_DSID), dataTypesInsert);
                 return null;
 
             case MessageType.INSERT_HIGH_FREQUENCY:
-                incomingMessage.getData().setClassLoader(DataTypeDoubleArray.class.getClassLoader());
-                privacyManager.insertHF(incomingMessage.getData().getInt(Constants.RC_DSID), (DataTypeDoubleArray) incomingMessage.getData().getParcelable(DataTypeDoubleArray.class.getSimpleName()));
+                incomingMessage.getData().setClassLoader(DataTypeDoubleArray[].class.getClassLoader());
+                Parcelable[] parcelablesHF=incomingMessage.getData().getParcelableArray(DataTypeDoubleArray.class.getSimpleName());
+                assert parcelablesHF != null;
+                DataTypeDoubleArray[] dataTypeDoubleArraysHF=new DataTypeDoubleArray[parcelablesHF.length];
+                for(int i=0;i<parcelablesHF.length;i++)
+                    dataTypeDoubleArraysHF[i]= (DataTypeDoubleArray) parcelablesHF[i];
+                privacyManager.insertHF(incomingMessage.getData().getInt(Constants.RC_DSID), dataTypeDoubleArraysHF);
                 return null;
 
             case MessageType.QUERYSIZE:
@@ -129,7 +140,7 @@ public class MessageController {
 
 
             case MessageType.QUERYPRIMARYKEY:
-                ArrayList<RowObject> objectTypes=null;
+                ArrayList<RowObject> objectTypes;
                 objectTypes = privacyManager.queryLastKey(incomingMessage.getData().getInt(Constants.RC_DSID), incomingMessage.getData().getInt(Constants.RC_LIMIT));
                 bundle = new Bundle();
                 bundle.putParcelableArrayList(RowObject.class.getSimpleName(), objectTypes);

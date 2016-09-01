@@ -99,11 +99,11 @@ public class DatabaseLogger extends SQLiteOpenHelper {
         }
     }
 
-    public Status insert(int dataSourceId, DataType dataType) {
+    public Status insert(int dataSourceId, DataType[] dataType) {
         return databaseTable_data.insert(db, dataSourceId, dataType);
     }
 
-    public Status insertHF(int dataSourceId, DataTypeDoubleArray dataType) {
+    public Status insertHF(int dataSourceId, DataTypeDoubleArray[] dataType) {
         return databaseTable_data.insertHF(dataSourceId, dataType);
     }
 

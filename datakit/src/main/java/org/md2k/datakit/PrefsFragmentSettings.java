@@ -91,8 +91,10 @@ public class PrefsFragmentSettings extends PreferenceFragment {
                 String directory = FileManager.getDirectory(getActivity(), location);
                 FileManager.deleteDirectory(directory);
                 location = ConfigurationManager.getInstance(getActivity()).configuration.database.location;
-                directory = FileManager.getDirectory(getActivity(), location);
-                FileManager.deleteDirectory(directory);
+                if(!directory.equals(FileManager.getDirectory(getActivity(), location))) {
+                    directory = FileManager.getDirectory(getActivity(), location);
+                    FileManager.deleteDirectory(directory);
+                }
             } catch (Exception ignored) {
             }
             return null;
@@ -103,7 +105,7 @@ public class PrefsFragmentSettings extends PreferenceFragment {
             if (dialog.isShowing()) {
                 dialog.dismiss();
             }
-            Toast.makeText(getActivity(), "Archive files is Deleted", Toast.LENGTH_LONG).show();
+            Toast.makeText(getActivity(), "Database & Archive files are Deleted", Toast.LENGTH_SHORT).show();
             if(getActivity().getIntent().getBooleanExtra("delete",false))
                 getActivity().finish();
             else

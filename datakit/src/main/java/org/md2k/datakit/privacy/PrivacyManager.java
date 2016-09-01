@@ -118,12 +118,12 @@ public class PrivacyManager {
         return dataSourceClient;
     }
 
-    public Status insert(int ds_id, DataType dataType) {
+    public Status insert(int ds_id, DataType[] dataTypes) {
         Status status=new Status(Status.SUCCESS);
-        if(ds_id==-1 || dataType==null)
+        if(ds_id==-1 || dataTypes==null)
             return new Status(Status.INTERNAL_ERROR);
         if (listPrivacyListDsId.get(ds_id) == null) {
-            status = routingManager.insert(ds_id, dataType);
+            status = routingManager.insert(ds_id, dataTypes);
             if(status.getStatusCode()==Status.INTERNAL_ERROR)
                 return status;
         }
@@ -138,15 +138,15 @@ public class PrivacyManager {
         Gson gson=new Gson();
         JsonObject sample = new JsonParser().parse(gson.toJson(privacyData)).getAsJsonObject();
         DataTypeJSONObject dataTypeJSONObject = new DataTypeJSONObject(DateTime.getDateTime(), sample);
-        insert(dsIdPrivacy, dataTypeJSONObject);
+        insert(dsIdPrivacy, new DataTypeJSONObject[]{dataTypeJSONObject});
     }
 
-    public Status insertHF(int ds_id, DataTypeDoubleArray dataType) {
+    public Status insertHF(int ds_id, DataTypeDoubleArray[] dataTypes) {
         Status status = new Status(Status.SUCCESS);
-        if (ds_id == -1 || dataType == null)
+        if (ds_id == -1 || dataTypes == null)
             return new Status(Status.INTERNAL_ERROR);
         if (listPrivacyListDsId.get(ds_id) == null) {
-            status = routingManager.insertHF(ds_id, dataType);
+            status = routingManager.insertHF(ds_id, dataTypes);
             if (status.getStatusCode() == Status.INTERNAL_ERROR)
                 return status;
         }

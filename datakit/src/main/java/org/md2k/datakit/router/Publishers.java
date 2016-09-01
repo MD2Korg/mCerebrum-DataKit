@@ -68,15 +68,15 @@ public class Publishers {
         return Status.SUCCESS;
     }
 
-    public Status receivedData(int ds_id, DataType dataType) {
+    public Status receivedData(int ds_id, DataType[] dataTypes) {
         if (publishers.get(ds_id) != null)
-            return publishers.get(ds_id).receivedData(dataType);
+            return publishers.get(ds_id).receivedData(dataTypes);
         else return new Status(Status.INTERNAL_ERROR);
     }
 
-    public Status receivedDataHF(int ds_id, DataTypeDoubleArray dataType) {
+    public Status receivedDataHF(int ds_id, DataTypeDoubleArray[] dataTypes) {
         if (publishers.get(ds_id) != null)
-            return publishers.get(ds_id).receivedDataHF(dataType);
+            return publishers.get(ds_id).receivedDataHF(dataTypes);
         else return new Status(Status.INTERNAL_ERROR);
     }
 
