@@ -47,29 +47,31 @@ public class CerebralCortexManager {
     private boolean active;
     private Configuration configuration;
     private Handler handler;
+
     Runnable publishData = new Runnable() {
         @Override
         public void run() {
 
             if (task != null) {
                 handler.removeCallbacks(publishData);
-            } else {
-                try {
-                    long time = Apps.serviceRunningTime(context.getApplicationContext(), org.md2k.datakit.Constants.SERVICE_NAME);
-                    if (time > 0) {
-                        task = new CerebralCortexWrapper(context, configuration.upload.url, configuration.upload.restricted_datasource);
-                        task.setPriority(Thread.MIN_PRIORITY);
-                        task.start();
-                    }
-                } catch (IOException e) {
-                    AlertDialogs.AlertDialog(context, "Error", e.getMessage(), R.drawable.ic_error_red_50dp, "Ok", null, null, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-
-                        }
-                    });
-                }
             }
+            try {
+                task = new CerebralCortexWrapper(context, configuration.upload.url, configuration.upload.restricted_datasource);
+                task.setPriority(Thread.MIN_PRIORITY);
+                long time = Apps.serviceRunningTime(context.getApplicationContext(), org.md2k.datakit.Constants.SERVICE_NAME);
+                if (time > 0) {
+                    task.start();
+                }
+            } catch (IOException e) {
+                AlertDialogs.AlertDialog(context, "Error", e.getMessage(), R.drawable.ic_error_red_50dp, "Ok", null, null, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                });
+            }
+
+
             handler.postDelayed(publishData, configuration.upload.interval);
         }
     };
@@ -79,6 +81,8 @@ public class CerebralCortexManager {
         handler = new Handler();
         active = false;
         configuration=ConfigurationManager.getInstance(context).configuration;
+
+
     }
 
     public static CerebralCortexManager getInstance(Context context) throws IOException {
