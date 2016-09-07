@@ -13,7 +13,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import org.md2k.datakit.configuration.ConfigurationManager;
 import org.md2k.utilities.FileManager;
@@ -105,7 +104,7 @@ public class PrefsFragmentSettings extends PreferenceFragment {
             if (dialog.isShowing()) {
                 dialog.dismiss();
             }
-            Toast.makeText(getActivity(), "Database & Archive files are Deleted", Toast.LENGTH_SHORT).show();
+//            Toast.makeText(getActivity(), "Database & Archive files are Deleted", Toast.LENGTH_SHORT).show();
             if(getActivity().getIntent().getBooleanExtra("delete",false))
                 getActivity().finish();
             else
