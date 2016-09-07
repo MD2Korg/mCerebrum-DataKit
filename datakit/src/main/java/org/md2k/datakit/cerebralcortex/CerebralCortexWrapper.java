@@ -475,11 +475,15 @@ public class CerebralCortexWrapper extends Thread {
                 validDataSources.put(dsc, ccdpResponse);
             }
         }
-
         for (Map.Entry<DataSourceClient, CerebralCortexDataSourceResponse> entry : validDataSources.entrySet()) {
 
             messenger("Publishing data for " + entry.getKey().getDs_id() + " (" + entry.getKey().getDataSource().getId() + ":" + entry.getKey().getDataSource().getType() + ") to " + entry.getValue().datastream_id);
-            publishDataStream(entry.getKey(), entry.getValue(), dbLogger);
+            Log.d(TAG, "dbLogger=" + dbLogger);
+            try {
+                publishDataStream(entry.getKey(), entry.getValue(), dbLogger);
+            } catch (Exception e) {
+                Log.w(TAG, "publishDataStream ... error...");
+            }
         }
 
         for (Map.Entry<DataSourceClient, CerebralCortexDataSourceResponse> entry : validDataSources.entrySet()) {

@@ -81,12 +81,6 @@ public class DatabaseLogger extends SQLiteOpenHelper {
         return instance != null;
     }
 
-    public void removeAll() {
-        //TODO: need to check crashes
-        databaseTable_data.removeAll(db);
-        databaseTable_dataSource.removeAll(db);
-    }
-
     public void close() {
         if(instance!=null) {
             Log.d(TAG, "close()");
