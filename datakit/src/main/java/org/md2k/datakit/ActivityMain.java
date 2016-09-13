@@ -23,12 +23,14 @@ import com.crashlytics.android.core.CrashlyticsCore;
 import org.md2k.datakit.cerebralcortex.CerebralCortexController;
 import org.md2k.datakit.cerebralcortex.ServiceCerebralCortex;
 import org.md2k.datakit.privacy.PrivacyManager;
+import org.md2k.datakitapi.messagehandler.ResultCallback;
 import org.md2k.datakitapi.time.DateTime;
 import org.md2k.utilities.Apps;
 import org.md2k.utilities.Report.LogStorage;
 import org.md2k.utilities.UI.ActivityAbout;
 import org.md2k.utilities.UI.ActivityCopyright;
 import org.md2k.utilities.data_format.privacy.PrivacyType;
+import org.md2k.utilities.permission.PermissionInfo;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -67,9 +69,48 @@ import io.fabric.sdk.android.Fabric;
 public class ActivityMain extends AppCompatActivity {
     private static final String TAG = ActivityMain.class.getSimpleName();
     PrivacyManager privacyManager;
+    private boolean isPermission=false;
 
     CerebralCortexController cerebralCortexController;
     CerebralCortexUpdateReceiver ccRcvr;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Fabric.with(this, new Crashlytics.Builder().core(new CrashlyticsCore.Builder().disabled(BuildConfig.DEBUG).build()).build(), new Crashlytics());
+        setContentView(R.layout.activity_main);
+        PermissionInfo permissionInfo = new PermissionInfo();
+        permissionInfo.getPermissions(this, new ResultCallback<Boolean>() {
+            @Override
+            public void onResult(Boolean result) {
+                isPermission=result;
+                if (result) {
+                    load();
+                }
+                else finish();
+            }
+        });
+        if (getSupportActionBar() != null)
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    }
+
+    void load() {
+        try {
+            //Enable logcat offline storage for warnings and errors
+            LogStorage.startLogFileStorageProcess(getApplicationContext().getPackageName());
+            configureAppStatus();
+            setupPrivacyUI();
+            setupCerebralCortexUI();
+            ccRcvr = new CerebralCortexUpdateReceiver();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    void configureAppStatus() {
+        findViewById(R.id.textViewTap).setVisibility(View.GONE);
+    }
 
     Handler mHandler = new Handler();
     Runnable runnable = new Runnable() {
@@ -95,32 +136,6 @@ public class ActivityMain extends AppCompatActivity {
             }
         }
     };
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        try {
-            super.onCreate(savedInstanceState);
-            Fabric.with(this, new Crashlytics.Builder().core(new CrashlyticsCore.Builder().disabled(BuildConfig.DEBUG).build()).build(), new Crashlytics());
-            setContentView(R.layout.activity_main);
-            configureAppStatus();
-            setupPrivacyUI();
-            setupCerebralCortexUI();
-            ccRcvr = new CerebralCortexUpdateReceiver();
-
-            if (getSupportActionBar() != null)
-                getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-            //Enable logcat offline storage for warnings and errors
-            LogStorage.startLogFileStorageProcess(getApplicationContext().getPackageName());
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    void configureAppStatus() {
-        findViewById(R.id.textViewTap).setVisibility(View.GONE);
-    }
 
     void setupCerebralCortexUI() throws IOException {
         cerebralCortexController = CerebralCortexController.getInstance(this);
@@ -196,26 +211,31 @@ public class ActivityMain extends AppCompatActivity {
             findViewById(R.id.textViewPrivacyOptionTitle).setVisibility(View.GONE);
         }
     }
-    private String getPrivacyList(ArrayList<PrivacyType> privacyTypeArrayList){
-        String list="";
-        for(int i=0;i<privacyTypeArrayList.size();i++){
-            if(!list.equals("")) list=", ";
-            list+=privacyTypeArrayList.get(i).getTitle();
+
+    private String getPrivacyList(ArrayList<PrivacyType> privacyTypeArrayList) {
+        String list = "";
+        for (int i = 0; i < privacyTypeArrayList.size(); i++) {
+            if (!list.equals("")) list = ", ";
+            list += privacyTypeArrayList.get(i).getTitle();
         }
         return list;
     }
 
     @Override
     public void onPause() {
-        mHandler.removeCallbacks(runnable);
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(ccRcvr);
+        if(isPermission) {
+            mHandler.removeCallbacks(runnable);
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(ccRcvr);
+        }
         super.onPause();
     }
 
     @Override
     public void onResume() {
-        mHandler.post(runnable);
-        LocalBroadcastManager.getInstance(this).registerReceiver(ccRcvr, new IntentFilter(org.md2k.datakit.cerebralcortex.Constants.CEREBRAL_CORTEX_STATUS));
+        if(isPermission) {
+            mHandler.post(runnable);
+            LocalBroadcastManager.getInstance(this).registerReceiver(ccRcvr, new IntentFilter(org.md2k.datakit.cerebralcortex.Constants.CEREBRAL_CORTEX_STATUS));
+        }
         super.onResume();
     }
 

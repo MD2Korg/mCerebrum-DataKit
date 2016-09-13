@@ -4,6 +4,9 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 
+import org.md2k.datakitapi.messagehandler.ResultCallback;
+import org.md2k.utilities.permission.PermissionInfo;
+
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
@@ -38,6 +41,14 @@ public class ActivitySettings extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
+        new PermissionInfo().getPermissions(this, new ResultCallback<Boolean>() {
+            @Override
+            public void onResult(Boolean result) {
+                if(result==false)
+                    finish();
+
+            }
+        });
         getFragmentManager().beginTransaction().replace(R.id.layout_preference_fragment,
                 new PrefsFragmentSettings()).commit();
         if (getSupportActionBar() != null) {

@@ -4,7 +4,9 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 
+import org.md2k.datakitapi.messagehandler.ResultCallback;
 import org.md2k.utilities.Report.Log;
+import org.md2k.utilities.permission.PermissionInfo;
 
 /*
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -35,12 +37,22 @@ import org.md2k.utilities.Report.Log;
 
 public class ActivityPrivacy extends AppCompatActivity {
     private static final String TAG = ActivityPrivacy.class.getSimpleName();
+    boolean isPermission=false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_privacy);
+        new PermissionInfo().getPermissions(this, new ResultCallback<Boolean>() {
+            @Override
+            public void onResult(Boolean result) {
+                isPermission=result;
+                if(isPermission==false)
+                    finish();
+
+            }
+        });
         getFragmentManager().beginTransaction().replace(R.id.layout_preference_fragment,
                 new PrefsFragmentPrivacySettings()).commit();
         if (getSupportActionBar() != null)
@@ -56,10 +68,4 @@ public class ActivityPrivacy extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-    }
-
 }

@@ -6,7 +6,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.READ_LOGS"/>
+    <uses-permission android:name="android.permission.READ_LOGS" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
 
@@ -56,6 +56,13 @@
             android:exported="true"
             android:label="Settings:Database"
             android:screenOrientation="portrait" />
+        <activity
+            android:name="org.md2k.utilities.permission.ActivityPermission"
+            android:enabled="true"
+            android:exported="true"
+            android:label="Permission"
+            android:screenOrientation="portrait"/>
+
         <service
             android:name=".ServiceDataKit"
             android:enabled="true"
@@ -68,7 +75,7 @@
         <service
             android:name=".cerebralcortex.ServiceCerebralCortex"
             android:enabled="true"
-            android:exported="true"/>
+            android:exported="true" />
 
 
         <meta-data

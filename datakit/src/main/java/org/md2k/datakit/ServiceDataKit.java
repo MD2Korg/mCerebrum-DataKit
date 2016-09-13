@@ -17,10 +17,12 @@ import android.support.v4.content.LocalBroadcastManager;
 import org.md2k.datakit.cerebralcortex.ServiceCerebralCortex;
 import org.md2k.datakit.message.MessageController;
 import org.md2k.datakitapi.messagehandler.MessageType;
+import org.md2k.datakitapi.messagehandler.ResultCallback;
 import org.md2k.datakitapi.status.Status;
 import org.md2k.utilities.Apps;
 import org.md2k.utilities.Report.Log;
 import org.md2k.utilities.UI.AlertDialogs;
+import org.md2k.utilities.permission.PermissionInfo;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -66,7 +68,15 @@ public class ServiceDataKit extends Service {
         super.onCreate();
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
                 new IntentFilter("datakit"));
-        start();
+        PermissionInfo permissionInfo=new PermissionInfo();
+        permissionInfo.getPermissions(this, new ResultCallback<Boolean>() {
+            @Override
+            public void onResult(Boolean result) {
+                if(result)
+                    start();
+                else stopSelf();
+            }
+        });
     }
 
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
