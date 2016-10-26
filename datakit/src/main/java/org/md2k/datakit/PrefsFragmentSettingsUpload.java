@@ -2,6 +2,7 @@ package org.md2k.datakit;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
@@ -16,6 +17,11 @@ import android.widget.Toast;
 
 import org.md2k.datakit.configuration.Configuration;
 import org.md2k.datakit.configuration.ConfigurationManager;
+import org.md2k.datakitapi.source.datasource.DataSource;
+import org.md2k.datakitapi.source.datasource.DataSourceBuilder;
+import org.md2k.datakitapi.source.datasource.DataSourceType;
+
+import java.util.ArrayList;
 
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -56,6 +62,11 @@ public class PrefsFragmentSettingsUpload extends PreferenceFragment {
         getPreferenceManager().getSharedPreferences().edit().putBoolean("key_enabled",configuration.upload.enabled).apply();
         getPreferenceManager().getSharedPreferences().edit().putString("key_url",configuration.upload.url).apply();
         getPreferenceManager().getSharedPreferences().edit().putString("key_interval",String.valueOf(configuration.upload.interval)).apply();
+        if(configuration.upload.restricted_datasource==null || configuration.upload.restricted_datasource.size()==0)
+            getPreferenceManager().getSharedPreferences().edit().putBoolean("key_restrict_location",false).apply();
+        else
+            getPreferenceManager().getSharedPreferences().edit().putBoolean("key_restrict_location",true).apply();
+
         addPreferencesFromResource(R.xml.pref_settings_upload);
         setBackButton();
         setSaveButton();
@@ -87,6 +98,21 @@ public class PrefsFragmentSettingsUpload extends PreferenceFragment {
         setupEnabled();
         setupInterval();
         setupURL();
+        setupRestrictedDataSource();
+    }
+    void setupRestrictedDataSource(){
+        final CheckBoxPreference checkBoxPreference= (CheckBoxPreference) findPreference("key_restrict_location");
+        boolean enabled = getPreferenceManager().getSharedPreferences().getBoolean("key_restrict_location", false);
+        checkBoxPreference.setChecked(enabled);
+        checkBoxPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                boolean enabled = (Boolean)newValue;
+                getPreferenceManager().getSharedPreferences().edit().putBoolean("key_restrict_location",enabled).apply();
+                setupPreferences();
+                return false;
+            }
+        });
     }
     void setupEnabled(){
         SwitchPreference switchPreference= (SwitchPreference) findPreference("key_enabled");
@@ -123,9 +149,16 @@ public class PrefsFragmentSettingsUpload extends PreferenceFragment {
                 configuration.upload.enabled = sharedPreferences.getBoolean("key_enabled", configuration.upload.enabled);
                 configuration.upload.url = sharedPreferences.getString("key_url", configuration.upload.url);
                 configuration.upload.interval = Long.parseLong(sharedPreferences.getString("key_interval", String.valueOf(configuration.upload.interval)));
-                if (configuration.upload.enabled == true && (configuration.upload.url == null || configuration.upload.interval == 0)) {
+                if (configuration.upload.enabled && (configuration.upload.url == null || configuration.upload.interval == 0)) {
                     Toast.makeText(getActivity(), "Not Saved...not all values are set properly", Toast.LENGTH_LONG).show();
                     return;
+                }
+                if(!sharedPreferences.getBoolean("key_restrict_location", false))
+                    configuration.upload.restricted_datasource.clear();
+                else{
+                    DataSource dataSource=new DataSourceBuilder().setType(DataSourceType.LOCATION).build();
+                    configuration.upload.restricted_datasource= new ArrayList<>();
+                    configuration.upload.restricted_datasource.add(dataSource);
                 }
                 ConfigurationManager.getInstance(getActivity()).write();
                 Toast.makeText(getActivity(),"Saved...",Toast.LENGTH_LONG).show();

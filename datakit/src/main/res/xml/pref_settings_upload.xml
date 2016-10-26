@@ -19,7 +19,6 @@
         <CheckBoxPreference
             android:key="key_restrict_location"
             android:defaultValue="true"
-            android:enabled="false"
             android:title="Location"/>
     </PreferenceCategory>
 </PreferenceScreen>
