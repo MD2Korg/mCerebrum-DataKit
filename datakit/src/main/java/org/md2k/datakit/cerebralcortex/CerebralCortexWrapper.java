@@ -113,7 +113,7 @@ public class CerebralCortexWrapper extends Thread {
         this.context = context;
         this.requestURL = url;
         this.restricted = restricted;
-        raw_directory = FileManager.getDirectory(context, configuration.database.location) + org.md2k.datakit.Constants.RAW_DIRECTORY;
+        raw_directory = FileManager.getDirectory(context, FileManager.EXTERNAL_SDCARD_PREFERRED) + org.md2k.datakit.Constants.RAW_DIRECTORY;
         if (configuration.archive.enabled) {
             CCDIR = FileManager.getDirectory(context, configuration.archive.location) + org.md2k.datakit.Constants.ARCHIVE_DIRECTORY;
         } else CCDIR = null;

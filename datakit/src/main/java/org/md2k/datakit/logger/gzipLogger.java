@@ -63,7 +63,7 @@ public class gzipLogger {
     public gzipLogger(Context context) {
         outputStreams = new HashMap<>();
         Configuration configuration = ConfigurationManager.getInstance(context).configuration;
-        RAWDIR = FileManager.getDirectory(context, configuration.database.location) + Constants.RAW_DIRECTORY;
+        RAWDIR = FileManager.getDirectory(context, FileManager.EXTERNAL_SDCARD_PREFERRED) + Constants.RAW_DIRECTORY;
     }
 
     public Status insert(ContentValues[] hfValues, int hfValueCount) {
