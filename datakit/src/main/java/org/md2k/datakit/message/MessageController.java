@@ -50,11 +50,9 @@ import java.util.ArrayList;
 public class MessageController {
     private static final String TAG = MessageController.class.getSimpleName();
     private static MessageController instance;
-    Context context;
-    PrivacyManager privacyManager;
+    private PrivacyManager privacyManager;
 
-    MessageController(Context context) throws IOException {
-        this.context = context;
+    private MessageController(Context context) throws IOException {
         privacyManager = PrivacyManager.getInstance(context);
     }
 
@@ -111,6 +109,13 @@ public class MessageController {
                 for(int i=0;i<parcelables.length;i++)
                     dataTypesInsert[i]= (DataType) parcelables[i];
                 privacyManager.insert(incomingMessage.getData().getInt(Constants.RC_DSID), dataTypesInsert);
+                return null;
+            case MessageType.SUMMARY:
+                incomingMessage.getData().setClassLoader(DataType.class.getClassLoader());
+                Parcelable parcelableU=incomingMessage.getData().getParcelable(DataType.class.getSimpleName());
+                assert parcelableU != null;
+                DataType dataTypeU= (DataType) parcelableU;
+                privacyManager.updateSummary((DataSourceClient) incomingMessage.getData().getParcelable(Constants.RC_DATASOURCE_CLIENT), dataTypeU);
                 return null;
 
             case MessageType.INSERT_HIGH_FREQUENCY:

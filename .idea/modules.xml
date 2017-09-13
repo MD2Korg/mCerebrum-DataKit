@@ -2,6 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/../mCerebrum-Library/commons/commons.iml" filepath="$PROJECT_DIR$/../mCerebrum-Library/commons/commons.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../mCerebrum-Library/core/core.iml" filepath="$PROJECT_DIR$/../mCerebrum-Library/core/core.iml" />
       <module fileurl="file://$PROJECT_DIR$/datakit/datakit.iml" filepath="$PROJECT_DIR$/datakit/datakit.iml" />
       <module fileurl="file://$PROJECT_DIR$/../mCerebrum-DataKitAPI/datakitapi/datakitapi.iml" filepath="$PROJECT_DIR$/../mCerebrum-DataKitAPI/datakitapi/datakitapi.iml" />
       <module fileurl="file://$PROJECT_DIR$/mCerebrum-DataKit.iml" filepath="$PROJECT_DIR$/mCerebrum-DataKit.iml" />

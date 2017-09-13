@@ -68,9 +68,9 @@ public class Publishers {
         return Status.SUCCESS;
     }
 
-    public Status receivedData(int ds_id, DataType[] dataTypes) {
+    public Status receivedData(int ds_id, DataType[] dataTypes, boolean isUpdate) {
         if (publishers.get(ds_id) != null)
-            return publishers.get(ds_id).receivedData(dataTypes);
+            return publishers.get(ds_id).receivedData(dataTypes, isUpdate);
         else return new Status(Status.INTERNAL_ERROR);
     }
 

@@ -39,8 +39,8 @@ public class DatabaseSubscriber {
         this.databaseLogger=databaseLogger;
     }
 
-    public Status insert(int ds_id, DataType[] data) {
-        return databaseLogger.insert(ds_id, data);
+    public Status insert(int ds_id, DataType[] data, boolean isUpdate) {
+        return databaseLogger.insert(ds_id, data, isUpdate);
     }
 
     public Status insertHF(int ds_id, DataTypeDoubleArray[] data) {

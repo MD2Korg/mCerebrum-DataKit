@@ -241,10 +241,22 @@ public class PrivacyManager {
         return gson.fromJson(dataTypeJSONObject.getSample().toString(), PrivacyData.class);
     }
 
-    void deactivate() {
+    private void deactivate() {
         Log.d(TAG, "privacy deactivated...");
         listPrivacyListDsId.clear();
         privacyData =null;
         handler.removeCallbacks(timer);
+    }
+
+    public Status updateSummary(DataSourceClient dataSourceClient, DataType dataType) {
+        Status status=new Status(Status.SUCCESS);
+        if(dataSourceClient==null || dataType==null)
+            return new Status(Status.INTERNAL_ERROR);
+        if (listPrivacyListDsId.get(dataSourceClient.getDs_id()) == null) {
+            status = routingManager.updateSummary(dataSourceClient.getDataSource(), dataType);
+            if(status.getStatusCode()==Status.INTERNAL_ERROR)
+                return status;
+        }
+        return status;
     }
 }
