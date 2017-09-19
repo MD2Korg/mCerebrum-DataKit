@@ -1,14 +1,11 @@
 package org.md2k.datakit.cerebralcortex;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.os.Handler;
 
-import org.md2k.datakit.R;
 import org.md2k.datakit.configuration.Configuration;
 import org.md2k.datakit.configuration.ConfigurationManager;
 import org.md2k.utilities.Apps;
-import org.md2k.utilities.UI.AlertDialogs;
 
 import java.io.IOException;
 
@@ -63,12 +60,14 @@ public class CerebralCortexManager {
                     task.start();
                 }
             } catch (IOException e) {
+/*
                 AlertDialogs.AlertDialog(context, "Error", e.getMessage(), R.drawable.ic_error_red_50dp, "Ok", null, null, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
 
                     }
                 });
+*/
             }
 
 

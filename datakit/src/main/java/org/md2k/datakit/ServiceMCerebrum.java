@@ -1,9 +1,11 @@
 package org.md2k.datakit;
 
 import android.content.Intent;
+import android.os.Bundle;
 
 import org.md2k.datakit.cerebralcortex.ServiceCerebralCortex;
 import org.md2k.mcerebrum.commons.app_info.AppInfo;
+import org.md2k.mcerebrum.commons.permission.Permission;
 import org.md2k.mcerebrum.core.access.AbstractServiceMCerebrum;
 
 public class ServiceMCerebrum extends AbstractServiceMCerebrum {
@@ -13,11 +15,11 @@ public class ServiceMCerebrum extends AbstractServiceMCerebrum {
 
     @Override
     protected boolean hasClear() {
-        return false;
+        return true;
     }
 
     @Override
-    public void initialize() {
+    public void initialize(Bundle bundle) {
         Intent intent=new Intent(this, ActivityMain.class);
         intent.putExtra("PERMISSION",true);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -25,22 +27,24 @@ public class ServiceMCerebrum extends AbstractServiceMCerebrum {
     }
 
     @Override
-    public void launch() {
+    public void launch(Bundle bundle) {
         Intent intent=new Intent(this, ActivityMain.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
     }
 
     @Override
-    public void startBackground() {
-        Intent intent=new Intent(this, ActivityMain.class);
-        intent.putExtra("RUN",true);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
+    public void startBackground(Bundle bundle) {
+
+        Intent intent=new Intent(this, ServiceDataKit.class);
+        startService(intent);
+        intent=new Intent(this, ServiceCerebralCortex.class);
+        startService(intent);
+
     }
 
     @Override
-    public void stopBackground() {
+    public void stopBackground(Bundle bundle) {
         Intent intent=new Intent(this, ServiceDataKit.class);
         stopService(intent);
         intent=new Intent(this, ServiceCerebralCortex.class);
@@ -48,12 +52,15 @@ public class ServiceMCerebrum extends AbstractServiceMCerebrum {
     }
 
     @Override
-    public void report() {
+    public void report(Bundle bundle) {
     }
 
     @Override
-    public void clear() {
-
+    public void clear(Bundle bundle) {
+        Intent intent = new Intent(this, ActivitySettings.class);
+        intent.putExtra("delete", true);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
     }
 
     @Override
@@ -92,7 +99,7 @@ public class ServiceMCerebrum extends AbstractServiceMCerebrum {
     }
 
     @Override
-    public void configure() {
+    public void configure(Bundle bundle) {
         Intent intent = new Intent(this, ActivitySettings.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);

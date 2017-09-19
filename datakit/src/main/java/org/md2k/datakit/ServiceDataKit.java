@@ -3,7 +3,6 @@ package org.md2k.datakit;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
@@ -21,7 +20,6 @@ import org.md2k.datakitapi.messagehandler.ResultCallback;
 import org.md2k.datakitapi.status.Status;
 import org.md2k.utilities.Apps;
 import org.md2k.utilities.Report.Log;
-import org.md2k.utilities.UI.AlertDialogs;
 import org.md2k.utilities.permission.PermissionInfo;
 
 import java.io.IOException;
@@ -130,13 +128,7 @@ public class ServiceDataKit extends Service {
         try {
             messageController = MessageController.getInstance(getApplicationContext());
             mMessenger = new Messenger(incomingHandler);
-        } catch (IOException e) {
-            AlertDialogs.AlertDialog(this, "Error", e.getMessage(), R.drawable.ic_error_red_50dp, "Ok", null, null, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-
-                }
-            });
+        } catch (IOException ignored) {
         }
     }
 

@@ -1,6 +1,5 @@
 package org.md2k.datakit;
 
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.ListPreference;
@@ -24,8 +23,9 @@ import org.md2k.datakit.configuration.ConfigurationManager;
 import org.md2k.datakit.configuration.PrivacyConfig;
 import org.md2k.datakit.privacy.PrivacyManager;
 import org.md2k.datakitapi.time.DateTime;
+import org.md2k.mcerebrum.commons.dialog.Dialog;
+import org.md2k.mcerebrum.commons.dialog.DialogCallback;
 import org.md2k.utilities.Report.Log;
-import org.md2k.utilities.UI.AlertDialogs;
 import org.md2k.utilities.data_format.privacy.Duration;
 import org.md2k.utilities.data_format.privacy.PrivacyData;
 import org.md2k.utilities.data_format.privacy.PrivacyType;
@@ -134,20 +134,21 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
 
     boolean preparePrivacyData() {
         if(newPrivacyData.getDuration()==null) {
-            AlertDialogs.AlertDialog(getActivity(), "ERROR: Duration", "Duration is not set", R.drawable.ic_error_red_50dp, "Ok", null, null, new DialogInterface.OnClickListener() {
+            Dialog.simple(getActivity(), "ERROR: Duration", "Duration is not set", "Ok", null, new DialogCallback() {
                 @Override
-                public void onClick(DialogInterface dialog, int which) {
+                public void onSelected(String value) {
 
                 }
-            });
+            }).show();
             return false;
         }
         else if (newPrivacyData.getPrivacyTypes() == null || newPrivacyData.getPrivacyTypes().size() == 0) {
-            AlertDialogs.AlertDialog(getActivity(), "ERROR: Privacy Type", "Privacy Type is not selected", R.drawable.ic_error_red_50dp, "Ok", null, null, new DialogInterface.OnClickListener() {
+            Dialog.simple(getActivity(), "ERROR: Privacy Type", "Privacy Type is not selected", "Ok", null, new DialogCallback() {
                 @Override
-                public void onClick(DialogInterface dialog, int which) {
+                public void onSelected(String value) {
+
                 }
-            });
+            }).show();
             return false;
         }
         else {

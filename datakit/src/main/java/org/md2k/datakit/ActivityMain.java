@@ -86,6 +86,8 @@ public class ActivityMain extends AppCompatActivity {
             public void onResult(Boolean result) {
                 isPermission=result;
                 if (result) {
+                    if(getIntent().getBooleanExtra("PERMISSION", false)) finish();
+                    else
                     load();
                 }
                 else finish();

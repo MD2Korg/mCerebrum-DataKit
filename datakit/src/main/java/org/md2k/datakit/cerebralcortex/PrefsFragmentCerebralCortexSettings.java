@@ -21,9 +21,10 @@ import org.md2k.datakit.R;
 import org.md2k.datakit.cerebralcortex.config.Config;
 import org.md2k.datakit.cerebralcortex.config.ConfigManager;
 import org.md2k.datakitapi.source.datasource.DataSourceType;
+import org.md2k.mcerebrum.commons.dialog.Dialog;
+import org.md2k.mcerebrum.commons.dialog.DialogCallback;
 import org.md2k.utilities.Apps;
 import org.md2k.utilities.Report.Log;
-import org.md2k.utilities.UI.AlertDialogs;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -280,11 +281,11 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 if (Apps.isServiceRunning(getActivity(), ServiceCerebralCortex.class.getName())) {
-                    AlertDialogs.AlertDialog(getActivity(), "Save and Restart?", "Save configuration file and restart Data Uploader App?", R.drawable.ic_info_teal_48dp, "Yes", "Cancel", null, new DialogInterface.OnClickListener() {
+                    Dialog.simple(getActivity(), "Save and Restart?", "Save configuration file and restart Data Uploader App?", "Yes", "Cancel", new DialogCallback() {
                         @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            switch (which) {
-                                case DialogInterface.BUTTON_POSITIVE:
+                        public void onSelected(String value) {
+                            switch (value) {
+                                case "Yes":
                                     Intent intent = new Intent(getActivity(), ServiceCerebralCortex.class);
                                     getActivity().stopService(intent);
                                     saveConfigurationFile();
@@ -293,13 +294,14 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
                                     getActivity().finish();
                                     break;
 
-                                case DialogInterface.BUTTON_NEGATIVE:
+                                case "Cancel":
                                     Toast.makeText(getActivity(), "!!! Error: Configuration file is not saved.", Toast.LENGTH_LONG).show();
                                     getActivity().finish();
                                     break;
                             }
+
                         }
-                    });
+                    }).show();
                 } else {
                     saveConfigurationFile();
                     getActivity().finish();
