@@ -2,6 +2,7 @@ package org.md2k.datakit.cerebralcortex;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 
@@ -9,16 +10,21 @@ import com.bluelinelabs.logansquare.LoganSquare;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import org.md2k.cerebralcortexwebapi.CCWebAPICalls;
+import org.md2k.cerebralcortexwebapi.interfaces.CerebralCortexWebApi;
+import org.md2k.cerebralcortexwebapi.metadata.MetadataBuilder;
+import org.md2k.cerebralcortexwebapi.models.AuthResponse;
+import org.md2k.cerebralcortexwebapi.models.MinioBucket;
+import org.md2k.cerebralcortexwebapi.models.MinioObjectStats;
+import org.md2k.cerebralcortexwebapi.models.stream.DataStream;
+import org.md2k.cerebralcortexwebapi.utils.ApiUtils;
 import org.md2k.datakit.cerebralcortex.communication.CerebralCortexData;
 import org.md2k.datakit.cerebralcortex.communication.CerebralCortexDataResponse;
 import org.md2k.datakit.cerebralcortex.communication.CerebralCortexDataSource;
 import org.md2k.datakit.cerebralcortex.communication.CerebralCortexDataSourceResponse;
-import org.md2k.datakit.cerebralcortex.communication.ParticipantRegistration;
 import org.md2k.datakit.cerebralcortex.communication.StudyInfo;
-import org.md2k.datakit.cerebralcortex.communication.StudyInfoCC;
 import org.md2k.datakit.cerebralcortex.communication.StudyInfoCCResponse;
 import org.md2k.datakit.cerebralcortex.communication.UserInfo;
-import org.md2k.datakit.cerebralcortex.communication.UserInfoCC;
 import org.md2k.datakit.cerebralcortex.communication.UserInfoCCResponse;
 import org.md2k.datakit.configuration.Configuration;
 import org.md2k.datakit.configuration.ConfigurationManager;
@@ -41,9 +47,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.sql.Time;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPOutputStream;
 
@@ -360,6 +364,7 @@ public class CerebralCortexWrapper extends Thread {
 
     public void run() {
         Log.w("CerebralCortex", "Starting publishdataKitData");
+
         DatabaseLogger dbLogger = null;
         if (!DatabaseLogger.isAlive()) {
             Log.w(TAG, "Database is not initialized yet...quitting");
@@ -391,106 +396,128 @@ public class CerebralCortexWrapper extends Thread {
             return;
         }
 
-        if (uInfo != null) {
-            if (uInfo.user_id.contentEquals("") || uInfo.uuid.contentEquals("")) {
-                messenger("uInfo field is empty");
-                return;
-            }
-        } else {
-            messenger("User does not exist");
-            return;
-        }
-        if (sInfo != null) {
-            if (sInfo.id.contentEquals("") || sInfo.name.contentEquals("")) {
-                messenger("sInfo field is empty");
-                return;
-            }
-        } else {
-            messenger("Study not defined");
-            return;
-        }
-        messenger("Extracted user and study info");
 
-        //Register User
-        UserInfoCCResponse uiResponse = null;
-        try {
-            uiResponse = registerUser(gson.toJson(new UserInfoCC(uInfo)));
-        } catch (IOException e) {
-            messenger("User Info Registration Error");
-            Log.e("CerebralCortex", "User Info Registration failed");
-            e.printStackTrace();
-            return;
-        }
-        messenger("Registered user");
-        lastUpload = System.currentTimeMillis();
+        CerebralCortexWebApi ccService = ApiUtils.getCCService("https://fourtytwo.md2k.org/");
+        CCWebAPICalls ccWebAPICalls = new CCWebAPICalls(ccService);
+        AuthResponse ar = ccWebAPICalls.authenticateUser("string", "string");
 
-        //Register Study
-        StudyInfoCCResponse siResponse = null;
-        try {
-            siResponse = registerStudy(gson.toJson(new StudyInfoCC(sInfo)));
-        } catch (IOException e) {
-            messenger("Study Info Registration Error");
-            Log.e("CerebralCortex", "Study Info Registration failed");
-            e.printStackTrace();
-            return;
-        }
+        List<MinioBucket> buckets = ccWebAPICalls.getMinioBuckets(ar.getAccessToken().toString());
 
-        if (siResponse == null || uiResponse == null) {
-            messenger("Registration has failed");
-            Log.e("CerebralCortex", "Registration failed");
-            return;
-        }
-        messenger("Registered study");
+        List<MinioObjectStats> objectList = ccWebAPICalls.getObjectsInBucket(ar.getAccessToken().toString(), buckets.get(0).getBucketName().toString());
 
-        //Register Participant in Study
-        ParticipantRegistration pr = new ParticipantRegistration(siResponse.id, uiResponse.id);
-        String prResult = null;
-        try {
-            prResult = cerebralCortexAPI(requestURL + "studies/register_participant", gson.toJson(pr));
-        } catch (IOException e) {
-            Log.e("CerebralCortex", "Register participant error: " + e);
-            Log.e("CerebralCortex", prResult);
-            return;
-        }
-        if (prResult == null) {
-            messenger("prResult is null");
-            return;
-        }
-        if (prResult.contains("Invalid participant or study id")) {
-            messenger("Register participant error: ");
-            Log.e("CerebralCortex", prResult);
-            return;
-        }
-        messenger("Registered participant in study");
+        MinioObjectStats object = ccWebAPICalls.getObjectStats(ar.getAccessToken().toString(), buckets.get(0).getBucketName().toString(), "203_mcerebrum_syed_new.pdf");
 
-        DataSourceBuilder dataSourceBuilder = new DataSourceBuilder();
-        List<DataSourceClient> dataSourceClients = dbLogger.find(dataSourceBuilder.build());
+        Boolean result = ccWebAPICalls.downloadMinioObject(ar.getAccessToken().toString(), buckets.get(0).getBucketName().toString(), "203_mcerebrum_syed_new.pdf", "test.pdf");
 
 
-        Map<DataSourceClient, CerebralCortexDataSourceResponse> validDataSources = new HashMap<>();
-        for (DataSourceClient dsc : dataSourceClients) {
-            CerebralCortexDataSourceResponse ccdpResponse = registerDataSource(uiResponse, dsc);
-            if (ccdpResponse.status.contains("ok") && !inRestrictedList(dsc)) {
-                messenger("Registered datastream: " + dsc.getDs_id() + " (" + dsc.getDataSource().getId() + ":" + dsc.getDataSource().getType() + ")");
-                validDataSources.put(dsc, ccdpResponse);
-            }
-        }
-        for (Map.Entry<DataSourceClient, CerebralCortexDataSourceResponse> entry : validDataSources.entrySet()) {
+        MetadataBuilder metadataBuilder = new MetadataBuilder();
+        DataStream dataStreamMetadata = metadataBuilder.buildDataStreamMetadata("datastream", "123", "999", "sampleStream", "zip");
+        Boolean resultUpload = ccWebAPICalls.putArchiveDataAndMetadata(ar.getAccessToken().toString(), dataStreamMetadata, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + "/test.pdf");
 
-            messenger("Publishing data for " + entry.getKey().getDs_id() + " (" + entry.getKey().getDataSource().getId() + ":" + entry.getKey().getDataSource().getType() + ") to " + entry.getValue().datastream_id);
-            Log.d(TAG, "dbLogger=" + dbLogger);
-            try {
-                publishDataStream(entry.getKey(), entry.getValue(), dbLogger);
-            } catch (Exception e) {
-                Log.w(TAG, "publishDataStream ... error...");
-            }
-        }
+        messenger("TESTING");
 
-        for (Map.Entry<DataSourceClient, CerebralCortexDataSourceResponse> entry : validDataSources.entrySet()) {
 
-            messenger("Publishing raw data for " + entry.getKey().getDs_id() + " (" + entry.getKey().getDataSource().getId() + ":" + entry.getKey().getDataSource().getType() + ") to " + entry.getValue().datastream_id);
-            publishDataFiles(entry.getKey(), entry.getValue());
-        }
+//
+//        if (uInfo != null) {
+//            if (uInfo.user_id.contentEquals("") || uInfo.uuid.contentEquals("")) {
+//                messenger("uInfo field is empty");
+//                return;
+//            }
+//        } else {
+//            messenger("User does not exist");
+//            return;
+//        }
+//        if (sInfo != null) {
+//            if (sInfo.id.contentEquals("") || sInfo.name.contentEquals("")) {
+//                messenger("sInfo field is empty");
+//                return;
+//            }
+//        } else {
+//            messenger("Study not defined");
+//            return;
+//        }
+//        messenger("Extracted user and study info");
+//
+//        //Register User
+//        UserInfoCCResponse uiResponse = null;
+//        try {
+//            uiResponse = registerUser(gson.toJson(new UserInfoCC(uInfo)));
+//        } catch (IOException e) {
+//            messenger("User Info Registration Error");
+//            Log.e("CerebralCortex", "User Info Registration failed");
+//            e.printStackTrace();
+//            return;
+//        }
+//        messenger("Registered user");
+//        lastUpload = System.currentTimeMillis();
+//
+//        //Register Study
+//        StudyInfoCCResponse siResponse = null;
+//        try {
+//            siResponse = registerStudy(gson.toJson(new StudyInfoCC(sInfo)));
+//        } catch (IOException e) {
+//            messenger("Study Info Registration Error");
+//            Log.e("CerebralCortex", "Study Info Registration failed");
+//            e.printStackTrace();
+//            return;
+//        }
+//
+//        if (siResponse == null || uiResponse == null) {
+//            messenger("Registration has failed");
+//            Log.e("CerebralCortex", "Registration failed");
+//            return;
+//        }
+//        messenger("Registered study");
+//
+//        //Register Participant in Study
+//        ParticipantRegistration pr = new ParticipantRegistration(siResponse.id, uiResponse.id);
+//        String prResult = null;
+//        try {
+//            prResult = cerebralCortexAPI(requestURL + "studies/register_participant", gson.toJson(pr));
+//        } catch (IOException e) {
+//            Log.e("CerebralCortex", "Register participant error: " + e);
+//            Log.e("CerebralCortex", prResult);
+//            return;
+//        }
+//        if (prResult == null) {
+//            messenger("prResult is null");
+//            return;
+//        }
+//        if (prResult.contains("Invalid participant or study id")) {
+//            messenger("Register participant error: ");
+//            Log.e("CerebralCortex", prResult);
+//            return;
+//        }
+//        messenger("Registered participant in study");
+//
+//        DataSourceBuilder dataSourceBuilder = new DataSourceBuilder();
+//        List<DataSourceClient> dataSourceClients = dbLogger.find(dataSourceBuilder.build());
+//
+//
+//        Map<DataSourceClient, CerebralCortexDataSourceResponse> validDataSources = new HashMap<>();
+//        for (DataSourceClient dsc : dataSourceClients) {
+//            CerebralCortexDataSourceResponse ccdpResponse = registerDataSource(uiResponse, dsc);
+//            if (ccdpResponse.status.contains("ok") && !inRestrictedList(dsc)) {
+//                messenger("Registered datastream: " + dsc.getDs_id() + " (" + dsc.getDataSource().getId() + ":" + dsc.getDataSource().getType() + ")");
+//                validDataSources.put(dsc, ccdpResponse);
+//            }
+//        }
+//        for (Map.Entry<DataSourceClient, CerebralCortexDataSourceResponse> entry : validDataSources.entrySet()) {
+//
+//            messenger("Publishing data for " + entry.getKey().getDs_id() + " (" + entry.getKey().getDataSource().getId() + ":" + entry.getKey().getDataSource().getType() + ") to " + entry.getValue().datastream_id);
+//            Log.d(TAG, "dbLogger=" + dbLogger);
+//            try {
+//                publishDataStream(entry.getKey(), entry.getValue(), dbLogger);
+//            } catch (Exception e) {
+//                Log.w(TAG, "publishDataStream ... error...");
+//            }
+//        }
+//
+//        for (Map.Entry<DataSourceClient, CerebralCortexDataSourceResponse> entry : validDataSources.entrySet()) {
+//
+//            messenger("Publishing raw data for " + entry.getKey().getDs_id() + " (" + entry.getKey().getDataSource().getId() + ":" + entry.getKey().getDataSource().getType() + ") to " + entry.getValue().datastream_id);
+//            publishDataFiles(entry.getKey(), entry.getValue());
+//        }
 
         messenger("Upload Complete");
     }

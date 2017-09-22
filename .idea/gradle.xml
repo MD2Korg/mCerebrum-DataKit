@@ -10,6 +10,7 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/datakit" />
             <option value="$PROJECT_DIR$/../mCerebrum-DataKitAPI/datakitapi" />
+            <option value="$PROJECT_DIR$/../mCerebrum-Library/cerebralcortexwebapi" />
             <option value="$PROJECT_DIR$/../mCerebrum-Library/commons" />
             <option value="$PROJECT_DIR$/../mCerebrum-Library/core" />
             <option value="$PROJECT_DIR$/../mCerebrum-Utilities/utilities" />
