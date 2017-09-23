@@ -2,8 +2,6 @@ package org.md2k.datakit.cerebralcortex;
 
 import android.content.Context;
 import android.content.Intent;
-import android.os.Environment;
-import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.bluelinelabs.logansquare.LoganSquare;
@@ -14,28 +12,20 @@ import org.md2k.cerebralcortexwebapi.CCWebAPICalls;
 import org.md2k.cerebralcortexwebapi.interfaces.CerebralCortexWebApi;
 import org.md2k.cerebralcortexwebapi.metadata.MetadataBuilder;
 import org.md2k.cerebralcortexwebapi.models.AuthResponse;
-import org.md2k.cerebralcortexwebapi.models.MinioBucket;
-import org.md2k.cerebralcortexwebapi.models.MinioObjectStats;
 import org.md2k.cerebralcortexwebapi.models.stream.DataStream;
 import org.md2k.cerebralcortexwebapi.utils.ApiUtils;
 import org.md2k.datakit.cerebralcortex.communication.CerebralCortexData;
 import org.md2k.datakit.cerebralcortex.communication.CerebralCortexDataResponse;
 import org.md2k.datakit.cerebralcortex.communication.CerebralCortexDataSource;
 import org.md2k.datakit.cerebralcortex.communication.CerebralCortexDataSourceResponse;
-import org.md2k.datakit.cerebralcortex.communication.StudyInfo;
-import org.md2k.datakit.cerebralcortex.communication.StudyInfoCCResponse;
-import org.md2k.datakit.cerebralcortex.communication.UserInfo;
 import org.md2k.datakit.cerebralcortex.communication.UserInfoCCResponse;
 import org.md2k.datakit.configuration.Configuration;
 import org.md2k.datakit.configuration.ConfigurationManager;
 import org.md2k.datakit.logger.DatabaseLogger;
-import org.md2k.datakitapi.datatype.DataType;
-import org.md2k.datakitapi.datatype.DataTypeJSONObject;
 import org.md2k.datakitapi.datatype.RowObject;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceBuilder;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
-import org.md2k.datakitapi.source.datasource.DataSourceType;
 import org.md2k.utilities.FileManager;
 import org.md2k.utilities.Report.Log;
 
@@ -46,6 +36,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.sql.Time;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -297,61 +288,61 @@ public class CerebralCortexWrapper extends Thread {
         return result;
     }
 
-    private StudyInfoCCResponse registerStudy(String encodedString) throws IOException {
-        String siResult = null;
-        siResult = cerebralCortexAPI(requestURL + "studies", encodedString);
-        if (siResult == null) {
-            return null;
-        }
-        return gson.fromJson(siResult, StudyInfoCCResponse.class);
-    }
+//    private StudyInfoCCResponse registerStudy(String encodedString) throws IOException {
+//        String siResult = null;
+//        siResult = cerebralCortexAPI(requestURL + "studies", encodedString);
+//        if (siResult == null) {
+//            return null;
+//        }
+//        return gson.fromJson(siResult, StudyInfoCCResponse.class);
+//    }
+//
+//    private UserInfoCCResponse registerUser(String encodedString) throws IOException {
+//        String uiResult = null;
+//        uiResult = cerebralCortexAPI(requestURL + "participants", encodedString);
+//        if (uiResult == null) {
+//            return null;
+//        }
+//        return gson.fromJson(uiResult, UserInfoCCResponse.class);
+//    }
 
-    private UserInfoCCResponse registerUser(String encodedString) throws IOException {
-        String uiResult = null;
-        uiResult = cerebralCortexAPI(requestURL + "participants", encodedString);
-        if (uiResult == null) {
-            return null;
-        }
-        return gson.fromJson(uiResult, UserInfoCCResponse.class);
-    }
+//    @Nullable
+//    private StudyInfo getStudyInfo(DatabaseLogger dbLogger) throws IOException {
+//        DataSourceBuilder studyinfoBuilder = new DataSourceBuilder();
+//        studyinfoBuilder.setType(DataSourceType.STUDY_INFO);
+//        List<DataSourceClient> studyInfoClients = dbLogger.find(studyinfoBuilder.build());
+//        DataType si = null;
+//        for (DataSourceClient dsc : studyInfoClients) {
+//            List<DataType> studyInfo = dbLogger.query(dsc.getDs_id(), 1);
+//            for (DataType dt : studyInfo) {
+//                si = dt;
+//            }
+//        }
+//        if (si != null) {
+//            return LoganSquare.parse(((DataTypeJSONObject) si).getSample().toString(), StudyInfo.class);
+//        } else {
+//            return null;
+//        }
+//    }
 
-    @Nullable
-    private StudyInfo getStudyInfo(DatabaseLogger dbLogger) throws IOException {
-        DataSourceBuilder studyinfoBuilder = new DataSourceBuilder();
-        studyinfoBuilder.setType(DataSourceType.STUDY_INFO);
-        List<DataSourceClient> studyInfoClients = dbLogger.find(studyinfoBuilder.build());
-        DataType si = null;
-        for (DataSourceClient dsc : studyInfoClients) {
-            List<DataType> studyInfo = dbLogger.query(dsc.getDs_id(), 1);
-            for (DataType dt : studyInfo) {
-                si = dt;
-            }
-        }
-        if (si != null) {
-            return LoganSquare.parse(((DataTypeJSONObject) si).getSample().toString(), StudyInfo.class);
-        } else {
-            return null;
-        }
-    }
-
-    @Nullable
-    private UserInfo getUserInfo(DatabaseLogger dbLogger) throws IOException {
-        DataSourceBuilder userInfoBuilder = new DataSourceBuilder();
-        userInfoBuilder.setType(DataSourceType.USER_INFO);
-        List<DataSourceClient> userInfoClients = dbLogger.find(userInfoBuilder.build());
-        DataType ui = null;
-        for (DataSourceClient dsc : userInfoClients) {
-            List<DataType> userInfo = dbLogger.query(dsc.getDs_id(), 1);
-            for (DataType dt : userInfo) {
-                ui = dt;
-            }
-        }
-        if (ui != null) {
-            return LoganSquare.parse(((DataTypeJSONObject) ui).getSample().toString(), UserInfo.class);
-        } else {
-            return null;
-        }
-    }
+//    @Nullable
+//    private UserInfo getUserInfo(DatabaseLogger dbLogger) throws IOException {
+//        DataSourceBuilder userInfoBuilder = new DataSourceBuilder();
+//        userInfoBuilder.setType(DataSourceType.USER_INFO);
+//        List<DataSourceClient> userInfoClients = dbLogger.find(userInfoBuilder.build());
+//        DataType ui = null;
+//        for (DataSourceClient dsc : userInfoClients) {
+//            List<DataType> userInfo = dbLogger.query(dsc.getDs_id(), 1);
+//            for (DataType dt : userInfo) {
+//                ui = dt;
+//            }
+//        }
+//        if (ui != null) {
+//            return LoganSquare.parse(((DataTypeJSONObject) ui).getSample().toString(), UserInfo.class);
+//        } else {
+//            return null;
+//        }
+//    }
 
     private boolean inRestrictedList(DataSourceClient dsc) {
         for (DataSource d : restricted) {
@@ -385,115 +376,50 @@ public class CerebralCortexWrapper extends Thread {
         }
         messenger("Starting publish procedure");
 
-        UserInfo uInfo = null;
-        StudyInfo sInfo = null;
-        try {
-            uInfo = getUserInfo(dbLogger);
-            sInfo = getStudyInfo(dbLogger);
-        } catch (IOException e) {
-            e.printStackTrace();
-            messenger("uInfo or sInfo null");
-            return;
-        }
 
+        String username = "string";
+        String password = "string";
 
         CerebralCortexWebApi ccService = ApiUtils.getCCService("https://fourtytwo.md2k.org/");
         CCWebAPICalls ccWebAPICalls = new CCWebAPICalls(ccService);
-        AuthResponse ar = ccWebAPICalls.authenticateUser("string", "string");
+        AuthResponse ar = ccWebAPICalls.authenticateUser(username, password);
 
-        List<MinioBucket> buckets = ccWebAPICalls.getMinioBuckets(ar.getAccessToken().toString());
+        if (ar != null) {
+            messenger("Authenticated with server");
+        } else {
+            messenger("Authentication Failed");
+            return;
+        }
 
-        List<MinioObjectStats> objectList = ccWebAPICalls.getObjectsInBucket(ar.getAccessToken().toString(), buckets.get(0).getBucketName().toString());
+//        List<MinioBucket> buckets = ccWebAPICalls.getMinioBuckets(ar.getAccessToken().toString());
 
-        MinioObjectStats object = ccWebAPICalls.getObjectStats(ar.getAccessToken().toString(), buckets.get(0).getBucketName().toString(), "203_mcerebrum_syed_new.pdf");
+//        List<MinioObjectStats> objectList = ccWebAPICalls.getObjectsInBucket(ar.getAccessToken().toString(), buckets.get(0).getBucketName().toString());
 
-        Boolean result = ccWebAPICalls.downloadMinioObject(ar.getAccessToken().toString(), buckets.get(0).getBucketName().toString(), "203_mcerebrum_syed_new.pdf", "test.pdf");
-
-
-        MetadataBuilder metadataBuilder = new MetadataBuilder();
-        DataStream dataStreamMetadata = metadataBuilder.buildDataStreamMetadata("datastream", "123", "999", "sampleStream", "zip");
-        Boolean resultUpload = ccWebAPICalls.putArchiveDataAndMetadata(ar.getAccessToken().toString(), dataStreamMetadata, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + "/test.pdf");
-
-        messenger("TESTING");
+//        MinioObjectStats object = ccWebAPICalls.getObjectStats(ar.getAccessToken().toString(), buckets.get(0).getBucketName().toString(), "203_mcerebrum_syed_new.pdf");
+//        MinioObjectStats object = ccWebAPICalls.getObjectStats(ar.getAccessToken().toString(), "configuration", "mperf.zip");
 
 
-//
-//        if (uInfo != null) {
-//            if (uInfo.user_id.contentEquals("") || uInfo.uuid.contentEquals("")) {
-//                messenger("uInfo field is empty");
-//                return;
-//            }
-//        } else {
-//            messenger("User does not exist");
-//            return;
-//        }
-//        if (sInfo != null) {
-//            if (sInfo.id.contentEquals("") || sInfo.name.contentEquals("")) {
-//                messenger("sInfo field is empty");
-//                return;
-//            }
-//        } else {
-//            messenger("Study not defined");
-//            return;
-//        }
-//        messenger("Extracted user and study info");
-//
-//        //Register User
-//        UserInfoCCResponse uiResponse = null;
-//        try {
-//            uiResponse = registerUser(gson.toJson(new UserInfoCC(uInfo)));
-//        } catch (IOException e) {
-//            messenger("User Info Registration Error");
-//            Log.e("CerebralCortex", "User Info Registration failed");
-//            e.printStackTrace();
-//            return;
-//        }
-//        messenger("Registered user");
-//        lastUpload = System.currentTimeMillis();
-//
-//        //Register Study
-//        StudyInfoCCResponse siResponse = null;
-//        try {
-//            siResponse = registerStudy(gson.toJson(new StudyInfoCC(sInfo)));
-//        } catch (IOException e) {
-//            messenger("Study Info Registration Error");
-//            Log.e("CerebralCortex", "Study Info Registration failed");
-//            e.printStackTrace();
-//            return;
-//        }
-//
-//        if (siResponse == null || uiResponse == null) {
-//            messenger("Registration has failed");
-//            Log.e("CerebralCortex", "Registration failed");
-//            return;
-//        }
-//        messenger("Registered study");
-//
-//        //Register Participant in Study
-//        ParticipantRegistration pr = new ParticipantRegistration(siResponse.id, uiResponse.id);
-//        String prResult = null;
-//        try {
-//            prResult = cerebralCortexAPI(requestURL + "studies/register_participant", gson.toJson(pr));
-//        } catch (IOException e) {
-//            Log.e("CerebralCortex", "Register participant error: " + e);
-//            Log.e("CerebralCortex", prResult);
-//            return;
-//        }
-//        if (prResult == null) {
-//            messenger("prResult is null");
-//            return;
-//        }
-//        if (prResult.contains("Invalid participant or study id")) {
-//            messenger("Register participant error: ");
-//            Log.e("CerebralCortex", prResult);
-//            return;
-//        }
-//        messenger("Registered participant in study");
-//
-//        DataSourceBuilder dataSourceBuilder = new DataSourceBuilder();
-//        List<DataSourceClient> dataSourceClients = dbLogger.find(dataSourceBuilder.build());
-//
-//
+//        Boolean result = ccWebAPICalls.downloadMinioObject(ar.getAccessToken().toString(), "configuration", "mperf.zip", "mperf.zip");
+
+
+//        MetadataBuilder metadataBuilder = new MetadataBuilder();
+//        DataStream dataStreamMetadata = metadataBuilder.buildDataStreamMetadata("datastream", "123", "999", "sampleStream", "zip");
+//        Boolean resultUpload = ccWebAPICalls.putArchiveDataAndMetadata(ar.getAccessToken().toString(), dataStreamMetadata, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + "/test.pdf");
+
+
+        DataSourceBuilder dataSourceBuilder = new DataSourceBuilder();
+        List<DataSourceClient> dataSourceClients = dbLogger.find(dataSourceBuilder.build());
+
+
+        List<DataStream> dataStreamList = new ArrayList<>();
+        for (DataSourceClient dsc : dataSourceClients) {
+            MetadataBuilder metadataBuilder = new MetadataBuilder();
+            DataStream dsMetadata = metadataBuilder.buildDataStreamMetadata(username, dsc);
+            String foo = "";
+        }
+
+
+
 //        Map<DataSourceClient, CerebralCortexDataSourceResponse> validDataSources = new HashMap<>();
 //        for (DataSourceClient dsc : dataSourceClients) {
 //            CerebralCortexDataSourceResponse ccdpResponse = registerDataSource(uiResponse, dsc);
@@ -512,7 +438,7 @@ public class CerebralCortexWrapper extends Thread {
 //                Log.w(TAG, "publishDataStream ... error...");
 //            }
 //        }
-//
+
 //        for (Map.Entry<DataSourceClient, CerebralCortexDataSourceResponse> entry : validDataSources.entrySet()) {
 //
 //            messenger("Publishing raw data for " + entry.getKey().getDs_id() + " (" + entry.getKey().getDataSource().getId() + ":" + entry.getKey().getDataSource().getType() + ") to " + entry.getValue().datastream_id);
