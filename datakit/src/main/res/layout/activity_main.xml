@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:weightSum="1"
     tools:context=".ActivityMain">
 
     <include layout="@layout/layout_status" />
@@ -104,6 +105,7 @@
         android:id="@+id/ll_cerebralcortex"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_weight="0.52"
         android:orientation="vertical"
         android:paddingBottom="10dp"
         android:paddingTop="20dp">
@@ -122,7 +124,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="3"
+            android:layout_weight="3.92"
             android:orientation="horizontal"
             android:padding="10dp"
             android:weightSum="3">
@@ -157,18 +159,7 @@
                         android:textStyle="bold" />
                 </LinearLayout>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:weightSum="3">
 
-                    <TextView
-                        android:id="@+id/textViewcerebralcortexMessage"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textStyle="bold" />
-                </LinearLayout>
 
             </LinearLayout>
 
@@ -179,6 +170,19 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/toggle" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="3">
+
+            <TextView
+                android:id="@+id/textViewcerebralcortexMessage"
+                android:layout_width="match_parent"
+                android:layout_height="75dip"
+                android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>
