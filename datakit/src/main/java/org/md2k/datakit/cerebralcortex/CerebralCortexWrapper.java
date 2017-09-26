@@ -7,12 +7,6 @@ import android.support.v4.content.LocalBroadcastManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import org.md2k.cerebralcortexwebapi.CCWebAPICalls;
-import org.md2k.cerebralcortexwebapi.interfaces.CerebralCortexWebApi;
-import org.md2k.cerebralcortexwebapi.metadata.MetadataBuilder;
-import org.md2k.cerebralcortexwebapi.models.AuthResponse;
-import org.md2k.cerebralcortexwebapi.models.stream.DataStream;
-import org.md2k.cerebralcortexwebapi.utils.ApiUtils;
 import org.md2k.datakit.configuration.Configuration;
 import org.md2k.datakit.configuration.ConfigurationManager;
 import org.md2k.datakit.logger.DatabaseLogger;
@@ -20,6 +14,12 @@ import org.md2k.datakitapi.datatype.RowObject;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceBuilder;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
+import org.md2k.system.cerebralcortexwebapi.CCWebAPICalls;
+import org.md2k.system.cerebralcortexwebapi.interfaces.CerebralCortexWebApi;
+import org.md2k.system.cerebralcortexwebapi.metadata.MetadataBuilder;
+import org.md2k.system.cerebralcortexwebapi.models.AuthResponse;
+import org.md2k.system.cerebralcortexwebapi.models.stream.DataStream;
+import org.md2k.system.cerebralcortexwebapi.utils.ApiUtils;
 import org.md2k.utilities.FileManager;
 import org.md2k.utilities.Report.Log;
 
@@ -30,7 +30,9 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.sql.Time;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.zip.GZIPOutputStream;
 
@@ -95,7 +97,7 @@ public class CerebralCortexWrapper extends Thread {
         boolean cont = true;
 
         int BLOCK_SIZE_LIMIT = Constants.DATA_BLOCK_SIZE_LIMIT;
-        ;
+
         long count = 0;
 
         while (cont) {
@@ -157,25 +159,30 @@ public class CerebralCortexWrapper extends Thread {
         };
 
         File[] files = directory.listFiles(ff);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHH");
 
         if (files != null) {
             Arrays.sort(files);
-            if (files.length > 1) { //Check for multiple files.  The last file is the current one and should not be moved/copied
-                for (int i = 0; i < files.length - 1; i++) {
-                    Log.d(TAG, files[i].getAbsolutePath());
+            for (File file : files) {
+                Long fileTimestamp = Long.valueOf(file.getName().substring(0, 10));
+                Long currentTimestamp = Long.valueOf(dateFormat.format(new Date()));
 
-                    Boolean resultUpload = ccWebAPICalls.putArchiveDataAndMetadata(ar.getAccessToken().toString(), dsMetadata, files[i].getAbsolutePath());
+                if (fileTimestamp < currentTimestamp) {
+                    Log.d(TAG, file.getAbsolutePath());
+
+                    Boolean resultUpload = ccWebAPICalls.putArchiveDataAndMetadata(ar.getAccessToken().toString(), dsMetadata, file.getAbsolutePath());
                     if (resultUpload) {
-                        File newFile = new File(files[i].getAbsolutePath().replace(".csv.gz", "_archive.csv.gz"));
-                        if (files[i].renameTo(newFile)) {
-                            Log.d(TAG, "Successfully renamed file: " + files[i].getAbsolutePath());
+                        File newFile = new File(file.getAbsolutePath().replace(".csv.gz", "_archive.csv.gz"));
+                        if (file.renameTo(newFile)) {
+                            Log.d(TAG, "Successfully renamed file: " + file.getAbsolutePath());
                         }
                     } else {
-                        Log.e(TAG, "Error uploading file: " + files[i].getName());
+                        Log.e(TAG, "Error uploading file: " + file.getName());
                     }
-
                 }
+
             }
+
         }
 
 
@@ -215,7 +222,7 @@ public class CerebralCortexWrapper extends Thread {
         String username = "string";
 
         //TODO: Either authenticate with Cerebral Cortex service here or pass in the AuthReponse Object
-        AuthResponse ar = ccWebAPICalls.authenticateUser("string", "string");
+        AuthResponse ar = ccWebAPICalls.authenticateUser("string", "473287f8298dba7163a897908958f7c0eae733e25d2e027992ea2edc9bed2fa8");
 
         //TODO: If authentication fails at any point in time, a prompt should be given to reauthenticate
 
@@ -233,7 +240,7 @@ public class CerebralCortexWrapper extends Thread {
         for (DataSourceClient dsc : dataSourceClients) {
             if (!inRestrictedList(dsc)) {
                 MetadataBuilder metadataBuilder = new MetadataBuilder();
-                DataStream dsMetadata = metadataBuilder.buildDataStreamMetadata(username, dsc);
+                DataStream dsMetadata = metadataBuilder.buildDataStreamMetadata(ar.getUserUuid(), dsc);
 
                 messenger("Publishing data for " + dsc.getDs_id() + " (" + dsc.getDataSource().getId() + ":" + dsc.getDataSource().getType() + ") to " + dsMetadata.getIdentifier());
                 publishDataStream(dsc, ccWebAPICalls, ar, dsMetadata, dbLogger);
