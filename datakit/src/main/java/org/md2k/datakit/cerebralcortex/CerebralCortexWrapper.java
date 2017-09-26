@@ -222,6 +222,7 @@ public class CerebralCortexWrapper extends Thread {
         String username = "string";
 
         //TODO: Either authenticate with Cerebral Cortex service here or pass in the AuthReponse Object
+        //TODO: Password needs hashed with SHA256 to obtains string needed
         AuthResponse ar = ccWebAPICalls.authenticateUser("string", "473287f8298dba7163a897908958f7c0eae733e25d2e027992ea2edc9bed2fa8");
 
         //TODO: If authentication fails at any point in time, a prompt should be given to reauthenticate
