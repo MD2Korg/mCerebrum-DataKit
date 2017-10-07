@@ -35,20 +35,28 @@ public class ServiceMCerebrum extends AbstractServiceMCerebrum {
 
     @Override
     public void startBackground(Bundle bundle) {
-
-        Intent intent=new Intent(this, ServiceDataKit.class);
-        startService(intent);
-        intent=new Intent(this, ServiceCerebralCortex.class);
-        startService(intent);
-
+/*
+        if(!AppInfo.isServiceRunning(this, ServiceDataKit.class.getName())) {
+            Intent intent = new Intent(this, ServiceDataKit.class);
+            startService(intent);
+        }
+*/
+        if(!AppInfo.isServiceRunning(this, ServiceCerebralCortex.class.getName())) {
+            Intent intent = new Intent(this, ServiceCerebralCortex.class);
+            startService(intent);
+        }
     }
 
     @Override
     public void stopBackground(Bundle bundle) {
-        Intent intent=new Intent(this, ServiceDataKit.class);
-        stopService(intent);
-        intent=new Intent(this, ServiceCerebralCortex.class);
-        stopService(intent);
+        if(AppInfo.isServiceRunning(this, ServiceDataKit.class.getName())) {
+            Intent intent = new Intent(this, ServiceDataKit.class);
+            stopService(intent);
+        }
+        if(AppInfo.isServiceRunning(this, ServiceCerebralCortex.class.getName())) {
+            Intent intent = new Intent(this, ServiceCerebralCortex.class);
+            stopService(intent);
+        }
     }
 
     @Override

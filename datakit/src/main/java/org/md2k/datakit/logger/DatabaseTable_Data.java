@@ -124,11 +124,15 @@ public class DatabaseTable_Data {
         return new Status(Status.SUCCESS);
     }
     public synchronized boolean update(SQLiteDatabase db, int dsid, DataType dataType) {
-        insertDB(db, TABLE_NAME);
-        ContentValues values = prepareData(dsid, dataType);
-        String[] args = new String[]{Long.toString(dsid), Long.toString(dataType.getDateTime())};
-        db.update(TABLE_NAME, values, "datasource_id = ? AND datetime = ?", args);
-        return true;
+        try {
+            insertDB(db, TABLE_NAME);
+            ContentValues values = prepareData(dsid, dataType);
+            String[] args = new String[]{Long.toString(dsid), Long.toString(dataType.getDateTime())};
+            db.update(TABLE_NAME, values, "datasource_id = ? AND datetime = ?", args);
+            return true;
+        }catch (Exception e){
+            return true;
+        }
     }
 
     public synchronized Status insert(SQLiteDatabase db, int dataSourceId, DataType[] dataType, boolean isUpdate) {

@@ -74,10 +74,10 @@ public class ActivityMain extends AppCompatActivity {
     CerebralCortexController cerebralCortexController;
     CerebralCortexUpdateReceiver ccRcvr;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        long curTime = System.currentTimeMillis();
         Fabric.with(this, new Crashlytics.Builder().core(new CrashlyticsCore.Builder().disabled(BuildConfig.DEBUG).build()).build(), new Crashlytics());
         setContentView(R.layout.activity_main);
         PermissionInfo permissionInfo = new PermissionInfo();

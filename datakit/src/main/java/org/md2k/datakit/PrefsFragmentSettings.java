@@ -55,7 +55,7 @@ public class PrefsFragmentSettings extends PreferenceFragment {
             clearData();
     }
     void clearData() {
-        Dialog.simple(getActivity(), "Delete Archive Files?", "Delete Database & Archive Files?\n\nData can't be recovered after deletion", "Yes", "Cancel", new DialogCallback() {
+        Dialog.simple(getActivity(), "Delete Database & Archive Files?", "Delete Database & Archive Files?\n\nData can't be recovered after deletion", "Yes", "Cancel", new DialogCallback() {
             @Override
             public void onSelected(String value) {
                 if(value.equals("Yes")){

@@ -20,6 +20,9 @@ import org.md2k.system.cerebralcortexwebapi.metadata.MetadataBuilder;
 import org.md2k.system.cerebralcortexwebapi.models.AuthResponse;
 import org.md2k.system.cerebralcortexwebapi.models.stream.DataStream;
 import org.md2k.system.cerebralcortexwebapi.utils.ApiUtils;
+import org.md2k.system.provider.ServerCP;
+import org.md2k.system.provider.serverinfo.ServerInfoCursor;
+import org.md2k.system.provider.serverinfo.ServerInfoSelection;
 import org.md2k.utilities.FileManager;
 import org.md2k.utilities.Report.Log;
 
@@ -134,6 +137,7 @@ public class CerebralCortexWrapper extends Thread {
                     dbLogger.setSyncedBit(dsc.getDs_id(), objects.get(objects.size() - 1).rowKey);
                 } else {
                     Log.e(TAG, "Error uploading file: " + outputTempFile + " for SQLite database dump");
+                    return ;
                 }
 
             }
@@ -178,6 +182,7 @@ public class CerebralCortexWrapper extends Thread {
                         }
                     } else {
                         Log.e(TAG, "Error uploading file: " + file.getName());
+                        return;
                     }
                 }
 
@@ -197,8 +202,41 @@ public class CerebralCortexWrapper extends Thread {
         }
         return false;
     }
+/*
+    private UserCP readUser(){
+        UserCP userInfo=new UserCP();
+        UserInfoSelection s= new UserInfoSelection();
+        UserInfoCursor c = s.query(context);
+        if(c.moveToNext()) {
+            userInfo.set(c);
+        }
+        c.close();
+        return userInfo;
+    }
+    private ConfigCP readConfig(){
+        ConfigCP configInfo=new ConfigCP();
+        ConfigInfoSelection s= new ConfigInfoSelection();
+        ConfigInfoCursor c = s.query(context);
+        if(c.moveToNext()) {
+            configInfo.set(c);
+        }
+        c.close();
+        return configInfo;
+    }
+*/
+private ServerCP readServer(){
+    ServerCP serverInfo=new ServerCP();
+    ServerInfoSelection s= new ServerInfoSelection();
+    ServerInfoCursor c = s.query(context);
+    if(c.moveToNext()) {
+        serverInfo.set(c);
+    }
+    c.close();
+    return serverInfo;
+}
 
     public void run() {
+        ServerCP serverCP=readServer();
         Log.w("CerebralCortex", "Starting publishdataKitData");
 
         DatabaseLogger dbLogger = null;
@@ -214,16 +252,26 @@ public class CerebralCortexWrapper extends Thread {
         }
 
         messenger("Starting publish procedure");
+        String username=serverCP.getUserName();
+        String passwordHash = serverCP.getPasswordHash();
+        String token = serverCP.getToken();
+        String serverURL=serverCP.getServerAddress();
+        if(serverURL==null || serverURL.length()==0 || username==null || username.length()==0 || passwordHash==null || passwordHash.length()==0) {
+            messenger("username/password/server address empty");
+            return;
+        }
 
-        CerebralCortexWebApi ccService = ApiUtils.getCCService(requestURL);
+        CerebralCortexWebApi ccService = ApiUtils.getCCService(serverURL);
         CCWebAPICalls ccWebAPICalls = new CCWebAPICalls(ccService);
 
         //TODO: The username needs to be available here for the metadata builder
-        String username = "string";
+//        String username = "string";
 
         //TODO: Either authenticate with Cerebral Cortex service here or pass in the AuthReponse Object
         //TODO: Password needs hashed with SHA256 to obtains string needed
-        AuthResponse ar = ccWebAPICalls.authenticateUser("string", "473287f8298dba7163a897908958f7c0eae733e25d2e027992ea2edc9bed2fa8");
+//        AuthResponse ar = ccWebAPICalls.authenticateUser(username, "473287f8298dba7163a897908958f7c0eae733e25d2e027992ea2edc9bed2fa8");
+        AuthResponse ar = ccWebAPICalls.authenticateUser(username, passwordHash);
+
 
         //TODO: If authentication fails at any point in time, a prompt should be given to reauthenticate
 
@@ -231,6 +279,14 @@ public class CerebralCortexWrapper extends Thread {
             messenger("Authenticated with server");
         } else {
             messenger("Authentication Failed");
+/*
+            Intent intent = new Intent();
+            intent.setComponent(new ComponentName("org.md2k.mcerebrum", "org.md2k.mcerebrum.UI.login.ActivityLogin"));
+            PendingIntent pendingIntent=PendingIntent.getActivity(context, 0, intent, 0);
+
+            PugNotification.with(context).load().identifier(312).title("Data upload failed").smallIcon(R.mipmap.ic_launcher)
+                    .message("Data upload failed. Please login again").autoCancel(true).click(pendingIntent).simple().build();
+*/
             return;
         }
 

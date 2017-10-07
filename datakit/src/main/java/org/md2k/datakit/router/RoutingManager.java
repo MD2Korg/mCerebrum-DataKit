@@ -15,14 +15,18 @@ import org.md2k.datakitapi.datatype.DataTypeIntArray;
 import org.md2k.datakitapi.datatype.DataTypeLong;
 import org.md2k.datakitapi.datatype.DataTypeLongArray;
 import org.md2k.datakitapi.datatype.RowObject;
+import org.md2k.datakitapi.source.application.Application;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceBuilder;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
+import org.md2k.datakitapi.source.platform.Platform;
+import org.md2k.datakitapi.source.platformapp.PlatformApp;
 import org.md2k.datakitapi.status.Status;
 import org.md2k.utilities.Report.Log;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 
 /*
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -56,9 +60,9 @@ import java.util.ArrayList;
 public class RoutingManager {
     private static final String TAG = RoutingManager.class.getSimpleName();
     private static RoutingManager instance;
-    Context context;
-    DatabaseLogger databaseLogger;
-    Publishers publishers;
+    private Context context;
+    private DatabaseLogger databaseLogger;
+    private Publishers publishers;
 
     private RoutingManager(Context context) throws IOException {
         Log.d(TAG, "RoutingManager()....constructor()");
@@ -82,6 +86,43 @@ public class RoutingManager {
         }
         return dataSourceClient;
     }
+/*
+    private String getName(DataSource dataSource){
+        String name = getAppStr(dataSource.getApplication())+"_"+getPlatformAppStr(dataSource.getPlatformApp())+"_"+getPlatformStr(dataSource.getPlatform())+"_";
+        if(dataSource.getType()!=null) name+=dataSource.getType()+"_";
+        else name+="null_";
+        if(dataSource.getId()!=null) name+=dataSource.getId();
+        else name+="null";
+        return name;
+    }
+    private String getAppStr(Application application){
+        String name;
+        if(application==null) return "null_null";
+        if(application.getType()==null) name="null_";
+        else name=application.getType()+"_";
+        if(application.getId()==null) name+="null";
+        else name+=application.getId();
+        return name;
+    }
+    private String getPlatformAppStr(PlatformApp platformApp){
+        String name;
+        if(platformApp==null) return "null_null";
+        if(platformApp.getType()==null) name="null_";
+        else name=platformApp.getType()+"_";
+        if(platformApp.getId()==null) name+="null";
+        else name+=platformApp.getId();
+        return name;
+    }
+    private String getPlatformStr(Platform platform){
+        String name;
+        if(platform==null) return "null_null";
+        if(platform.getType()==null) name="null_";
+        else name=platform.getType()+"_";
+        if(platform.getId()==null) name+="null";
+        else name+=platform.getId();
+        return name;
+    }
+*/
 
     public Status insert(int ds_id, DataType[] dataTypes) {
         return publishers.receivedData(ds_id, dataTypes, false);
@@ -285,15 +326,20 @@ public class RoutingManager {
     }
 
     private long getUpdatedTimestamp(long curTime, int summaryType) {
-        if (summaryType == 1) {
-            return (1000 * 60) * (curTime / (1000 * 60));
+        Calendar c = Calendar.getInstance();
+        c.setTimeInMillis(curTime);
+        c.set(Calendar.MILLISECOND, 0);
+        c.set(Calendar.SECOND, 0);
+        switch(summaryType){
+            case 1:
+                return c.getTimeInMillis();
+            case 2:
+                c.set(Calendar.MINUTE, 0); return c.getTimeInMillis();
+            case 3:
+                c.set(Calendar.MINUTE, 0);
+                c.set(Calendar.HOUR_OF_DAY, 0);
+                return c.getTimeInMillis();
+            default: return curTime;
         }
-        if (summaryType == 2) {
-            return (1000 * 60 * 60) * (curTime / (1000 * 60 * 60));
-        }
-        if (summaryType == 3) {
-            return (1000 * 60 * 60 * 24) * (curTime / (1000 * 60 * 60 * 24));
-        }
-        return curTime;
     }
 }
