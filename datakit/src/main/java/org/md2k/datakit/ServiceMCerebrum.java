@@ -5,6 +5,7 @@ import android.os.Bundle;
 
 import org.md2k.datakit.cerebralcortex.ServiceCerebralCortex;
 import org.md2k.mcerebrum.commons.app_info.AppInfo;
+import org.md2k.mcerebrum.commons.permission.ActivityPermission;
 import org.md2k.mcerebrum.commons.permission.Permission;
 import org.md2k.mcerebrum.core.access.AbstractServiceMCerebrum;
 
@@ -20,10 +21,12 @@ public class ServiceMCerebrum extends AbstractServiceMCerebrum {
 
     @Override
     public void initialize(Bundle bundle) {
-        Intent intent=new Intent(this, ActivityMain.class);
-        intent.putExtra("PERMISSION",true);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
+        if(!Permission.hasPermission(this)) {
+            Intent intent=new Intent(this, ActivityMain.class);
+            intent.putExtra("PERMISSION",true);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        }
     }
 
     @Override

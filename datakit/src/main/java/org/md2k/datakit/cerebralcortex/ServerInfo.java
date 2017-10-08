@@ -1,20 +1,7 @@
 package org.md2k.datakit.cerebralcortex;
-
-import android.app.Service;
-import android.content.Intent;
-import android.os.IBinder;
-
-import org.md2k.system.provider.ServerCP;
-import org.md2k.system.provider.serverinfo.ServerInfoCursor;
-import org.md2k.system.provider.serverinfo.ServerInfoSelection;
-import org.md2k.utilities.Report.Log;
-
-import java.io.IOException;
-
 /*
- * Copyright (c) 2015, The University of Memphis, MD2K Center
+ * Copyright (c) 2016, The University of Memphis, MD2K Center
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
- * - Timothy Hnat <twhnat@memphis.edu>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,33 +26,44 @@ import java.io.IOException;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-public class ServiceCerebralCortex extends Service {
-    private static final String TAG = ServiceCerebralCortex.class.getSimpleName();
-    private static CerebralCortexManager cerebralCortexManager;
+import android.content.Context;
 
-    public void onCreate() {
-        super.onCreate();
-        Log.d(TAG, "Connecting Cerebral Cortex");
-        if(!ServerInfo.isValid(this)) stopSelf();
-        else {
-            try {
-                cerebralCortexManager = CerebralCortexManager.getInstance(ServiceCerebralCortex.this.getApplicationContext());
-            } catch (IOException e) {
-                e.printStackTrace();
+import org.md2k.system.provider.ServerCP;
+import org.md2k.system.provider.serverinfo.ServerInfoCursor;
+import org.md2k.system.provider.serverinfo.ServerInfoSelection;
+
+public class ServerInfo {
+    public static ServerCP readServer(Context context){
+        try {
+            ServerCP serverInfo = new ServerCP();
+            ServerInfoSelection s = new ServerInfoSelection();
+            ServerInfoCursor c = s.query(context);
+            if (c.moveToNext()) {
+                serverInfo.set(c);
             }
-            cerebralCortexManager.start();
+            c.close();
+            if(serverInfo.getUserName()== null || serverInfo.getPasswordHash()==null || serverInfo.getServerAddress()==null)
+                return null;
+            return serverInfo;
+        }catch (Exception e){
+            return null;
+        }
+    }
+    public static boolean isValid(Context context){
+        try {
+            ServerCP serverInfo = new ServerCP();
+            ServerInfoSelection s = new ServerInfoSelection();
+            ServerInfoCursor c = s.query(context);
+            if (c.moveToNext()) {
+                serverInfo.set(c);
+            }
+            c.close();
+            if(serverInfo.getUserName()== null || serverInfo.getPasswordHash()==null || serverInfo.getServerAddress()==null)
+                return false;
+            return true;
+        }catch (Exception e){
+            return false;
         }
     }
 
-    @Override
-    public void onDestroy() {
-        if (cerebralCortexManager != null && cerebralCortexManager.isActive())
-            cerebralCortexManager.stop();
-        super.onDestroy();
-    }
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
 }

@@ -44,16 +44,18 @@ public class CerebralCortexManager {
     private boolean active;
     private Configuration configuration;
     private Handler handler;
-
-    Runnable publishData = new Runnable() {
+    private Runnable publishData = new Runnable() {
         @Override
         public void run() {
-
+            if(!ServerInfo.isValid(context)) {
+                stop();
+                return;
+            }
             if (task != null) {
                 handler.removeCallbacks(publishData);
             }
             try {
-                task = new CerebralCortexWrapper(context, configuration.upload.url, configuration.upload.restricted_datasource);
+                task = new CerebralCortexWrapper(context, configuration.upload.restricted_datasource);
                 task.setPriority(Thread.MIN_PRIORITY);
                 long time = Apps.serviceRunningTime(context.getApplicationContext(), org.md2k.datakit.Constants.SERVICE_NAME);
                 if (time > 0) { //TWH: TEMPORARY
@@ -75,7 +77,7 @@ public class CerebralCortexManager {
         }
     };
 
-    CerebralCortexManager(Context context) {
+    private CerebralCortexManager(Context context) {
         this.context = context;
         handler = new Handler();
         active = false;
@@ -96,7 +98,7 @@ public class CerebralCortexManager {
             handler.post(publishData);
     }
 
-    public boolean isActive() {
+    boolean isActive() {
         return active;
     }
 
@@ -105,7 +107,7 @@ public class CerebralCortexManager {
         handler.removeCallbacks(publishData);
     }
 
-    public boolean isAvailable() {
+    boolean isAvailable() {
         return (configuration != null);
     }
 }

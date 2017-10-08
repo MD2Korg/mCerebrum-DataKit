@@ -39,7 +39,7 @@ public class CerebralCortexController {
     private static CerebralCortexManager cerebralCortexManager;
     Context context;
 
-    CerebralCortexController(Context context) throws IOException {
+    private CerebralCortexController(Context context) throws IOException {
         Log.d(TAG, "CerebralCortexController()...constructor()...");
         this.context = context;
         cerebralCortexManager = CerebralCortexManager.getInstance(context);

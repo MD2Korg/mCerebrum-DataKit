@@ -147,20 +147,24 @@ public class DatabaseTable_DataSource {
                 Log.d(TAG,"findDataSource()...selectionArgs["+i+"]="+selectionArgs[i]);
         }
         Cursor mCursor = db.query(TABLE_NAME, columns, selection, selectionArgs, null, null, null);
-        if (mCursor.moveToFirst()) {
-            Log.d(TAG,"findDataSource()...mCursor..not Empty");
-            do {
-                byte[] bytes=mCursor.getBlob(mCursor.getColumnIndex(C_DATASOURCE));
-                Log.d(TAG, "findDataSource()...blob_size="+bytes.length);
-                DataSource curDataSource = fromBytes(bytes);
-                DataSourceClient dataSourceClient = new DataSourceClient(mCursor.getInt(mCursor.getColumnIndex(C_DS_ID)),
-                        curDataSource, new Status(Status.DATASOURCE_EXIST));
+        try {
+            if (mCursor.moveToFirst()) {
+                Log.d(TAG, "findDataSource()...mCursor..not Empty");
+                do {
+                    byte[] bytes = mCursor.getBlob(mCursor.getColumnIndex(C_DATASOURCE));
+                    Log.d(TAG, "findDataSource()...blob_size=" + bytes.length);
+                    DataSource curDataSource = fromBytes(bytes);
+                    DataSourceClient dataSourceClient = new DataSourceClient(mCursor.getInt(mCursor.getColumnIndex(C_DS_ID)),
+                            curDataSource, new Status(Status.DATASOURCE_EXIST));
 //                    DataSourceClient dataSourceClient = new DataSourceClient(mCursor.getInt(mCursor.getColumnIndex(C_DS_ID)),
 //                            DataSource.fromBytes(mCursor.getBlob(mCursor.getColumnIndex(C_DATASOURCE))), new Status(Status.DATASOURCE_EXIST));
-                dataSourceClients.add(dataSourceClient);
-            } while (mCursor.moveToNext());
+                    dataSourceClients.add(dataSourceClient);
+                } while (mCursor.moveToNext());
+            }
+            mCursor.close();
+        }catch (Exception ignored){
+
         }
-        mCursor.close();
         return dataSourceClients;
     }
 

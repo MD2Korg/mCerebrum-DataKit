@@ -74,14 +74,12 @@ public class CerebralCortexWrapper extends Thread {
     public long lastUpload;
 
     private Context context;
-    private String requestURL;
     private List<DataSource> restricted;
     private Gson gson = new GsonBuilder().serializeNulls().create();
 
-    public CerebralCortexWrapper(Context context, String url, List<DataSource> restricted) throws IOException {
+    public CerebralCortexWrapper(Context context, List<DataSource> restricted) throws IOException {
         Configuration configuration = ConfigurationManager.getInstance(context).configuration;
         this.context = context;
-        this.requestURL = url;
         this.restricted = restricted;
         raw_directory = FileManager.getDirectory(context, FileManager.INTERNAL_SDCARD_PREFERRED) + org.md2k.datakit.Constants.RAW_DIRECTORY;
     }
@@ -224,19 +222,11 @@ public class CerebralCortexWrapper extends Thread {
         return configInfo;
     }
 */
-private ServerCP readServer(){
-    ServerCP serverInfo=new ServerCP();
-    ServerInfoSelection s= new ServerInfoSelection();
-    ServerInfoCursor c = s.query(context);
-    if(c.moveToNext()) {
-        serverInfo.set(c);
-    }
-    c.close();
-    return serverInfo;
-}
 
     public void run() {
-        ServerCP serverCP=readServer();
+        if(!ServerInfo.isValid(context)) return ;
+        ServerCP serverCP = ServerInfo.readServer(context);
+        if(serverCP==null) return;
         Log.w("CerebralCortex", "Starting publishdataKitData");
 
         DatabaseLogger dbLogger = null;
