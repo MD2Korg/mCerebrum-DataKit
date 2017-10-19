@@ -95,7 +95,7 @@ public class PrivacyManager {
         return instance;
     }
 
-    void createPrivacyList() {
+    private void createPrivacyList() {
         if(!isActive()) return;
         listPrivacyListDsId.clear();
         int id;

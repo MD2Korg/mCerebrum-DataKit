@@ -2,6 +2,7 @@ package org.md2k.datakit.cerebralcortex;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.google.gson.Gson;
@@ -14,15 +15,13 @@ import org.md2k.datakitapi.datatype.RowObject;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceBuilder;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
-import org.md2k.system.cerebralcortexwebapi.CCWebAPICalls;
-import org.md2k.system.cerebralcortexwebapi.interfaces.CerebralCortexWebApi;
-import org.md2k.system.cerebralcortexwebapi.metadata.MetadataBuilder;
-import org.md2k.system.cerebralcortexwebapi.models.AuthResponse;
-import org.md2k.system.cerebralcortexwebapi.models.stream.DataStream;
-import org.md2k.system.cerebralcortexwebapi.utils.ApiUtils;
-import org.md2k.system.provider.ServerCP;
-import org.md2k.system.provider.serverinfo.ServerInfoCursor;
-import org.md2k.system.provider.serverinfo.ServerInfoSelection;
+import org.md2k.mcerebrum.core.access.serverinfo.ServerCP;
+import org.md2k.mcerebrum.system.cerebralcortexwebapi.CCWebAPICalls;
+import org.md2k.mcerebrum.system.cerebralcortexwebapi.interfaces.CerebralCortexWebApi;
+import org.md2k.mcerebrum.system.cerebralcortexwebapi.metadata.MetadataBuilder;
+import org.md2k.mcerebrum.system.cerebralcortexwebapi.models.AuthResponse;
+import org.md2k.mcerebrum.system.cerebralcortexwebapi.models.stream.DataStream;
+import org.md2k.mcerebrum.system.cerebralcortexwebapi.utils.ApiUtils;
 import org.md2k.utilities.FileManager;
 import org.md2k.utilities.Report.Log;
 
@@ -38,6 +37,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.zip.GZIPOutputStream;
+
+import static android.content.Context.CONNECTIVITY_SERVICE;
 
 
 /*
@@ -71,16 +72,20 @@ import java.util.zip.GZIPOutputStream;
 public class CerebralCortexWrapper extends Thread {
     private static final String TAG = CerebralCortexWrapper.class.getSimpleName();
     private static String raw_directory = "";
-    public long lastUpload;
 
     private Context context;
     private List<DataSource> restricted;
     private Gson gson = new GsonBuilder().serializeNulls().create();
+    private String network_high_freq;
+    private String network_low_freq;
 
     public CerebralCortexWrapper(Context context, List<DataSource> restricted) throws IOException {
         Configuration configuration = ConfigurationManager.getInstance(context).configuration;
         this.context = context;
         this.restricted = restricted;
+        this.network_high_freq=configuration.upload.network_high_frequency;
+        this.network_low_freq=configuration.upload.network_low_frequency;
+
         raw_directory = FileManager.getDirectory(context, FileManager.INTERNAL_SDCARD_PREFERRED) + org.md2k.datakit.Constants.RAW_DIRECTORY;
     }
 
@@ -224,9 +229,7 @@ public class CerebralCortexWrapper extends Thread {
 */
 
     public void run() {
-        if(!ServerInfo.isValid(context)) return ;
-        ServerCP serverCP = ServerInfo.readServer(context);
-        if(serverCP==null) return;
+        if(ServerCP.getServerAddress(context)==null) return;
         Log.w("CerebralCortex", "Starting publishdataKitData");
 
         DatabaseLogger dbLogger = null;
@@ -242,10 +245,10 @@ public class CerebralCortexWrapper extends Thread {
         }
 
         messenger("Starting publish procedure");
-        String username=serverCP.getUserName();
-        String passwordHash = serverCP.getPasswordHash();
-        String token = serverCP.getToken();
-        String serverURL=serverCP.getServerAddress();
+        String username= ServerCP.getUserName(context);
+        String passwordHash = ServerCP.getPasswordHash(context);
+        String token = ServerCP.getToken(context);
+        String serverURL=ServerCP.getServerAddress(context);
         if(serverURL==null || serverURL.length()==0 || username==null || username.length()==0 || passwordHash==null || passwordHash.length()==0) {
             messenger("username/password/server address empty");
             return;
@@ -289,16 +292,32 @@ public class CerebralCortexWrapper extends Thread {
                 MetadataBuilder metadataBuilder = new MetadataBuilder();
                 DataStream dsMetadata = metadataBuilder.buildDataStreamMetadata(ar.getUserUuid(), dsc);
 
-                messenger("Publishing data for " + dsc.getDs_id() + " (" + dsc.getDataSource().getId() + ":" + dsc.getDataSource().getType() + ") to " + dsMetadata.getIdentifier());
-                publishDataStream(dsc, ccWebAPICalls, ar, dsMetadata, dbLogger);
+                if(isNetworkConnectionValid(network_low_freq)) {
 
-                messenger("Publishing raw data for " + dsc.getDs_id() + " (" + dsc.getDataSource().getId() + ":" + dsc.getDataSource().getType() + ") to " + dsMetadata.getIdentifier());
-                publishDataFiles(dsc, ccWebAPICalls, ar, dsMetadata);
+                    messenger("Publishing data for " + dsc.getDs_id() + " (" + dsc.getDataSource().getId() + ":" + dsc.getDataSource().getType() + ") to " + dsMetadata.getIdentifier());
+                    publishDataStream(dsc, ccWebAPICalls, ar, dsMetadata, dbLogger);
+                }
+                if(isNetworkConnectionValid(network_high_freq)) {
+
+                    messenger("Publishing raw data for " + dsc.getDs_id() + " (" + dsc.getDataSource().getId() + ":" + dsc.getDataSource().getType() + ") to " + dsMetadata.getIdentifier());
+                    publishDataFiles(dsc, ccWebAPICalls, ar, dsMetadata);
+                }
             }
         }
 
 
         messenger("Upload Complete");
+    }
+    private boolean isNetworkConnectionValid(String value){
+        if(value==null || value.equalsIgnoreCase("ANY")) return true;
+        if(value.equalsIgnoreCase("NONE")) return false;
+        ConnectivityManager manager = (ConnectivityManager) context.getSystemService(CONNECTIVITY_SERVICE);
+        if(value.equalsIgnoreCase("WIFI")){
+            return manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI)
+                    .isConnectedOrConnecting();
+        }
+        return manager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE)
+                .isConnectedOrConnecting();
     }
 
 

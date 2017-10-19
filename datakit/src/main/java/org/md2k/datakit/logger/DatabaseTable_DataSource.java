@@ -47,7 +47,6 @@ import java.util.Arrays;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 public class DatabaseTable_DataSource {
-    private static final String TAG = DatabaseTable_DataSource.class.getSimpleName();
     private static String TABLE_NAME = "datasources";
     private static String C_DS_ID = "ds_id";
     private static String C_DATASOURCE_ID = "datasource_id";
@@ -134,25 +133,17 @@ public class DatabaseTable_DataSource {
     }
 
     public synchronized ArrayList<DataSourceClient> findDataSource(SQLiteDatabase db, DataSource dataSource) {
-        Log.d(TAG,"findDataSource()..dataSource="+dataSource.getId()+" "+ dataSource.getType());
         ArrayList<DataSourceClient> dataSourceClients = new ArrayList<>();
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
         queryBuilder.setTables(TABLE_NAME);
         String[] columns = new String[]{C_DS_ID, C_DATASOURCE};
         String selection = prepareSelection(dataSource);
-        Log.d(TAG,"findDataSource()...selection = "+selection);
         String[] selectionArgs = prepareSelectionArgs(dataSource);
-        if(selectionArgs!=null){
-            for(int i=0;i<selectionArgs.length;i++)
-                Log.d(TAG,"findDataSource()...selectionArgs["+i+"]="+selectionArgs[i]);
-        }
         Cursor mCursor = db.query(TABLE_NAME, columns, selection, selectionArgs, null, null, null);
         try {
             if (mCursor.moveToFirst()) {
-                Log.d(TAG, "findDataSource()...mCursor..not Empty");
                 do {
                     byte[] bytes = mCursor.getBlob(mCursor.getColumnIndex(C_DATASOURCE));
-                    Log.d(TAG, "findDataSource()...blob_size=" + bytes.length);
                     DataSource curDataSource = fromBytes(bytes);
                     DataSourceClient dataSourceClient = new DataSourceClient(mCursor.getInt(mCursor.getColumnIndex(C_DS_ID)),
                             curDataSource, new Status(Status.DATASOURCE_EXIST));
@@ -214,13 +205,11 @@ public class DatabaseTable_DataSource {
         kryo.writeClassAndObject(output, dataSource);
         output.close();
         bytes = baos.toByteArray();
-        Log.d(TAG, "datasource_bytes: size=" + bytes.length + " content=" + Arrays.toString(bytes));
         return bytes;
     }
 
     private synchronized DataSource fromBytes(byte[] bytes) {
         Kryo kryo=new Kryo();
-        Log.d(TAG,"fromBytes size="+bytes.length);
         Input input = new Input(new ByteArrayInputStream(bytes));
         DataSource curDataSource = (DataSource) kryo.readClassAndObject(input);
         input.close();

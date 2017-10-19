@@ -1,4 +1,4 @@
-package org.md2k.datakit.cerebralcortex;
+package org.md2k.datakit;
 /*
  * Copyright (c) 2016, The University of Memphis, MD2K Center
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
@@ -28,42 +28,30 @@ package org.md2k.datakit.cerebralcortex;
 
 import android.content.Context;
 
-import org.md2k.system.provider.ServerCP;
-import org.md2k.system.provider.serverinfo.ServerInfoCursor;
-import org.md2k.system.provider.serverinfo.ServerInfoSelection;
+import org.md2k.datakit.cerebralcortex.ServiceCerebralCortex;
+import org.md2k.mcerebrum.commons.permission.ActivityPermission;
+import org.md2k.mcerebrum.commons.permission.PermissionInfo;
+import org.md2k.mcerebrum.commons.permission.ResultCallback;
+import org.md2k.mcerebrum.core.access.MCerebrum;
+import org.md2k.mcerebrum.core.access.MCerebrumInfo;
 
-public class ServerInfo {
-    public static ServerCP readServer(Context context){
-        try {
-            ServerCP serverInfo = new ServerCP();
-            ServerInfoSelection s = new ServerInfoSelection();
-            ServerInfoCursor c = s.query(context);
-            if (c.moveToNext()) {
-                serverInfo.set(c);
-            }
-            c.close();
-            if(serverInfo.getUserName()== null || serverInfo.getPasswordHash()==null || serverInfo.getServerAddress()==null)
-                return null;
-            return serverInfo;
-        }catch (Exception e){
-            return null;
+public class MyMCerebrumInit extends MCerebrumInfo {
+    @Override
+    public void update(final Context context){
+        MCerebrum.setBackgroundService(context, ServiceCerebralCortex.class);
+        MCerebrum.setClearActivity(context, ActivityClear.class);
+        MCerebrum.setConfigureActivity(context, ActivitySettings.class);
+        MCerebrum.setPermissionActivity(context, ActivityPermission.class);
+        MCerebrum.setConfigured(context, true);
+        MCerebrum.setConfigureExact(context, true);
+        if(!MCerebrum.getPermission(context)) {
+            PermissionInfo p = new PermissionInfo();
+            p.getPermissions(context, new ResultCallback<Boolean>() {
+                @Override
+                public void onResult(Boolean result) {
+                    MCerebrum.setPermission(context, result);
+                }
+            });
         }
     }
-    public static boolean isValid(Context context){
-        try {
-            ServerCP serverInfo = new ServerCP();
-            ServerInfoSelection s = new ServerInfoSelection();
-            ServerInfoCursor c = s.query(context);
-            if (c.moveToNext()) {
-                serverInfo.set(c);
-            }
-            c.close();
-            if(serverInfo.getUserName()== null || serverInfo.getPasswordHash()==null || serverInfo.getServerAddress()==null)
-                return false;
-            return true;
-        }catch (Exception e){
-            return false;
-        }
-    }
-
 }

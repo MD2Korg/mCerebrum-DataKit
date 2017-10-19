@@ -1,10 +1,14 @@
 package org.md2k.datakit.cerebralcortex;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Handler;
+import android.support.v4.content.LocalBroadcastManager;
 
 import org.md2k.datakit.configuration.Configuration;
 import org.md2k.datakit.configuration.ConfigurationManager;
+import org.md2k.mcerebrum.core.access.appinfo.AppInfo;
+import org.md2k.mcerebrum.core.access.serverinfo.ServerCP;
 import org.md2k.utilities.Apps;
 
 import java.io.IOException;
@@ -47,7 +51,8 @@ public class CerebralCortexManager {
     private Runnable publishData = new Runnable() {
         @Override
         public void run() {
-            if(!ServerInfo.isValid(context)) {
+            if(ServerCP.getServerAddress(context)==null) {
+                LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent("SERVER_ERROR"));
                 stop();
                 return;
             }
@@ -57,7 +62,7 @@ public class CerebralCortexManager {
             try {
                 task = new CerebralCortexWrapper(context, configuration.upload.restricted_datasource);
                 task.setPriority(Thread.MIN_PRIORITY);
-                long time = Apps.serviceRunningTime(context.getApplicationContext(), org.md2k.datakit.Constants.SERVICE_NAME);
+                long time = AppInfo.serviceRunningTime(context.getApplicationContext(), org.md2k.datakit.Constants.SERVICE_NAME);
                 if (time > 0) { //TWH: TEMPORARY
                     task.start();
                 }
@@ -93,9 +98,10 @@ public class CerebralCortexManager {
     }
 
     void start() {
-        active = true;
-        if(configuration.upload.enabled)
+        if (configuration.upload.enabled) {
+            active = true;
             handler.post(publishData);
+        }
     }
 
     boolean isActive() {
