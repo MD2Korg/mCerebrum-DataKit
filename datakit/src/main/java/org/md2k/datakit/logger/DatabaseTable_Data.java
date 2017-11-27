@@ -49,7 +49,6 @@ import java.util.ArrayList;
 
 public class DatabaseTable_Data {
 
-    private static final String TAG = DatabaseTable_Data.class.getSimpleName();
     public static String TABLE_NAME = "data";
     private static String C_ID = "_id";
     private static String C_CLOUD_SYNC_BIT = "cc_sync";
@@ -108,7 +107,6 @@ public class DatabaseTable_Data {
             long st = System.currentTimeMillis();
             db.beginTransaction();
 
-            Log.w("INSERTDB", "Buffer Size: " + cValueCount + " (" + tableName + ")");
             for (int i = 0; i < cValueCount; i++)
                 db.insert(tableName, null, cValues[i]);
             cValueCount = 0;
@@ -116,15 +114,30 @@ public class DatabaseTable_Data {
                 db.setTransactionSuccessful();
             } finally {
                 db.endTransaction();
-                Log.w("INSERTDB", "Transaction Time: " + (System.currentTimeMillis() - st));
             }
         } catch (Exception e) {
             return new Status(Status.INTERNAL_ERROR);
         }
         return new Status(Status.SUCCESS);
     }
-    public synchronized Status insert(SQLiteDatabase db, int dataSourceId, DataType[] dataType) {
-        for (DataType aDataType : dataType) insert(db, dataSourceId, aDataType);
+    public synchronized boolean update(SQLiteDatabase db, int dsid, DataType dataType) {
+        try {
+            insertDB(db, TABLE_NAME);
+            ContentValues values = prepareData(dsid, dataType);
+            String[] args = new String[]{Long.toString(dsid), Long.toString(dataType.getDateTime())};
+            db.update(TABLE_NAME, values, "datasource_id = ? AND datetime = ?", args);
+            return true;
+        }catch (Exception e){
+            return true;
+        }
+    }
+
+    public synchronized Status insert(SQLiteDatabase db, int dataSourceId, DataType[] dataType, boolean isUpdate) {
+        if(isUpdate){
+            for(DataType aDataType:dataType) update(db, dataSourceId, aDataType);
+        }else {
+            for (DataType aDataType : dataType) insert(db, dataSourceId, aDataType);
+        }
         return new Status(Status.SUCCESS);
     }
 
@@ -218,7 +231,6 @@ public class DatabaseTable_Data {
             } while (mCursor.moveToNext());
         }
         mCursor.close();
-        Log.w(TAG, "Query: starttime="+starttimestamp+" endtime="+ endtimestamp+" Size="+dataTypes.size()+" QueryTime: " + (System.currentTimeMillis() - totalst));
 
         return dataTypes;
     }
@@ -243,7 +255,6 @@ public class DatabaseTable_Data {
             } while (mCursor.moveToNext());
         }
         mCursor.close();
-        Log.w(TAG, "Query: id="+ds_id+" last_n_sample="+last_n_sample+" Size="+dataTypes.size()+" QueryTime: " + (System.currentTimeMillis() - totalst));
         return dataTypes;
     }
 
@@ -268,7 +279,6 @@ public class DatabaseTable_Data {
         }
         mCursor.close();
 
-        Log.w(TAG, "QueryLastKey: Size="+rowObjects.size()+" QueryTime: " + (System.currentTimeMillis() - totalst));
         return rowObjects;
     }
 
@@ -291,7 +301,6 @@ public class DatabaseTable_Data {
             } while (mCursor.moveToNext());
         }
         mCursor.close();
-        Log.w(TAG, "QuerySyncedData: Size="+rowObjects.size()+" QueryTime: " + (System.currentTimeMillis() - totalst));
         return rowObjects;
     }
 
@@ -327,7 +336,6 @@ public class DatabaseTable_Data {
             } while (mCursor.moveToNext());
         }
         mCursor.close();
-        Log.w(TAG, "QuerySize="+count+" QueryTime: " + (System.currentTimeMillis() - totalst));
         return count;
     }
 
@@ -344,7 +352,6 @@ public class DatabaseTable_Data {
             } while (mCursor.moveToNext());
         }
         mCursor.close();
-        Log.w(TAG, "QueryCount="+count+" QueryTime: " + (System.currentTimeMillis() - totalst));
         return count;
     }
 

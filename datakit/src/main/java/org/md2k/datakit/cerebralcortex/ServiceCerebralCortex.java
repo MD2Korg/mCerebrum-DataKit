@@ -1,9 +1,14 @@
 package org.md2k.datakit.cerebralcortex;
 
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
 
+import org.md2k.mcerebrum.core.access.serverinfo.ServerCP;
 import org.md2k.utilities.Report.Log;
 
 import java.io.IOException;
@@ -42,17 +47,21 @@ public class ServiceCerebralCortex extends Service {
 
     public void onCreate() {
         super.onCreate();
+        LocalBroadcastManager.getInstance(this).registerReceiver(br, new IntentFilter("SERVER_ERROR"));
         Log.d(TAG, "Connecting Cerebral Cortex");
         try {
             cerebralCortexManager = CerebralCortexManager.getInstance(ServiceCerebralCortex.this.getApplicationContext());
         } catch (IOException e) {
             e.printStackTrace();
         }
-        cerebralCortexManager.start();
+        if(ServerCP.getServerAddress(this)==null) stopSelf();
+        else
+            cerebralCortexManager.start();
     }
 
     @Override
     public void onDestroy() {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(br);
         if (cerebralCortexManager != null && cerebralCortexManager.isActive())
             cerebralCortexManager.stop();
         super.onDestroy();
@@ -62,4 +71,12 @@ public class ServiceCerebralCortex extends Service {
     public IBinder onBind(Intent intent) {
         throw new UnsupportedOperationException("Not yet implemented");
     }
+    private BroadcastReceiver br = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // Get extra data included in the Intent
+            stopSelf();
+        }
+    };
+
 }

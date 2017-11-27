@@ -53,6 +53,28 @@ public class PrefsFragmentSettingsUpload extends PreferenceFragment {
 
     private static final String TAG = PrefsFragmentSettingsUpload.class.getSimpleName();
     Configuration configuration;
+    String[] network_type_show={
+        "Any", "WiFi", "Cellular Data", "None"
+    };
+    String[] network_type_value={
+            "ANY", "WIFI", "CELLULAR_DATA", "NONE"
+    };
+
+    private String getFreqShowFromValue(String value){
+        if(value==null) return network_type_show[0];
+        for(int i=0;i<network_type_value.length;i++)
+            if(network_type_value[i].equals(value))
+                return network_type_show[i];
+        return network_type_show[0];
+    }
+    private String getFreqValueFromShow(String show){
+        if(show==null) return network_type_value[0];
+        for(int i=0;i<network_type_value.length;i++)
+            if(network_type_show[i].equals(show))
+                return network_type_value[i];
+        return network_type_value[0];
+    }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -62,6 +84,8 @@ public class PrefsFragmentSettingsUpload extends PreferenceFragment {
         getPreferenceManager().getSharedPreferences().edit().putBoolean("key_enabled",configuration.upload.enabled).apply();
         getPreferenceManager().getSharedPreferences().edit().putString("key_url",configuration.upload.url).apply();
         getPreferenceManager().getSharedPreferences().edit().putString("key_interval",String.valueOf(configuration.upload.interval)).apply();
+        getPreferenceManager().getSharedPreferences().edit().putString("key_network_high_freq",configuration.upload.network_high_frequency).apply();
+        getPreferenceManager().getSharedPreferences().edit().putString("key_network_low_freq",configuration.upload.network_low_frequency).apply();
         if(configuration.upload.restricted_datasource==null || configuration.upload.restricted_datasource.size()==0)
             getPreferenceManager().getSharedPreferences().edit().putBoolean("key_restrict_location",false).apply();
         else
@@ -80,6 +104,7 @@ public class PrefsFragmentSettingsUpload extends PreferenceFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View v=super.onCreateView(inflater, container,savedInstanceState);
+        assert v != null;
         ListView lv = (ListView) v.findViewById(android.R.id.list);
         lv.setPadding(0, 0, 0, 0);
 
@@ -97,6 +122,8 @@ public class PrefsFragmentSettingsUpload extends PreferenceFragment {
     void setupPreferences(){
         setupEnabled();
         setupInterval();
+        setupNetworkHighFrequency();
+        setupNetworkLowFrequency();
         setupURL();
         setupRestrictedDataSource();
     }
@@ -133,6 +160,39 @@ public class PrefsFragmentSettingsUpload extends PreferenceFragment {
             }
         });
     }
+    void setupNetworkHighFrequency() {
+        ListPreference preference = (ListPreference) findPreference("key_network_high_freq");
+        String network = getPreferenceManager().getSharedPreferences().getString("key_network_high_freq", network_type_value[0]);
+        preference.setValue(network);
+        preference.setEntries(network_type_show);
+        preference.setEntryValues(network_type_value);
+        preference.setSummary(getFreqShowFromValue(network));
+        preference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                getPreferenceManager().getSharedPreferences().edit().putString("key_network_high_freq", newValue.toString()).apply();
+                setupPreferences();
+                return false;
+            }
+        });
+    }
+    void setupNetworkLowFrequency() {
+        ListPreference preference = (ListPreference) findPreference("key_network_low_freq");
+        String network = getPreferenceManager().getSharedPreferences().getString("key_network_low_freq", network_type_value[0]);
+        preference.setValue(network);
+        preference.setEntries(network_type_show);
+        preference.setEntryValues(network_type_value);
+        preference.setSummary(getFreqShowFromValue(network));
+        preference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                getPreferenceManager().getSharedPreferences().edit().putString("key_network_low_freq", newValue.toString()).apply();
+                setupPreferences();
+                return false;
+            }
+        });
+    }
+
     private String findString(String[] values, String[] strings, String value) {
         for (int i = 0; i < values.length; i++)
             if (values[i].equals(value))
@@ -149,6 +209,9 @@ public class PrefsFragmentSettingsUpload extends PreferenceFragment {
                 configuration.upload.enabled = sharedPreferences.getBoolean("key_enabled", configuration.upload.enabled);
                 configuration.upload.url = sharedPreferences.getString("key_url", configuration.upload.url);
                 configuration.upload.interval = Long.parseLong(sharedPreferences.getString("key_interval", String.valueOf(configuration.upload.interval)));
+                configuration.upload.network_high_frequency = sharedPreferences.getString("key_network_high_freq", configuration.upload.network_high_frequency);
+                configuration.upload.network_low_frequency = sharedPreferences.getString("key_network_low_freq", configuration.upload.network_high_frequency);
+
                 if (configuration.upload.enabled && (configuration.upload.url == null || configuration.upload.interval == 0)) {
                     Toast.makeText(getActivity(), "Not Saved...not all values are set properly", Toast.LENGTH_LONG).show();
                     return;

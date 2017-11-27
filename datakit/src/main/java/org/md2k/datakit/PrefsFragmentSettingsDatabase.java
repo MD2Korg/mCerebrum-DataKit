@@ -1,8 +1,6 @@
 package org.md2k.datakit;
 
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -20,9 +18,10 @@ import android.widget.Toast;
 
 import org.md2k.datakit.configuration.Configuration;
 import org.md2k.datakit.configuration.ConfigurationManager;
+import org.md2k.mcerebrum.commons.dialog.Dialog;
+import org.md2k.mcerebrum.commons.dialog.DialogCallback;
 import org.md2k.utilities.FileManager;
 import org.md2k.utilities.Report.Log;
-import org.md2k.utilities.UI.AlertDialogs;
 
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -177,18 +176,19 @@ public class PrefsFragmentSettingsDatabase extends PreferenceFragment {
     }
 
     void clearDatabase() {
-        AlertDialogs.AlertDialog(getActivity(), "Clear Database", "Clear Database?\n\nData can't be recovered after deletion\n\nSome apps may have problems after this operation. If it is, please restart those apps", R.drawable.ic_delete_red_48dp, "Yes", "Cancel", null, new DialogInterface.OnClickListener() {
+        Dialog.simple(getActivity(), "Clear Database", "Clear Database?\n\nData can't be recovered after deletion\n\nSome apps may have problems after this operation. If it is, please restart those apps", "Yes", "Cancel", new DialogCallback() {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
-                if (which == AlertDialog.BUTTON_POSITIVE) {
+            public void onSelected(String value) {
+                if (value.equals("Yes")) {
                     sendLocalBroadcast("stop");
                     new DatabaseDeleteAsyncTask().execute();
                 } else {
                     if (getActivity().getIntent().getBooleanExtra("delete", false))
                         getActivity().finish();
                 }
+
             }
-        });
+        }).show();
     }
 
     class DatabaseDeleteAsyncTask extends AsyncTask<String, String, String> {

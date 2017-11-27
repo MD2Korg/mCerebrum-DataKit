@@ -1,8 +1,6 @@
 package org.md2k.datakit;
 
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -15,8 +13,9 @@ import android.widget.Button;
 import android.widget.ListView;
 
 import org.md2k.datakit.configuration.ConfigurationManager;
+import org.md2k.mcerebrum.commons.dialog.Dialog;
+import org.md2k.mcerebrum.commons.dialog.DialogCallback;
 import org.md2k.utilities.FileManager;
-import org.md2k.utilities.UI.AlertDialogs;
 
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -56,17 +55,17 @@ public class PrefsFragmentSettings extends PreferenceFragment {
             clearData();
     }
     void clearData() {
-        AlertDialogs.AlertDialog(getActivity(), "Delete Archive Files?", "Delete Database & Archive Files?\n\nData can't be recovered after deletion",R.drawable.ic_delete_red_48dp, "Yes", "Cancel",null, new DialogInterface.OnClickListener() {
+        Dialog.simple(getActivity(), "Delete Database & Archive Files?", "Delete Database & Archive Files?\n\nData can't be recovered after deletion", "Yes", "Cancel", new DialogCallback() {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
-                if (which == AlertDialog.BUTTON_POSITIVE) {
+            public void onSelected(String value) {
+                if(value.equals("Yes")){
                     new DeleteDataAsyncTask().execute();
-                }else{
-                    if(getActivity().getIntent().getBooleanExtra("delete",false))
+                }else {
+                    if (getActivity().getIntent().getBooleanExtra("delete", false))
                         getActivity().finish();
                 }
             }
-        });
+        }).show();
     }
     class DeleteDataAsyncTask extends AsyncTask<String, String, String> {
         private ProgressDialog dialog;

@@ -1,15 +1,7 @@
-package org.md2k.datakit.cerebralcortex;
-
-import android.content.Context;
-
-import org.md2k.utilities.Report.Log;
-
-import java.io.IOException;
-
+package org.md2k.datakit;
 /*
- * Copyright (c) 2015, The University of Memphis, MD2K Center
+ * Copyright (c) 2016, The University of Memphis, MD2K Center
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
- * - Timothy Hnat <twhnat@memphis.edu>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,28 +25,33 @@ import java.io.IOException;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public class CerebralCortexController {
-    private static final String TAG = CerebralCortexController.class.getSimpleName();
-    private static CerebralCortexController instance = null;
-    private static CerebralCortexManager cerebralCortexManager;
-    Context context;
 
-    private CerebralCortexController(Context context) throws IOException {
-        Log.d(TAG, "CerebralCortexController()...constructor()...");
-        this.context = context;
-        cerebralCortexManager = CerebralCortexManager.getInstance(context);
-    }
+import android.content.Context;
 
-    public static CerebralCortexController getInstance(Context context) throws IOException {
-        if (instance == null) instance = new CerebralCortexController(context);
-        return instance;
-    }
+import org.md2k.datakit.cerebralcortex.ServiceCerebralCortex;
+import org.md2k.mcerebrum.commons.permission.ActivityPermission;
+import org.md2k.mcerebrum.commons.permission.PermissionInfo;
+import org.md2k.mcerebrum.commons.permission.ResultCallback;
+import org.md2k.mcerebrum.core.access.MCerebrum;
+import org.md2k.mcerebrum.core.access.MCerebrumInfo;
 
-    public boolean isActive() {
-        return cerebralCortexManager.isActive();
-    }
-
-    public boolean isAvailable() {
-        return cerebralCortexManager.isAvailable();
+public class MyMCerebrumInit extends MCerebrumInfo {
+    @Override
+    public void update(final Context context){
+        MCerebrum.setBackgroundService(context, ServiceCerebralCortex.class);
+        MCerebrum.setClearActivity(context, ActivityClear.class);
+        MCerebrum.setConfigureActivity(context, ActivitySettings.class);
+        MCerebrum.setPermissionActivity(context, ActivityPermission.class);
+        MCerebrum.setConfigured(context, true);
+        MCerebrum.setConfigureExact(context, true);
+        if(!MCerebrum.getPermission(context)) {
+            PermissionInfo p = new PermissionInfo();
+            p.getPermissions(context, new ResultCallback<Boolean>() {
+                @Override
+                public void onResult(Boolean result) {
+                    MCerebrum.setPermission(context, result);
+                }
+            });
+        }
     }
 }

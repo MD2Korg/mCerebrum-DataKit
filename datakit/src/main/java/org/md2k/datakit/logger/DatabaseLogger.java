@@ -93,8 +93,8 @@ public class DatabaseLogger extends SQLiteOpenHelper {
         }
     }
 
-    public Status insert(int dataSourceId, DataType[] dataType) {
-        return databaseTable_data.insert(db, dataSourceId, dataType);
+    public Status insert(int dataSourceId, DataType[] dataType, boolean isUpdate) {
+        return databaseTable_data.insert(db, dataSourceId, dataType, isUpdate);
     }
 
     public Status insertHF(int dataSourceId, DataTypeDoubleArray[] dataType) {

@@ -3,15 +3,16 @@
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
-        <option name="distributionType" value="LOCAL" />
+        <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="gradleHome" value="$APPLICATION_HOME_DIR$/gradle/gradle-2.14.1" />
-        <option name="gradleJvm" value="1.7" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/datakit" />
             <option value="$PROJECT_DIR$/../mCerebrum-DataKitAPI/datakitapi" />
+            <option value="$PROJECT_DIR$/../mCerebrum-Library/commons" />
+            <option value="$PROJECT_DIR$/../mCerebrum-Library/core" />
+            <option value="$PROJECT_DIR$/../mCerebrum-Library/system" />
             <option value="$PROJECT_DIR$/../mCerebrum-Utilities/utilities" />
           </set>
         </option>

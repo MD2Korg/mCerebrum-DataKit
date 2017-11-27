@@ -1,14 +1,15 @@
 package org.md2k.datakit.cerebralcortex;
 
 import android.content.Context;
-import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Handler;
+import android.support.v4.content.LocalBroadcastManager;
 
-import org.md2k.datakit.R;
 import org.md2k.datakit.configuration.Configuration;
 import org.md2k.datakit.configuration.ConfigurationManager;
+import org.md2k.mcerebrum.core.access.appinfo.AppInfo;
+import org.md2k.mcerebrum.core.access.serverinfo.ServerCP;
 import org.md2k.utilities.Apps;
-import org.md2k.utilities.UI.AlertDialogs;
 
 import java.io.IOException;
 
@@ -47,28 +48,33 @@ public class CerebralCortexManager {
     private boolean active;
     private Configuration configuration;
     private Handler handler;
-
-    Runnable publishData = new Runnable() {
+    private Runnable publishData = new Runnable() {
         @Override
         public void run() {
-
+            if(ServerCP.getServerAddress(context)==null) {
+                LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent("SERVER_ERROR"));
+                stop();
+                return;
+            }
             if (task != null) {
                 handler.removeCallbacks(publishData);
             }
             try {
-                task = new CerebralCortexWrapper(context, configuration.upload.url, configuration.upload.restricted_datasource);
+                task = new CerebralCortexWrapper(context, configuration.upload.restricted_datasource);
                 task.setPriority(Thread.MIN_PRIORITY);
-                long time = Apps.serviceRunningTime(context.getApplicationContext(), org.md2k.datakit.Constants.SERVICE_NAME);
-                if (time > 0) {
+                long time = AppInfo.serviceRunningTime(context.getApplicationContext(), org.md2k.datakit.Constants.SERVICE_NAME);
+                if (time > 0) { //TWH: TEMPORARY
                     task.start();
                 }
             } catch (IOException e) {
+/*
                 AlertDialogs.AlertDialog(context, "Error", e.getMessage(), R.drawable.ic_error_red_50dp, "Ok", null, null, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
 
                     }
                 });
+*/
             }
 
 
@@ -76,7 +82,7 @@ public class CerebralCortexManager {
         }
     };
 
-    CerebralCortexManager(Context context) {
+    private CerebralCortexManager(Context context) {
         this.context = context;
         handler = new Handler();
         active = false;
@@ -92,12 +98,13 @@ public class CerebralCortexManager {
     }
 
     void start() {
-        active = true;
-        if(configuration.upload.enabled)
+        if (configuration.upload.enabled) {
+            active = true;
             handler.post(publishData);
+        }
     }
 
-    public boolean isActive() {
+    boolean isActive() {
         return active;
     }
 
@@ -106,7 +113,7 @@ public class CerebralCortexManager {
         handler.removeCallbacks(publishData);
     }
 
-    public boolean isAvailable() {
+    boolean isAvailable() {
         return (configuration != null);
     }
 }

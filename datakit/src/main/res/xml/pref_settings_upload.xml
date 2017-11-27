@@ -15,6 +15,16 @@
             android:defaultValue="86400000"
             android:key="key_interval"
             android:title="Upload Interval"/>
+    <ListPreference
+        android:dependency="key_enabled"
+        android:key="key_network_low_freq"
+        android:title="Network (Low Frequency Data Upload)" />
+
+    <ListPreference
+        android:dependency="key_enabled"
+        android:key="key_network_high_freq"
+        android:title="Network (High Frequency Data Upload)" />
+
     <PreferenceCategory android:title="Restricted Data Stream">
         <CheckBoxPreference
             android:key="key_restrict_location"
