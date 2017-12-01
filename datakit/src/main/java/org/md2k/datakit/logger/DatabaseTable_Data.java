@@ -311,6 +311,12 @@ public class DatabaseTable_Data {
         db.delete(TABLE_NAME, "cc_sync = 1 AND _id <= ? AND datasource_id = ?", args);
         return true;
     }
+    public synchronized boolean removeSyncedDataByTime(SQLiteDatabase db, int dsid, long endTimestamp) {
+        insertDB(db, TABLE_NAME);
+        String[] args = new String[]{Long.toString(endTimestamp), Integer.toString(dsid)};
+        db.delete(TABLE_NAME, "cc_sync = 1 AND datetime <= ? AND datasource_id = ?", args);
+        return true;
+    }
 
     public synchronized boolean setSyncedBit(SQLiteDatabase db, int dsid, long lastSyncKey) {
         insertDB(db, TABLE_NAME);

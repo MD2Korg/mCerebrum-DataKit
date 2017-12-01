@@ -125,6 +125,9 @@ public class DatabaseLogger extends SQLiteOpenHelper {
     public boolean removeSyncedData(int ds_id, long key) {
         return databaseTable_data.removeSyncedData(db, ds_id, key);
     }
+    public boolean removeSyncedDataByTime(int ds_id, long endTimeStamp) {
+        return databaseTable_data.removeSyncedDataByTime(db, ds_id, endTimeStamp);
+    }
 
     public DataTypeLong querySize() {
         return databaseTable_data.querySize(db);

@@ -11,10 +11,12 @@ import com.google.gson.GsonBuilder;
 import org.md2k.datakit.configuration.Configuration;
 import org.md2k.datakit.configuration.ConfigurationManager;
 import org.md2k.datakit.logger.DatabaseLogger;
+import org.md2k.datakitapi.datatype.DataTypeLong;
 import org.md2k.datakitapi.datatype.RowObject;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceBuilder;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
+import org.md2k.datakitapi.time.DateTime;
 import org.md2k.mcerebrum.core.access.serverinfo.ServerCP;
 import org.md2k.mcerebrum.system.cerebralcortexwebapi.CCWebAPICalls;
 import org.md2k.mcerebrum.system.cerebralcortexwebapi.interfaces.CerebralCortexWebApi;
@@ -72,6 +74,7 @@ import static android.content.Context.CONNECTIVITY_SERVICE;
 public class CerebralCortexWrapper extends Thread {
     private static final String TAG = CerebralCortexWrapper.class.getSimpleName();
     private static String raw_directory = "";
+    private static long PRUNE_OFFSET=7*24*60*60*1000;
 
     private Context context;
     private List<DataSource> restricted;
@@ -138,6 +141,10 @@ public class CerebralCortexWrapper extends Thread {
                 Boolean resultUpload = ccWebAPICalls.putArchiveDataAndMetadata(ar.getAccessToken().toString(), dsMetadata, outputTempFile);
                 if (resultUpload) {
                     dbLogger.setSyncedBit(dsc.getDs_id(), objects.get(objects.size() - 1).rowKey);
+                    DataTypeLong countRow = dbLogger.queryCount(dsc.getDs_id(), false);
+                    if(countRow.getSample()>50000){
+                        dbLogger.removeSyncedDataByTime(dsc.getDs_id(), DateTime.getDateTime()-PRUNE_OFFSET);
+                    }
                 } else {
                     Log.e(TAG, "Error uploading file: " + outputTempFile + " for SQLite database dump");
                     return ;
