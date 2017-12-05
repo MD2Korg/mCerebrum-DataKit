@@ -112,7 +112,7 @@ public class CerebralCortexWrapper extends Thread {
         while (cont) {
             cont = false;
 
-            //Computed Data Store
+//Computed Data Store
             List<RowObject> objects;
 
             objects = dbLogger.queryLastKey(dsc.getDs_id(), Constants.DATA_BLOCK_SIZE_LIMIT);
@@ -141,15 +141,11 @@ public class CerebralCortexWrapper extends Thread {
                 Boolean resultUpload = ccWebAPICalls.putArchiveDataAndMetadata(ar.getAccessToken().toString(), dsMetadata, outputTempFile);
                 if (resultUpload) {
                     dbLogger.setSyncedBit(dsc.getDs_id(), objects.get(objects.size() - 1).rowKey);
-                    DataTypeLong countRow = dbLogger.queryCount(dsc.getDs_id(), false);
-                    if(countRow.getSample()>50000){
-                        dbLogger.removeSyncedDataByTime(dsc.getDs_id(), DateTime.getDateTime()-PRUNE_OFFSET);
-                    }
+
                 } else {
                     Log.e(TAG, "Error uploading file: " + outputTempFile + " for SQLite database dump");
                     return ;
                 }
-
             }
             if (objects.size() == BLOCK_SIZE_LIMIT) {
                 cont = true;
@@ -157,8 +153,12 @@ public class CerebralCortexWrapper extends Thread {
 
         }
 
-    }
+        DataTypeLong countRow = dbLogger.queryCount(dsc.getDs_id(), false);
+        if(countRow.getSample()>50000){
+            dbLogger.removeSyncedDataByTime(dsc.getDs_id(), DateTime.getDateTime()-PRUNE_OFFSET);
+        }
 
+    }
 
     private void publishDataFiles(DataSourceClient dsc, CCWebAPICalls ccWebAPICalls, AuthResponse ar, DataStream dsMetadata) {
         File directory = new File(raw_directory + "/raw" + dsc.getDs_id());
