@@ -1,4 +1,4 @@
-version = '2.0.11'
+version = '2.0.13'
 apply from: 'versioning.gradle'
 buildscript {
     repositories {

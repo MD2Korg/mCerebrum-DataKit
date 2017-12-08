@@ -3,6 +3,7 @@ package org.md2k.datakit.logger;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.SparseArray;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
@@ -18,6 +19,15 @@ import org.md2k.utilities.Report.Log;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+
+import rx.Observable;
+import rx.Observer;
+import rx.Subscription;
+import rx.functions.Func1;
+import rx.schedulers.Schedulers;
 
 /*
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -57,7 +67,9 @@ public class DatabaseTable_Data {
     private static String C_DATASOURCE_ID = "datasource_id";
     private static final int CVALUE_LIMIT = 250;
     private static final int HFVALUE_LIMIT = 5000;
-
+    private static final int MAX_DATA_ROW = 50000;
+    private SparseArray<Subscription> subscriptionPrune;
+    private Subscription subsPrune;
     private static final String SQL_CREATE_DATA_INDEX = "CREATE INDEX IF NOT EXISTS index_datasource_id on " + TABLE_NAME + " (" + C_DATASOURCE_ID + ");";
     private static final String SQL_CREATE_CC_INDEX = "CREATE INDEX IF NOT EXISTS index_cc_datasource_id on " + TABLE_NAME + " (" + C_DATASOURCE_ID + ", " + C_CLOUD_SYNC_BIT + ");";
 
@@ -80,6 +92,7 @@ public class DatabaseTable_Data {
     private gzipLogger gzLogger;
 
     DatabaseTable_Data(SQLiteDatabase db, gzipLogger gzl) {
+        subscriptionPrune = new SparseArray<Subscription>();
         kryo = new Kryo();
         createIfNotExists(db);
 
@@ -120,6 +133,7 @@ public class DatabaseTable_Data {
         }
         return new Status(Status.SUCCESS);
     }
+
     public synchronized boolean update(SQLiteDatabase db, int dsid, DataType dataType) {
         try {
             insertDB(db, TABLE_NAME);
@@ -127,15 +141,15 @@ public class DatabaseTable_Data {
             String[] args = new String[]{Long.toString(dsid), Long.toString(dataType.getDateTime())};
             db.update(TABLE_NAME, values, "datasource_id = ? AND datetime = ?", args);
             return true;
-        }catch (Exception e){
+        } catch (Exception e) {
             return true;
         }
     }
 
     public synchronized Status insert(SQLiteDatabase db, int dataSourceId, DataType[] dataType, boolean isUpdate) {
-        if(isUpdate){
-            for(DataType aDataType:dataType) update(db, dataSourceId, aDataType);
-        }else {
+        if (isUpdate) {
+            for (DataType aDataType : dataType) update(db, dataSourceId, aDataType);
+        } else {
             for (DataType aDataType : dataType) insert(db, dataSourceId, aDataType);
         }
         return new Status(Status.SUCCESS);
@@ -146,13 +160,14 @@ public class DatabaseTable_Data {
         Status status = new Status(Status.SUCCESS);
         if (dataType.getDateTime() - lastUnlock >= WAITTIME || cValueCount >= CVALUE_LIMIT) {
             status = insertDB(db, TABLE_NAME);
-            cValueCount=0;
+            cValueCount = 0;
             lastUnlock = dataType.getDateTime();
         }
         ContentValues contentValues = prepareData(dataSourceId, dataType);
         cValues[cValueCount++] = contentValues;
         return status;
     }
+
     public synchronized Status insertHF(int dataSourceId, DataTypeDoubleArray[] dataType) {
         for (DataTypeDoubleArray aDataType : dataType) insertHF(dataSourceId, aDataType);
         return new Status(Status.SUCCESS);
@@ -311,11 +326,148 @@ public class DatabaseTable_Data {
         db.delete(TABLE_NAME, "cc_sync = 1 AND _id <= ? AND datasource_id = ?", args);
         return true;
     }
-    public synchronized boolean removeSyncedDataByTime(SQLiteDatabase db, int dsid, long endTimestamp) {
-        insertDB(db, TABLE_NAME);
-        String[] args = new String[]{Long.toString(endTimestamp), Integer.toString(dsid)};
-        db.delete(TABLE_NAME, "cc_sync = 1 AND datetime <= ? AND datasource_id = ?", args);
-        return true;
+    public void pruneSyncData(final SQLiteDatabase db, final ArrayList<Integer> prunes) {
+        final int[] current=new int[1];
+        if(prunes==null || prunes.size()==0) return;
+        current[0]=0;
+        if(subsPrune!=null && !subsPrune.isUnsubscribed())
+            subsPrune.unsubscribe();
+        subsPrune = Observable.range(1,1000000).takeUntil(new Func1<Integer, Boolean>() {
+                    @Override
+                    public Boolean call(Integer aLong) {
+                        Log.d("abc","current="+current[0]+" size="+prunes.size());
+                        if(current[0]>=prunes.size()) return true;
+                        DataTypeLong countRow = queryCount(db, prunes.get(current[0]),  false);
+                        Log.d("abc","id="+prunes.get(current[0])+" count="+countRow.getSample());
+                        if(countRow.getSample()>MAX_DATA_ROW){
+                            long prune=countRow.getSample()-MAX_DATA_ROW;
+                            Log.d("abc","id="+prunes.get(current[0])+" before delete interval="+aLong);
+                            if(prune>MAX_DATA_ROW) prune=MAX_DATA_ROW;
+                            String ALTER_TBL ="delete from " + TABLE_NAME +
+                                    " where _id in (select _id from "+TABLE_NAME+" where datasource_id="+Integer.toString(prunes.get(current[0]))+" AND cc_sync=1 order by _id limit "+Long.toString(prune)+")";
+                            db.execSQL(ALTER_TBL);
+                            Log.d("abc","id="+prunes.get(current[0])+" after delete");
+                        }else{
+                            Log.d("abc","current++");
+                            current[0]++;
+                        }
+                        return false;
+                    }
+        }).subscribe(new Observer<Integer>() {
+            @Override
+            public void onCompleted() {
+
+            }
+
+            @Override
+            public void onError(Throwable e) {
+
+            }
+
+            @Override
+            public void onNext(Integer aLong) {
+
+            }
+        });
+
+    }
+    public void pruneSyncData(final SQLiteDatabase db, final int dsid) {
+    /*    Thread t = new Thread(new Runnable() {
+            public void run() {
+                while(true) {
+                    Log.d("abc", "id=" + dsid + " before count");
+                    DataTypeLong countRow = queryCount(db, dsid, false);
+                    Log.d("abc", "id=" + dsid + " after count=" + countRow.getSample());
+                    if (countRow.getSample() > MAX_DATA_ROW) {
+                        long prune = countRow.getSample() - MAX_DATA_ROW;
+                        if(prune>10000) prune = 10000;
+                        String ALTER_TBL = "delete from " + TABLE_NAME +
+                                " where _id in (select _id from " + TABLE_NAME + " where datasource_id=" + Integer.toString(dsid) + " AND cc_sync=1 order by _id limit " + Long.toString(prune) + ")";
+                        Log.d("abc", "id=" + dsid + " before delete");
+                        db.execSQL(ALTER_TBL);
+                        Log.d("abc", "id=" + dsid + " after delete");
+                    }else break;
+                }
+            }
+        });
+        t.setPriority(Thread.MIN_PRIORITY);
+        t.start();
+*/
+        Subscription s = subscriptionPrune.get(dsid);
+        if(s!=null && !s.isUnsubscribed()) s.unsubscribe();
+        if(subsPrune!=null && !subsPrune.isUnsubscribed()) subsPrune.unsubscribe();
+        Random rn = new Random();
+        int value=15+rn.nextInt(30);
+        s=Observable.interval(rn.nextInt(5),value, TimeUnit.SECONDS).subscribeOn(Schedulers.newThread()).observeOn(Schedulers.newThread()).takeUntil(new Func1<Long, Boolean>() {
+            @Override
+            public Boolean call(Long aLong) {
+                DataTypeLong countRow = queryCount(db, dsid,  false);
+                if(countRow.getSample()>MAX_DATA_ROW){
+                    long prune=countRow.getSample()-MAX_DATA_ROW;
+                    Log.d("abc","id="+dsid+" before delete interval="+aLong);
+                    if(prune>MAX_DATA_ROW) prune=MAX_DATA_ROW;
+                    String ALTER_TBL ="delete from " + TABLE_NAME +
+                            " where _id in (select _id from "+TABLE_NAME+" where datasource_id="+Integer.toString(dsid)+" AND cc_sync=1 order by _id limit "+Long.toString(prune)+")";
+                    db.execSQL(ALTER_TBL);
+                    Log.d("abc","id="+dsid+" after delete");
+                    return false;
+                }else return true;
+            }
+        }).subscribe(new Observer<Long>() {
+            @Override
+            public void onCompleted() {
+                Log.d("abc","id="+dsid+" onCompleted()");
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                Log.d("abc","id="+dsid+" error e="+e.getMessage());
+
+            }
+
+            @Override
+            public void onNext(Long aLong) {
+                Log.d("abc","id="+dsid+" onNext()");
+
+            }
+        });
+/*
+        s=Observable.just(true).subscribeOn(Schedulers.newThread()).observeOn(Schedulers.newThread()).map(new Func1<Boolean, Boolean>() {
+            @Override
+            public Boolean call(Boolean aBoolean) {
+                Log.d("abc","id="+dsid+" before count");
+                DataTypeLong countRow = queryCount(db, dsid,  false);
+                Log.d("abc","id="+dsid+" after count="+countRow.getSample());
+                if(countRow.getSample()>MAX_DATA_ROW){
+                    long prune=countRow.getSample()-MAX_DATA_ROW;
+                    if(prune>MAX_DATA_ROW) prune=MAX_DATA_ROW;
+                    String ALTER_TBL ="delete from " + TABLE_NAME +
+                            " where _id in (select _id from "+TABLE_NAME+" where datasource_id="+Integer.toString(dsid)+" AND cc_sync=1 order by _id limit "+Long.toString(prune)+")";
+                    Log.d("abc","id="+dsid+" before delete");
+                    db.execSQL(ALTER_TBL);
+                    Log.d("abc","id="+dsid+" after delete");
+                }
+                return true;
+            }
+        }).repeatWhen(new Func)subscribe(new Observer<Boolean>() {
+            @Override
+            public void onCompleted() {
+
+            }
+
+            @Override
+            public void onError(Throwable e) {
+
+            }
+
+            @Override
+            public void onNext(Boolean aBoolean) {
+
+            }
+        });
+*/
+        subscriptionPrune.put(dsid, s);
+        Log.d("abc","id="+dsid+" after added to sparse array");
     }
 
     public synchronized boolean setSyncedBit(SQLiteDatabase db, int dsid, long lastSyncKey) {
@@ -359,6 +511,17 @@ public class DatabaseTable_Data {
         }
         mCursor.close();
         return count;
+    }
+
+    void stopPruning() {
+        for (int i = 0; i < subscriptionPrune.size(); i++) {
+            int key = subscriptionPrune.keyAt(i);
+            Subscription s = subscriptionPrune.get(key);
+            if (s != null && !s.isUnsubscribed()) s.unsubscribe();
+        }
+        subscriptionPrune.clear();
+        if(subsPrune!=null && !subsPrune.isUnsubscribed()) subsPrune.unsubscribe();
+
     }
 
     public synchronized ContentValues prepareData(int dataSourceId, DataType dataType) {

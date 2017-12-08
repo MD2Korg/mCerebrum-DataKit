@@ -84,7 +84,9 @@ public class DatabaseLogger extends SQLiteOpenHelper {
     public void close() {
         if(instance!=null) {
             Log.d(TAG, "close()");
+            databaseTable_data.stopPruning();
             databaseTable_data.commit(db);
+
             if (db.isOpen())
                 db.close();
             super.close();
@@ -125,8 +127,11 @@ public class DatabaseLogger extends SQLiteOpenHelper {
     public boolean removeSyncedData(int ds_id, long key) {
         return databaseTable_data.removeSyncedData(db, ds_id, key);
     }
-    public boolean removeSyncedDataByTime(int ds_id, long endTimeStamp) {
-        return databaseTable_data.removeSyncedDataByTime(db, ds_id, endTimeStamp);
+    public void pruneSyncData(int ds_id){
+        databaseTable_data.pruneSyncData(db, ds_id);
+    }
+    public void pruneSyncData(ArrayList<Integer> prune){
+        databaseTable_data.pruneSyncData(db, prune);
     }
 
     public DataTypeLong querySize() {

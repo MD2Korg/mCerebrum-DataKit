@@ -2,6 +2,7 @@ package org.md2k.datakit.cerebralcortex;
 
 import android.content.Context;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
 import android.support.v4.content.LocalBroadcastManager;
 
@@ -35,10 +36,16 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.sql.Time;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.zip.GZIPOutputStream;
+
+import rx.Observable;
+import rx.Observer;
+import rx.Subscription;
+import rx.functions.Func1;
 
 import static android.content.Context.CONNECTIVITY_SERVICE;
 
@@ -74,20 +81,20 @@ import static android.content.Context.CONNECTIVITY_SERVICE;
 public class CerebralCortexWrapper extends Thread {
     private static final String TAG = CerebralCortexWrapper.class.getSimpleName();
     private static String raw_directory = "";
-    private static long PRUNE_OFFSET=7*24*60*60*1000;
 
     private Context context;
     private List<DataSource> restricted;
     private Gson gson = new GsonBuilder().serializeNulls().create();
     private String network_high_freq;
     private String network_low_freq;
+    private Subscription subsPrune;
 
     public CerebralCortexWrapper(Context context, List<DataSource> restricted) throws IOException {
         Configuration configuration = ConfigurationManager.getInstance(context).configuration;
         this.context = context;
         this.restricted = restricted;
-        this.network_high_freq=configuration.upload.network_high_frequency;
-        this.network_low_freq=configuration.upload.network_low_frequency;
+        this.network_high_freq = configuration.upload.network_high_frequency;
+        this.network_low_freq = configuration.upload.network_low_frequency;
 
         raw_directory = FileManager.getDirectory(context, FileManager.INTERNAL_SDCARD_PREFERRED) + org.md2k.datakit.Constants.RAW_DIRECTORY;
     }
@@ -103,6 +110,7 @@ public class CerebralCortexWrapper extends Thread {
 
 
     private void publishDataStream(DataSourceClient dsc, CCWebAPICalls ccWebAPICalls, AuthResponse ar, DataStream dsMetadata, DatabaseLogger dbLogger) {
+        Log.d("abc", "upload start...  id=" + dsc.getDs_id() + " source=" + dsc.getDataSource().getType());
         boolean cont = true;
 
         int BLOCK_SIZE_LIMIT = Constants.DATA_BLOCK_SIZE_LIMIT;
@@ -144,25 +152,67 @@ public class CerebralCortexWrapper extends Thread {
 
                 } else {
                     Log.e(TAG, "Error uploading file: " + outputTempFile + " for SQLite database dump");
-                    return ;
+                    return;
                 }
             }
             if (objects.size() == BLOCK_SIZE_LIMIT) {
                 cont = true;
             }
-
         }
-
-        DataTypeLong countRow = dbLogger.queryCount(dsc.getDs_id(), false);
-        if(countRow.getSample()>50000){
-            dbLogger.removeSyncedDataByTime(dsc.getDs_id(), DateTime.getDateTime()-PRUNE_OFFSET);
-        }
+        Log.d("abc", "upload done... prune...  id=" + dsc.getDs_id() + " source=" + dsc.getDataSource().getType());
 
     }
 
-    private void publishDataFiles(DataSourceClient dsc, CCWebAPICalls ccWebAPICalls, AuthResponse ar, DataStream dsMetadata) {
-        File directory = new File(raw_directory + "/raw" + dsc.getDs_id());
+    private void deleteArchiveFile(final ArrayList<Integer> prunes) {
+        final int[] current = new int[1];
+        if (prunes == null || prunes.size() == 0) return;
+        current[0] = 0;
+        if (subsPrune != null && !subsPrune.isUnsubscribed())
+            subsPrune.unsubscribe();
 
+        subsPrune = Observable.range(1, 1000000).takeUntil(new Func1<Integer, Boolean>() {
+            @Override
+            public Boolean call(Integer aLong) {
+                Log.d("abc", "current=" + current[0] + " size=" + prunes.size());
+                if (current[0] >= prunes.size()) return true;
+                File directory = new File(raw_directory + "/raw" + current[0]);
+                FilenameFilter ff = new FilenameFilter() {
+                    @Override
+                    public boolean accept(File dir, String filename) {
+                        if (filename.contains("_archive") || filename.contains("_corrupt"))
+                            return true;
+                        return false;
+                    }
+                };
+                File[] files = directory.listFiles(ff);
+                for (int i = 0; files != null && i < files.length; i++) {
+                    files[i].delete();
+                }
+                current[0]++;
+                return false;
+            }
+        }).subscribe(new Observer<Integer>() {
+            @Override
+            public void onCompleted() {
+
+            }
+
+            @Override
+            public void onError(Throwable e) {
+
+            }
+
+            @Override
+            public void onNext(Integer aLong) {
+
+            }
+        });
+
+    }
+
+
+    private void publishDataFiles(DataSourceClient dsc, CCWebAPICalls ccWebAPICalls, AuthResponse ar, DataStream dsMetadata)  {
+        File directory = new File(raw_directory + "/raw" + dsc.getDs_id());
         FilenameFilter ff = new FilenameFilter() {
             @Override
             public boolean accept(File dir, String filename) {
@@ -186,10 +236,14 @@ public class CerebralCortexWrapper extends Thread {
 
                     Boolean resultUpload = ccWebAPICalls.putArchiveDataAndMetadata(ar.getAccessToken().toString(), dsMetadata, file.getAbsolutePath());
                     if (resultUpload) {
+                        File newFile = new File(file.getAbsolutePath());
+                        newFile.delete();
+/*
                         File newFile = new File(file.getAbsolutePath().replace(".csv.gz", "_archive.csv.gz"));
                         if (file.renameTo(newFile)) {
                             Log.d(TAG, "Successfully renamed file: " + file.getAbsolutePath());
                         }
+*/
                     } else {
                         Log.e(TAG, "Error uploading file: " + file.getName());
                         return;
@@ -236,7 +290,7 @@ public class CerebralCortexWrapper extends Thread {
 */
 
     public void run() {
-        if(ServerCP.getServerAddress(context)==null) return;
+        if (ServerCP.getServerAddress(context) == null) return;
         Log.w("CerebralCortex", "Starting publishdataKitData");
 
         DatabaseLogger dbLogger = null;
@@ -252,11 +306,11 @@ public class CerebralCortexWrapper extends Thread {
         }
 
         messenger("Starting publish procedure");
-        String username= ServerCP.getUserName(context);
+        String username = ServerCP.getUserName(context);
         String passwordHash = ServerCP.getPasswordHash(context);
         String token = ServerCP.getToken(context);
-        String serverURL=ServerCP.getServerAddress(context);
-        if(serverURL==null || serverURL.length()==0 || username==null || username.length()==0 || passwordHash==null || passwordHash.length()==0) {
+        String serverURL = ServerCP.getServerAddress(context);
+        if (serverURL == null || serverURL.length() == 0 || username == null || username.length() == 0 || passwordHash == null || passwordHash.length() == 0) {
             messenger("username/password/server address empty");
             return;
         }
@@ -292,6 +346,8 @@ public class CerebralCortexWrapper extends Thread {
 
         DataSourceBuilder dataSourceBuilder = new DataSourceBuilder();
         List<DataSourceClient> dataSourceClients = dbLogger.find(dataSourceBuilder.build());
+        ArrayList<Integer> prune = new ArrayList<>();
+        ArrayList<Integer> pruneFiles = new ArrayList<>();
 
 
         for (DataSourceClient dsc : dataSourceClients) {
@@ -299,27 +355,32 @@ public class CerebralCortexWrapper extends Thread {
                 MetadataBuilder metadataBuilder = new MetadataBuilder();
                 DataStream dsMetadata = metadataBuilder.buildDataStreamMetadata(ar.getUserUuid(), dsc);
 
-                if(isNetworkConnectionValid(network_low_freq)) {
-
+                if (isNetworkConnectionValid(network_low_freq)) {
+                    Log.d("abc", "trying to upload from database id=" + dsc.getDs_id());
                     messenger("Publishing data for " + dsc.getDs_id() + " (" + dsc.getDataSource().getId() + ":" + dsc.getDataSource().getType() + ") to " + dsMetadata.getIdentifier());
                     publishDataStream(dsc, ccWebAPICalls, ar, dsMetadata, dbLogger);
+                    prune.add(dsc.getDs_id());
                 }
-                if(isNetworkConnectionValid(network_high_freq)) {
-
+                if (isNetworkConnectionValid(network_high_freq)) {
+                    Log.d("abc", "trying to upload from file id=" + dsc.getDs_id());
                     messenger("Publishing raw data for " + dsc.getDs_id() + " (" + dsc.getDataSource().getId() + ":" + dsc.getDataSource().getType() + ") to " + dsMetadata.getIdentifier());
+                    pruneFiles.add(dsc.getDs_id());
                     publishDataFiles(dsc, ccWebAPICalls, ar, dsMetadata);
                 }
             }
         }
-
+        dbLogger.pruneSyncData(prune);
+        deleteArchiveFile(pruneFiles);
+//        dbLogger.pruneSyncData(dsc.getDs_id());
 
         messenger("Upload Complete");
     }
-    private boolean isNetworkConnectionValid(String value){
-        if(value==null || value.equalsIgnoreCase("ANY")) return true;
-        if(value.equalsIgnoreCase("NONE")) return false;
+
+    private boolean isNetworkConnectionValid(String value) {
+        if (value == null || value.equalsIgnoreCase("ANY")) return true;
+        if (value.equalsIgnoreCase("NONE")) return false;
         ConnectivityManager manager = (ConnectivityManager) context.getSystemService(CONNECTIVITY_SERVICE);
-        if(value.equalsIgnoreCase("WIFI")){
+        if (value.equalsIgnoreCase("WIFI")) {
             return manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI)
                     .isConnectedOrConnecting();
         }
