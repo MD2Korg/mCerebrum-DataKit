@@ -1,7 +1,6 @@
-package org.md2k.datakit;
 /*
- * Copyright (c) 2016, The University of Memphis, MD2K Center
- * - Syed Monowar Hossain <monowar.hossain@gmail.com>
+ * Copyright (c) 2018, The University of Memphis, MD2K Center of Excellence
+ *
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,20 +25,36 @@ package org.md2k.datakit;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+package org.md2k.datakit;
+
 import android.app.Application;
 import android.content.Context;
 
 import org.md2k.mcerebrum.core.access.MCerebrum;
 
+/**
+ * Starting point for execution.
+ */
 public class MyApplication extends Application {
+
+    /** Android context. */
     private static Context context;
 
+    /**
+     * Calls <code>super.onCreate()</code> and initiates <code>MCerebrum</code> initialization.
+     */
     @Override
     public void onCreate() {
         super.onCreate();
         MCerebrum.init(getApplicationContext(), MyMCerebrumInit.class);
-        context=this;
+        context = this;
     }
+
+    /**
+     * Returns the current context.
+     *
+     * @return The context of this application.
+     */
     public static Context getContext(){
         return context;
     }
