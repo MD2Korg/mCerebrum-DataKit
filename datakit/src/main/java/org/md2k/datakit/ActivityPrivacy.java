@@ -1,16 +1,6 @@
-package org.md2k.datakit;
-
-import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
-import android.view.MenuItem;
-
-import org.md2k.datakitapi.messagehandler.ResultCallback;
-import org.md2k.utilities.Report.Log;
-import org.md2k.utilities.permission.PermissionInfo;
-
 /*
- * Copyright (c) 2015, The University of Memphis, MD2K Center
- * - Syed Monowar Hossain <monowar.hossain@gmail.com>
+ * Copyright (c) 2018, The University of Memphis, MD2K Center of Excellence
+ *
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,22 +25,51 @@ import org.md2k.utilities.permission.PermissionInfo;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-public class ActivityPrivacy extends AppCompatActivity {
-    private static final String TAG = ActivityPrivacy.class.getSimpleName();
-    boolean isPermission=false;
+package org.md2k.datakit;
 
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.view.MenuItem;
+
+import org.md2k.datakitapi.messagehandler.ResultCallback;
+import org.md2k.utilities.Report.Log;
+import org.md2k.utilities.permission.PermissionInfo;
+
+/**
+ * Activity for determining privacy permissions.
+ */
+public class ActivityPrivacy extends AppCompatActivity {
+
+    /** Constant used for logging. <p>Uses <code>class.getSimpleName()</code>.</p> */
+    private static final String TAG = ActivityPrivacy.class.getSimpleName();
+
+    /** Determines if permissions have been granted. */
+    boolean isPermission = false;
+
+    /**
+     * Upon creation, this activity creates a new <code>PermissionInfo</code> object to fetch permissions.
+     *
+     * <p>
+     *     The creation of this activity is logged.
+     * </p>
+     * @param savedInstanceState Previous state of this activity, if it existed.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_privacy);
         new PermissionInfo().getPermissions(this, new ResultCallback<Boolean>() {
+            /**
+             * If permissions are not granted, the activity is finished.
+             *
+             * @param result Result of the callback from <code>.getPermissions()</code>.
+             */
             @Override
             public void onResult(Boolean result) {
-                isPermission=result;
-                if(isPermission==false)
+                isPermission = result;
+                if(isPermission == false)
                     finish();
-
             }
         });
         getFragmentManager().beginTransaction().replace(R.id.layout_preference_fragment,
@@ -58,10 +77,16 @@ public class ActivityPrivacy extends AppCompatActivity {
         if (getSupportActionBar() != null)
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
+
+    /**
+     * Finishes the activity if the home button is pressed on the device.
+     *
+     * @param item Menu item that was selected.
+     * @return Whether home or back was pressed.
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            // Respond to the action bar's Up/Home button
             case android.R.id.home:
                 finish();
                 return true;
