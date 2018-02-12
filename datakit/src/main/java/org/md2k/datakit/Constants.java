@@ -1,11 +1,6 @@
-package org.md2k.datakit;
-
-import android.os.Environment;
-
 /*
- * Copyright (c) 2015, The University of Memphis, MD2K Center
- * - Syed Monowar Hossain <monowar.hossain@gmail.com>
- * - Timothy Hnat <twhnat@memphis.edu>
+ * Copyright (c) 2018, The University of Memphis, MD2K Center of Excellence
+ *
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,11 +24,68 @@ import android.os.Environment;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+package org.md2k.datakit;
+
+import android.os.Environment;
+
+/**
+ * This class defines various constants used throughout this application.
+ */
 public class Constants {
-    public static final String CONFIG_DIRECTORY= Environment.getExternalStorageDirectory().getAbsolutePath() + "/mCerebrum/org.md2k.datakit/";
+
+    /**
+     * Directory for the configuration file.
+     *
+     * <p>
+     *   The configuration file should be found in <code>"/mCerebrum/org.md2k.datakit/"</code> by default.
+     * </p>
+     */
+    public static final String CONFIG_DIRECTORY= Environment.getExternalStorageDirectory()
+                                                            .getAbsolutePath() + "/mCerebrum/org.md2k.datakit/";
+
+    /**
+     * Name of the configuration file.
+     *
+     * <p>
+     *   The configuration file is named <code>"config.json"</code> by default.
+     * </p>
+     */
     public static final String CONFIG_FILENAME = "config.json";
+
+    /**
+     * Filename of the database.
+     *
+     * <p>
+     *   The filename for the database is <code>"database.db"</code> by default.
+     * </p>
+     */
     public static final String DATABASE_FILENAME="database.db";
+
+    /**
+     * Archive directory.
+     *
+     * <p>
+     *   The default directory for archives is <code>"cerebralcortex/"</code>.
+     * </p>
+     */
     public static final String ARCHIVE_DIRECTORY="cerebralcortex/";
+
+    /**
+     * Directory for raw data.
+     *
+     * <p>
+     *   The default raw data directory is <code>"raw/"</code>.
+     * </p>
+     */
     public static final String RAW_DIRECTORY = "raw/";
+
+    /**
+     * Name of this service.
+     *
+     * <p>
+     *   The name of this service is <code>"org.md2k.datakit.ServiceDataKit"</code> by default.
+     * </p>
+     */
     public static String SERVICE_NAME = "org.md2k.datakit.ServiceDataKit";
 }
