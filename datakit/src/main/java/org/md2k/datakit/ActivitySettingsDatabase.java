@@ -1,27 +1,18 @@
-package org.md2k.datakit;
-
-import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
-import android.view.MenuItem;
-
-import org.md2k.datakitapi.messagehandler.ResultCallback;
-import org.md2k.utilities.permission.PermissionInfo;
-
-/**
- * Copyright (c) 2015, The University of Memphis, MD2K Center
- * - Syed Monowar Hossain <monowar.hossain@gmail.com>
+/*
+ * Copyright (c) 2018, The University of Memphis, MD2K Center of Excellence
+ *
  * All rights reserved.
- * <p/>
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * <p/>
+ *
  * * Redistributions of source code must retain the above copyright notice, this
  * list of conditions and the following disclaimer.
- * <p/>
+ *
  * * Redistributions in binary form must reproduce the above copyright notice,
  * this list of conditions and the following disclaimer in the documentation
  * and/or other materials provided with the distribution.
- * <p/>
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -34,19 +25,43 @@ import org.md2k.utilities.permission.PermissionInfo;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+package org.md2k.datakit;
+
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.view.MenuItem;
+
+import org.md2k.datakitapi.messagehandler.ResultCallback;
+import org.md2k.utilities.permission.PermissionInfo;
+
+/**
+ * Activity for the database settings.
+ */
 public class ActivitySettingsDatabase extends AppCompatActivity {
+
+    /** Constant used for logging. <p>Uses <code>class.getSimpleName()</code>.</p> */
     private static final String TAG = ActivitySettingsDatabase.class.getSimpleName();
 
+    /**
+     * Upon creation, this activity creates a new <code>PermissionInfo</code> object to fetch permissions.
+     *
+     * @param savedInstanceState Previous state of this activity, if it existed.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings_database);
         new PermissionInfo().getPermissions(this, new ResultCallback<Boolean>() {
+
+            /**
+             * If permissions are not granted, the activity is finished.
+             *
+             * @param result Result of the callback from <code>.getPermissions()</code>.
+             */
             @Override
             public void onResult(Boolean result) {
-                if(result==false)
+                if(result == false)
                     finish();
-
             }
         });
         getFragmentManager().beginTransaction().replace(R.id.layout_preference_fragment,
@@ -56,10 +71,16 @@ public class ActivitySettingsDatabase extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
     }
+
+    /**
+     * Finishes the activity if the home button is pressed on the device.
+     *
+     * @param item Menu item that was selected.
+     * @return Whether home or back was pressed.
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            // Respond to the action bar's Up/Home button
             case android.R.id.home:
                 finish();
                 return true;
