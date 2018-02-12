@@ -139,7 +139,7 @@ public class ServiceDataKit extends Service {
     }
 
     /**
-     * 
+     * Disconnects all currently connected data sources and messengers.
      */
     void disconnectAll() {
         Messenger replyTo;
@@ -159,6 +159,19 @@ public class ServiceDataKit extends Service {
         messengers.clear();
     }
 
+    /**
+     * On service start the following occurs:
+     *
+     * <p>
+     *     <ul>
+     *         <li>A new incoming handler is created.</li>
+     *         <li>A new <code>connectedList</code> hashMap is created.</li>
+     *         <li>A new <code>messengers</code> hashSet is created.</li>
+     *         <li>Service start is logged.</li>
+     *         <li>The incoming handler is bound to a new messenger thread.</li>
+     *     </ul>
+     * </p>
+     */
     void start() {
         incomingHandler = new IncomingHandler();
         connectedList = new HashMap<>();
@@ -167,10 +180,15 @@ public class ServiceDataKit extends Service {
         try {
             messageController = MessageController.getInstance(getApplicationContext());
             mMessenger = new Messenger(incomingHandler);
-        } catch (IOException ignored) {
-        }
+        } catch (IOException ignored) {}
     }
 
+    /**
+     * Unbinds the given messenger.
+     *
+     * @param intent Android intent
+     * @return Whether the unbinding was successful or not.
+     */
     @Override
     public boolean onUnbind(Intent intent) {
         Log.d(TAG,"onUnbind()...");
@@ -182,6 +200,9 @@ public class ServiceDataKit extends Service {
         return super.onUnbind(intent);
     }
 
+    /**
+     * Sets <code>messengers</code>, <code>connectedList</code>, and <code>messageController</code> to null.
+     */
     @Override
     public void onDestroy() {
         Log.d(TAG, "onDestroy()...");
@@ -195,6 +216,12 @@ public class ServiceDataKit extends Service {
         super.onDestroy();
     }
 
+    /**
+     * Creates an IBinder to bind the given messenger to the thread.
+     *
+     * @param intent Android intent
+     * @return An IBinder
+     */
     @Override
     public IBinder onBind(Intent intent) {
         Log.d(TAG,"onBind()...");
@@ -206,6 +233,13 @@ public class ServiceDataKit extends Service {
         return mMessenger.getBinder();
     }
 
+    /**
+     * Prepares a message for sending.
+     *
+     * @param bundle Data to be sent with the message.
+     * @param messageType Type of message.
+     * @return The prepared message.
+     */
     public Message prepareMessage(Bundle bundle, int messageType) {
         Message message = Message.obtain(null, 0, 0, 0);
         message.what = messageType;
@@ -213,9 +247,16 @@ public class ServiceDataKit extends Service {
         return message;
     }
 
+    /**
+     * Nested class for <code>IncomingHandler</code>.
+     */
     private class IncomingHandler extends Handler {
         Messenger replyTo;
 
+        /**
+         * Handles the incoming messages. Logs errors and executes when possible.
+         * @param incomingMessage
+         */
         @Override
         public void handleMessage(Message incomingMessage) {
             Message outgoingMessage;
