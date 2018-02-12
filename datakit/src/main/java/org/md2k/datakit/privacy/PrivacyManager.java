@@ -1,3 +1,30 @@
+/*
+ * Copyright (c) 2018, The University of Memphis, MD2K Center of Excellence
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 package org.md2k.datakit.privacy;
 
 import android.content.Context;
@@ -32,54 +59,68 @@ import org.md2k.utilities.data_format.privacy.PrivacyData;
 import java.io.IOException;
 import java.util.ArrayList;
 
-/*
- * Copyright (c) 2015, The University of Memphis, MD2K Center
- * - Syed Monowar Hossain <monowar.hossain@gmail.com>
- * - Timothy W. Hnat <twhnat@memphis.edu>
- * All rights reserved.
+/**
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * * Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer.
- *
- * * Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 public class PrivacyManager {
+
+    /** Constant used for logging. <p>Uses <code>class.getSimpleName()</code>.</p> */
     private static final String TAG = PrivacyManager.class.getSimpleName();
-    private static PrivacyManager instance;
+
+    /** Android context. */
     Context context;
+
+    /** Instance of a <code>PrivacyManager</code> object. */
+    private static PrivacyManager instance;
+
+    /** Instance of a <code>routingManager</code> object. */
     RoutingManager routingManager;
+
+    /**  */
     SparseArray<Boolean> listPrivacyListDsId;
+
+    /**  */
     int dsIdPrivacy;
+
+    /** Message handler. */
     Handler handler;
+
+    /** <code>PrivacyData</code> object from mCerebrum Utilites.
+     *
+     * <p>
+     *     This object contains a duration, starting timestamp, and an arrayList of privacy types.
+     * </p>
+     */
     PrivacyData privacyData;
+
+
     Runnable timer = new Runnable() {
         @Override
         public void run() {
             deactivate();
         }
     };
+
+    /**
+     * Returns whether the <code>PrivacyManager</code> is currently active.
+     *
+     * @return Whether <code>PrivacyManager</code> is active or not.
+     */
     public boolean isActive(){
         if (privacyData == null|| !privacyData.isStatus() || getRemainingTime()<=0)
             return false;
-        else return true;
+        else
+            return true;
     }
 
+    /**
+     * Constructor
+     *
+     * <p>
+     *     The construction of <code>PrivacyManager</code> objects is logged.
+     * </p>
+     * @throws IOException
+     */
     private PrivacyManager(Context context) throws IOException {
         Log.d(TAG,"PrivacyManager()..constructor()..");
         this.context = context;
@@ -89,21 +130,35 @@ public class PrivacyManager {
         processPrivacyData();
     }
 
+    /**
+     * Returns this instance of the <code>PrivacyManager</code>.
+     *
+     * <p>
+     *   If an instance doesn't already exist, it creates one.
+     * </p>
+     *
+     * @throws IOException
+     */
     public static PrivacyManager getInstance(Context context) throws IOException {
         if (instance == null)
             instance = new PrivacyManager(context);
         return instance;
     }
 
+    /**
+     * Iterates through <code>privacyData</code> to create a list of
+     */
     private void createPrivacyList() {
-        if(!isActive()) return;
+        if(!isActive())
+            return;
         listPrivacyListDsId.clear();
         int id;
         for (int i = 0; i < privacyData.getPrivacyTypes().size(); i++) {
             for (int j = 0; j < privacyData.getPrivacyTypes().get(i).getDatasource().size(); j++) {
-                ArrayList<DataSourceClient> dataSourceClients = routingManager.find(privacyData.getPrivacyTypes().get(i).getDatasource().get(j));
+                ArrayList<DataSourceClient> dataSourceClients =
+                    routingManager.find(privacyData.getPrivacyTypes().get(i).getDatasource().get(j));
                 for (int k = 0; k < dataSourceClients.size(); k++) {
-                    Log.d(TAG,"id="+dataSourceClients.get(k).getDs_id());
+                    Log.d(TAG,"id=" + dataSourceClients.get(k).getDs_id());
                     id = dataSourceClients.get(k).getDs_id();
                     listPrivacyListDsId.put(id, true);
                 }
@@ -118,24 +173,33 @@ public class PrivacyManager {
         return dataSourceClient;
     }
 
+    /**
+     *
+     * @param ds_id Data source identifier.
+     * @param dataTypes Array of <code>dataTypes</code> to insert.
+     * @return A status corresponding to the success or error of the insert action.
+     */
     public Status insert(int ds_id, DataType[] dataTypes) {
-        Status status=new Status(Status.SUCCESS);
-        if(ds_id==-1 || dataTypes==null)
+        Status status = new Status(Status.SUCCESS);
+
+        if(ds_id == -1 || dataTypes == null)
             return new Status(Status.INTERNAL_ERROR);
+
         if (listPrivacyListDsId.get(ds_id) == null) {
             status = routingManager.insert(ds_id, dataTypes);
-            if(status.getStatusCode()==Status.INTERNAL_ERROR)
+
+            if(status.getStatusCode() == Status.INTERNAL_ERROR)
                 return status;
         }
-        if(ds_id==dsIdPrivacy){
+        if(ds_id == dsIdPrivacy){
             Log.d(TAG,"privacy data...process start...");
             processPrivacyData();
         }
         return status;
     }
     public void insertPrivacy(PrivacyData privacyData){
-        this.privacyData=privacyData;
-        Gson gson=new Gson();
+        this.privacyData = privacyData;
+        Gson gson = new Gson();
         JsonObject sample = new JsonParser().parse(gson.toJson(privacyData)).getAsJsonObject();
         DataTypeJSONObject dataTypeJSONObject = new DataTypeJSONObject(DateTime.getDateTime(), sample);
         insert(dsIdPrivacy, new DataTypeJSONObject[]{dataTypeJSONObject});
@@ -160,15 +224,15 @@ public class PrivacyManager {
     public long getRemainingTime(){
         long currentTimeStamp = DateTime.getDateTime();
         long endTimeStamp = privacyData.getStartTimeStamp() + privacyData.getDuration().getValue();
-        Log.d(TAG,"remaining time = "+(endTimeStamp-currentTimeStamp));
-        return endTimeStamp-currentTimeStamp;
+        Log.d(TAG,"remaining time = " + (endTimeStamp - currentTimeStamp));
+        return endTimeStamp - currentTimeStamp;
 
     }
 
     private void processPrivacyData(){
         Log.d(TAG, "processPrivacyData()...");
         privacyData = queryLastPrivacyData();
-        Log.d(TAG,"privacyData="+ privacyData);
+        Log.d(TAG,"privacyData=" + privacyData);
         if(isActive())
             activate();
         else deactivate();
@@ -189,6 +253,7 @@ public class PrivacyManager {
     public DataTypeLong querySize() {
         return routingManager.querySize();
     }
+
     public Status unregister(int ds_id) {
         return routingManager.unregister(ds_id);
     }
@@ -212,8 +277,8 @@ public class PrivacyManager {
     }
 
     public void close() {
-        Log.d(TAG,"PrivacyManager()..close()..instance="+instance);
-        if(instance!=null) {
+        Log.d(TAG, "PrivacyManager()..close()..instance=" + instance);
+        if(instance != null) {
             listPrivacyListDsId.clear();
             routingManager.close();
             instance = null;
@@ -244,17 +309,17 @@ public class PrivacyManager {
     private void deactivate() {
         Log.d(TAG, "privacy deactivated...");
         listPrivacyListDsId.clear();
-        privacyData =null;
+        privacyData = null;
         handler.removeCallbacks(timer);
     }
 
     public Status updateSummary(DataSourceClient dataSourceClient, DataType dataType) {
-        Status status=new Status(Status.SUCCESS);
-        if(dataSourceClient==null || dataType==null)
+        Status status = new Status(Status.SUCCESS);
+        if(dataSourceClient == null || dataType == null)
             return new Status(Status.INTERNAL_ERROR);
         if (listPrivacyListDsId.get(dataSourceClient.getDs_id()) == null) {
             status = routingManager.updateSummary(dataSourceClient.getDataSource(), dataType);
-            if(status.getStatusCode()==Status.INTERNAL_ERROR)
+            if(status.getStatusCode() == Status.INTERNAL_ERROR)
                 return status;
         }
         return status;

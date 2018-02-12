@@ -1,3 +1,30 @@
+/*
+ * Copyright (c) 2018, The University of Memphis, MD2K Center of Excellence
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 package org.md2k.datakit.router;
 
 import android.content.Context;
@@ -28,40 +55,24 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 
-/*
- * Copyright (c) 2015, The University of Memphis, MD2K Center
- * - Syed Monowar Hossain <monowar.hossain@gmail.com>
- * - Timothy W. Hnat <twhnat@memphis.edu>
- * All rights reserved.
+/**
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * * Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer.
- *
- * * Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-
 public class RoutingManager {
+
+    /** Constant used for logging. <p>Uses <code>class.getSimpleName()</code>.</p> */
     private static final String TAG = RoutingManager.class.getSimpleName();
+
+    /** Instance of a <code>RoutingManager</code> object. */
     private static RoutingManager instance;
+
+    /** Android context. */
     private Context context;
+
+
     private DatabaseLogger databaseLogger;
+
+
     private Publishers publishers;
 
     private RoutingManager(Context context) throws IOException {
@@ -86,43 +97,6 @@ public class RoutingManager {
         }
         return dataSourceClient;
     }
-/*
-    private String getName(DataSource dataSource){
-        String name = getAppStr(dataSource.getApplication())+"_"+getPlatformAppStr(dataSource.getPlatformApp())+"_"+getPlatformStr(dataSource.getPlatform())+"_";
-        if(dataSource.getType()!=null) name+=dataSource.getType()+"_";
-        else name+="null_";
-        if(dataSource.getId()!=null) name+=dataSource.getId();
-        else name+="null";
-        return name;
-    }
-    private String getAppStr(Application application){
-        String name;
-        if(application==null) return "null_null";
-        if(application.getType()==null) name="null_";
-        else name=application.getType()+"_";
-        if(application.getId()==null) name+="null";
-        else name+=application.getId();
-        return name;
-    }
-    private String getPlatformAppStr(PlatformApp platformApp){
-        String name;
-        if(platformApp==null) return "null_null";
-        if(platformApp.getType()==null) name="null_";
-        else name=platformApp.getType()+"_";
-        if(platformApp.getId()==null) name+="null";
-        else name+=platformApp.getId();
-        return name;
-    }
-    private String getPlatformStr(Platform platform){
-        String name;
-        if(platform==null) return "null_null";
-        if(platform.getType()==null) name="null_";
-        else name=platform.getType()+"_";
-        if(platform.getId()==null) name+="null";
-        else name+=platform.getId();
-        return name;
-    }
-*/
 
     public Status insert(int ds_id, DataType[] dataTypes) {
         return publishers.receivedData(ds_id, dataTypes, false);

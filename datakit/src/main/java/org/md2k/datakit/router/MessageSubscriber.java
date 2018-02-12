@@ -1,16 +1,6 @@
-package org.md2k.datakit.router;
-
-import android.os.Bundle;
-import android.os.Message;
-import android.os.Messenger;
-import android.os.RemoteException;
-
-import org.md2k.datakitapi.datatype.DataType;
-import org.md2k.datakitapi.messagehandler.MessageType;
-
-/**
- * Copyright (c) 2015, The University of Memphis, MD2K Center
- * - Syed Monowar Hossain <monowar.hossain@gmail.com>
+/*
+ * Copyright (c) 2018, The University of Memphis, MD2K Center of Excellence
+ *
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,19 +24,54 @@ import org.md2k.datakitapi.messagehandler.MessageType;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+package org.md2k.datakit.router;
+
+import android.os.Bundle;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
+
+import org.md2k.datakitapi.datatype.DataType;
+import org.md2k.datakitapi.messagehandler.MessageType;
+
+/**
+ *
+ */
 public class MessageSubscriber{
+
+    /** Constant used for logging. <p>Uses <code>class.getSimpleName()</code>.</p> */
     private static final String TAG = MessageSubscriber.class.getSimpleName();
+
+    /** Reference to message handler. */
     Messenger reply;
+
+    /** Name of the package the message comes from. */
     String packageName;
+
+    /**
+     * Constructor
+     *
+     * @param packageName Name of the package the message comes from.
+     * @param reply Reference to message handler.
+     */
     public MessageSubscriber(String packageName, Messenger reply){
-        this.packageName=packageName;
-        this.reply=reply;
+        this.packageName = packageName;
+        this.reply = reply;
     }
+
+    /**
+     * Bundles data and sends it in a message.
+     *
+     * @param ds_id Data source identifier.
+     * @param data Data to be sent.
+     * @return Whether the sending was successful or not.
+     */
     public boolean update(int ds_id,DataType[] data) {
-        Bundle bundle=new Bundle();
+        Bundle bundle = new Bundle();
         bundle.putParcelableArray(DataType.class.getSimpleName(), data);
         bundle.putInt("ds_id",ds_id);
-        Message message=prepareMessage(bundle, MessageType.SUBSCRIBED_DATA);
+        Message message = prepareMessage(bundle, MessageType.SUBSCRIBED_DATA);
         try {
             reply.send(message);
             return true;
@@ -54,6 +79,14 @@ public class MessageSubscriber{
             return false;
         }
     }
+
+    /**
+     * Constructs a message.
+     *
+     * @param bundle Data to be sent with the message.
+     * @param messageType Type of message.
+     * @return The prepared message.
+     */
     public Message prepareMessage(Bundle bundle, int messageType) {
         Message message = Message.obtain(null, 0, 0, 0);
         message.what = messageType;
