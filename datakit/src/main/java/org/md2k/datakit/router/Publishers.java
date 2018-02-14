@@ -37,7 +37,7 @@ import org.md2k.datakitapi.status.Status;
 import org.md2k.utilities.Report.Log;
 
 /**
- *
+ * Manages a sparse array of <code>Publisher</code> objects and provides methods for methods for handling them.
  */
 public class Publishers {
 

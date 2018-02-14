@@ -1,3 +1,30 @@
+/*
+ * Copyright (c) 2018, The University of Memphis, MD2K Center of Excellence
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 package org.md2k.datakit.cerebralcortex;
 
 import android.content.Context;
@@ -49,46 +76,35 @@ import rx.functions.Func1;
 
 import static android.content.Context.CONNECTIVITY_SERVICE;
 
-
-/*
- * Copyright (c) 2016, The University of Memphis, MD2K Center
- * - Timothy W. Hnat <twhnat@memphis.edu>
- * - Syed Monowar Hossain <monowar.hossain@gmail.com>
- * All rights reserved.
+/**
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * * Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer.
- *
- * * Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 public class CerebralCortexWrapper extends Thread {
+
+    /** Constant used for logging. <p>Uses <code>class.getSimpleName()</code>.</p> */
     private static final String TAG = CerebralCortexWrapper.class.getSimpleName();
+
+
     private static String raw_directory = "";
 
+    /** Android context. */
     private Context context;
+
+    /** List of restricted or ignored <code>DataSource</code>s. */
     private List<DataSource> restricted;
+
+
     private Gson gson = new GsonBuilder().serializeNulls().create();
+
     private String network_high_freq;
     private String network_low_freq;
     private Subscription subsPrune;
 
+    /**
+     * Constructor
+     *
+     * @throws IOException
+     */
     public CerebralCortexWrapper(Context context, List<DataSource> restricted) throws IOException {
         Configuration configuration = ConfigurationManager.getInstance(context).configuration;
         this.context = context;
@@ -96,9 +112,15 @@ public class CerebralCortexWrapper extends Thread {
         this.network_high_freq = configuration.upload.network_high_frequency;
         this.network_low_freq = configuration.upload.network_low_frequency;
 
-        raw_directory = FileManager.getDirectory(context, FileManager.INTERNAL_SDCARD_PREFERRED) + org.md2k.datakit.Constants.RAW_DIRECTORY;
+        raw_directory = FileManager.getDirectory(context, FileManager.INTERNAL_SDCARD_PREFERRED)
+                                + org.md2k.datakit.Constants.RAW_DIRECTORY;
     }
 
+    /**
+     * Sends broadcast messages containing the given message and an extra name, <code>"CC_Upload"</code>.
+     *
+     * @param message Message to put into the broadcast.
+     */
     private void messenger(String message) {
         Intent intent = new Intent(Constants.CEREBRAL_CORTEX_STATUS);
         Time t = new Time(System.currentTimeMillis());
@@ -108,8 +130,16 @@ public class CerebralCortexWrapper extends Thread {
         LocalBroadcastManager.getInstance(this.context).sendBroadcast(intent);
     }
 
-
-    private void publishDataStream(DataSourceClient dsc, CCWebAPICalls ccWebAPICalls, AuthResponse ar, DataStream dsMetadata, DatabaseLogger dbLogger) {
+    /**
+     *
+     * @param dsc <code>DataSourcClient</code>
+     * @param ccWebAPICalls
+     * @param ar
+     * @param dsMetadata
+     * @param dbLogger
+     */
+    private void publishDataStream(DataSourceClient dsc, CCWebAPICalls ccWebAPICalls, AuthResponse ar,
+                                    DataStream dsMetadata, DatabaseLogger dbLogger) {
         Log.d("abc", "upload start...  id=" + dsc.getDs_id() + " source=" + dsc.getDataSource().getType());
         boolean cont = true;
 
@@ -163,6 +193,10 @@ public class CerebralCortexWrapper extends Thread {
 
     }
 
+    /**
+     *
+     * @param prunes
+     */
     private void deleteArchiveFile(final ArrayList<Integer> prunes) {
         final int[] current = new int[1];
         if (prunes == null || prunes.size() == 0) return;
@@ -193,27 +227,33 @@ public class CerebralCortexWrapper extends Thread {
             }
         }).subscribe(new Observer<Integer>() {
             @Override
-            public void onCompleted() {
-
-            }
+            public void onCompleted() {}
 
             @Override
-            public void onError(Throwable e) {
-
-            }
+            public void onError(Throwable e) {}
 
             @Override
-            public void onNext(Integer aLong) {
-
-            }
+            public void onNext(Integer aLong) {}
         });
-
     }
 
-
-    private void publishDataFiles(DataSourceClient dsc, CCWebAPICalls ccWebAPICalls, AuthResponse ar, DataStream dsMetadata)  {
+    /**
+     *
+     * @param dsc <code>DataSourceClient</code>
+     * @param ccWebAPICalls
+     * @param ar
+     * @param dsMetadata
+     */
+    private void publishDataFiles(DataSourceClient dsc, CCWebAPICalls ccWebAPICalls, AuthResponse ar,
+                                    DataStream dsMetadata)  {
         File directory = new File(raw_directory + "/raw" + dsc.getDs_id());
         FilenameFilter ff = new FilenameFilter() {
+            /**
+             *
+             * @param dir
+             * @param filename
+             * @return
+             */
             @Override
             public boolean accept(File dir, String filename) {
                 if (filename.contains("_archive") || filename.contains("_corrupt"))
@@ -234,27 +274,18 @@ public class CerebralCortexWrapper extends Thread {
                 if (fileTimestamp < currentTimestamp) {
                     Log.d(TAG, file.getAbsolutePath());
 
-                    Boolean resultUpload = ccWebAPICalls.putArchiveDataAndMetadata(ar.getAccessToken().toString(), dsMetadata, file.getAbsolutePath());
+                    Boolean resultUpload = ccWebAPICalls.putArchiveDataAndMetadata(ar.getAccessToken()
+                                                        .toString(), dsMetadata, file.getAbsolutePath());
                     if (resultUpload) {
                         File newFile = new File(file.getAbsolutePath());
                         newFile.delete();
-/*
-                        File newFile = new File(file.getAbsolutePath().replace(".csv.gz", "_archive.csv.gz"));
-                        if (file.renameTo(newFile)) {
-                            Log.d(TAG, "Successfully renamed file: " + file.getAbsolutePath());
-                        }
-*/
                     } else {
                         Log.e(TAG, "Error uploading file: " + file.getName());
                         return;
                     }
                 }
-
             }
-
         }
-
-
     }
 
 
@@ -266,28 +297,6 @@ public class CerebralCortexWrapper extends Thread {
         }
         return false;
     }
-/*
-    private UserCP readUser(){
-        UserCP userInfo=new UserCP();
-        UserInfoSelection s= new UserInfoSelection();
-        UserInfoCursor c = s.query(context);
-        if(c.moveToNext()) {
-            userInfo.set(c);
-        }
-        c.close();
-        return userInfo;
-    }
-    private ConfigCP readConfig(){
-        ConfigCP configInfo=new ConfigCP();
-        ConfigInfoSelection s= new ConfigInfoSelection();
-        ConfigInfoCursor c = s.query(context);
-        if(c.moveToNext()) {
-            configInfo.set(c);
-        }
-        c.close();
-        return configInfo;
-    }
-*/
 
     public void run() {
         if (ServerCP.getServerAddress(context) == null) return;
@@ -333,14 +342,6 @@ public class CerebralCortexWrapper extends Thread {
             messenger("Authenticated with server");
         } else {
             messenger("Authentication Failed");
-/*
-            Intent intent = new Intent();
-            intent.setComponent(new ComponentName("org.md2k.mcerebrum", "org.md2k.mcerebrum.UI.login.ActivityLogin"));
-            PendingIntent pendingIntent=PendingIntent.getActivity(context, 0, intent, 0);
-
-            PugNotification.with(context).load().identifier(312).title("Data upload failed").smallIcon(R.mipmap.ic_launcher)
-                    .message("Data upload failed. Please login again").autoCancel(true).click(pendingIntent).simple().build();
-*/
             return;
         }
 
@@ -371,21 +372,27 @@ public class CerebralCortexWrapper extends Thread {
         }
         dbLogger.pruneSyncData(prune);
         deleteArchiveFile(pruneFiles);
-//        dbLogger.pruneSyncData(dsc.getDs_id());
-
         messenger("Upload Complete");
     }
 
+    /**
+     * Check network connectivity.
+     *
+     * @param value Type of network connection.
+     * @return Whether the network connection is working.
+     */
     private boolean isNetworkConnectionValid(String value) {
-        if (value == null || value.equalsIgnoreCase("ANY")) return true;
-        if (value.equalsIgnoreCase("NONE")) return false;
+        if (value == null || value.equalsIgnoreCase("ANY"))
+            return true;
+        if (value.equalsIgnoreCase("NONE"))
+            return false;
+
         ConnectivityManager manager = (ConnectivityManager) context.getSystemService(CONNECTIVITY_SERVICE);
+
         if (value.equalsIgnoreCase("WIFI")) {
-            return manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI)
-                    .isConnectedOrConnecting();
+            return manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).isConnectedOrConnecting();
         }
-        return manager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE)
-                .isConnectedOrConnecting();
+        return manager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).isConnectedOrConnecting();
     }
 
 

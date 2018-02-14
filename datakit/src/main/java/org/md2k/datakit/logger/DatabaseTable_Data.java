@@ -1,3 +1,30 @@
+/*
+ * Copyright (c) 2018, The University of Memphis, MD2K Center of Excellence
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 package org.md2k.datakit.logger;
 
 import android.content.ContentValues;
@@ -29,50 +56,54 @@ import rx.Subscription;
 import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 
-/*
- * Copyright (c) 2015, The University of Memphis, MD2K Center
- * - Syed Monowar Hossain <monowar.hossain@gmail.com>
- * - Timothy W. Hnat <twhnat@memphis.edu>
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * * Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer.
- *
- * * Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/**
+ * Class for defining a <code>Data</code> table within the database.
  */
-
 public class DatabaseTable_Data {
 
+    /** Name fo the table. <p>Default is <code>"data"</code>.</p> */
     public static String TABLE_NAME = "data";
-    private static String C_ID = "_id";
-    private static String C_CLOUD_SYNC_BIT = "cc_sync";
-    private static String C_DATETIME = "datetime";
-    private static String C_SAMPLE = "sample";
-    private static String C_DATASOURCE_ID = "datasource_id";
-    private static final int CVALUE_LIMIT = 250;
-    private static final int HFVALUE_LIMIT = 5000;
-    private static final int MAX_DATA_ROW = 50000;
-    private SparseArray<Subscription> subscriptionPrune;
-    private Subscription subsPrune;
-    private static final String SQL_CREATE_DATA_INDEX = "CREATE INDEX IF NOT EXISTS index_datasource_id on " + TABLE_NAME + " (" + C_DATASOURCE_ID + ");";
-    private static final String SQL_CREATE_CC_INDEX = "CREATE INDEX IF NOT EXISTS index_cc_datasource_id on " + TABLE_NAME + " (" + C_DATASOURCE_ID + ", " + C_CLOUD_SYNC_BIT + ");";
 
+
+    /**  */
+    private static String C_ID = "_id";
+
+    /**  */
+    private static String C_CLOUD_SYNC_BIT = "cc_sync";
+
+    /**  */
+    private static String C_DATETIME = "datetime";
+
+    /**  */
+    private static String C_SAMPLE = "sample";
+
+    /** <code>DataSource</code> identifier. */
+    private static String C_DATASOURCE_ID = "datasource_id";
+
+    /** Size of a content value array. */
+    private static final int CVALUE_LIMIT = 250;
+
+    /** Size of a content value array for high frequency data. */
+    private static final int HFVALUE_LIMIT = 5000;
+
+    /** Maximum number of rows in the data table. */
+    private static final int MAX_DATA_ROW = 50000;
+
+    /**  */
+    private SparseArray<Subscription> subscriptionPrune;
+
+    /**  */
+    private Subscription subsPrune;
+
+    /**  */
+    private static final String SQL_CREATE_DATA_INDEX = "CREATE INDEX IF NOT EXISTS index_datasource_id on "
+                                                        + TABLE_NAME + " (" + C_DATASOURCE_ID + ");";
+
+    /**  */
+    private static final String SQL_CREATE_CC_INDEX = "CREATE INDEX IF NOT EXISTS index_cc_datasource_id on "
+                                        + TABLE_NAME + " (" + C_DATASOURCE_ID + ", " + C_CLOUD_SYNC_BIT + ");";
+
+    /** Database table creation command. */
     private static final String SQL_CREATE_DATA = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
             C_ID + " INTEGER PRIMARY KEY autoincrement, " +
             C_DATASOURCE_ID + " TEXT not null, " +
@@ -80,25 +111,50 @@ public class DatabaseTable_Data {
             C_DATETIME + " LONG, " +
             C_SAMPLE + " BLOB not null);";
 
+    /**  */
     private static String C_COUNT = "c";
-    private static final long WAITTIME = 5 * 1000L; // 5 second;
+
+    /** 5 seconds waittime. */
+    private static final long WAITTIME = 5 * 1000L;
+
+    /** Content values array for data. */
     private ContentValues[] cValues = new ContentValues[CVALUE_LIMIT];
+
+    /** Content values array for hight frequency data. */
     private ContentValues[] hfValues = new ContentValues[HFVALUE_LIMIT];
+
+    /**  */
     private int cValueCount = 0;
+
+    /**  */
     private int hfValueCount = 0;
+
+    /**  */
     long lastUnlock = 0;
+
+    /**  */
     Kryo kryo;
 
+    /**  */
     private gzipLogger gzLogger;
 
+    /**
+     * Creates a data table in the database if one does not already exist.
+     *
+     * @param db database to check.
+     * @param gzl
+     */
     DatabaseTable_Data(SQLiteDatabase db, gzipLogger gzl) {
         subscriptionPrune = new SparseArray<Subscription>();
         kryo = new Kryo();
         createIfNotExists(db);
-
         gzLogger = gzl;
     }
 
+    /**
+     * Removes the indexes
+     * @param db
+     */
     public synchronized void removeAll(SQLiteDatabase db) {
         db.execSQL("DROP INDEX index_datasource_id");
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
@@ -109,7 +165,7 @@ public class DatabaseTable_Data {
         db.execSQL(SQL_CREATE_DATA_INDEX);
         db.execSQL(SQL_CREATE_CC_INDEX);
     }
-
+//important part
     private synchronized Status insertDB(SQLiteDatabase db, String tableName) {
         try {
 
@@ -372,27 +428,6 @@ public class DatabaseTable_Data {
 
     }
     public void pruneSyncData(final SQLiteDatabase db, final int dsid) {
-    /*    Thread t = new Thread(new Runnable() {
-            public void run() {
-                while(true) {
-                    Log.d("abc", "id=" + dsid + " before count");
-                    DataTypeLong countRow = queryCount(db, dsid, false);
-                    Log.d("abc", "id=" + dsid + " after count=" + countRow.getSample());
-                    if (countRow.getSample() > MAX_DATA_ROW) {
-                        long prune = countRow.getSample() - MAX_DATA_ROW;
-                        if(prune>10000) prune = 10000;
-                        String ALTER_TBL = "delete from " + TABLE_NAME +
-                                " where _id in (select _id from " + TABLE_NAME + " where datasource_id=" + Integer.toString(dsid) + " AND cc_sync=1 order by _id limit " + Long.toString(prune) + ")";
-                        Log.d("abc", "id=" + dsid + " before delete");
-                        db.execSQL(ALTER_TBL);
-                        Log.d("abc", "id=" + dsid + " after delete");
-                    }else break;
-                }
-            }
-        });
-        t.setPriority(Thread.MIN_PRIORITY);
-        t.start();
-*/
         Subscription s = subscriptionPrune.get(dsid);
         if(s!=null && !s.isUnsubscribed()) s.unsubscribe();
         if(subsPrune!=null && !subsPrune.isUnsubscribed()) subsPrune.unsubscribe();
@@ -431,41 +466,6 @@ public class DatabaseTable_Data {
 
             }
         });
-/*
-        s=Observable.just(true).subscribeOn(Schedulers.newThread()).observeOn(Schedulers.newThread()).map(new Func1<Boolean, Boolean>() {
-            @Override
-            public Boolean call(Boolean aBoolean) {
-                Log.d("abc","id="+dsid+" before count");
-                DataTypeLong countRow = queryCount(db, dsid,  false);
-                Log.d("abc","id="+dsid+" after count="+countRow.getSample());
-                if(countRow.getSample()>MAX_DATA_ROW){
-                    long prune=countRow.getSample()-MAX_DATA_ROW;
-                    if(prune>MAX_DATA_ROW) prune=MAX_DATA_ROW;
-                    String ALTER_TBL ="delete from " + TABLE_NAME +
-                            " where _id in (select _id from "+TABLE_NAME+" where datasource_id="+Integer.toString(dsid)+" AND cc_sync=1 order by _id limit "+Long.toString(prune)+")";
-                    Log.d("abc","id="+dsid+" before delete");
-                    db.execSQL(ALTER_TBL);
-                    Log.d("abc","id="+dsid+" after delete");
-                }
-                return true;
-            }
-        }).repeatWhen(new Func)subscribe(new Observer<Boolean>() {
-            @Override
-            public void onCompleted() {
-
-            }
-
-            @Override
-            public void onError(Throwable e) {
-
-            }
-
-            @Override
-            public void onNext(Boolean aBoolean) {
-
-            }
-        });
-*/
         subscriptionPrune.put(dsid, s);
         Log.d("abc","id="+dsid+" after added to sparse array");
     }

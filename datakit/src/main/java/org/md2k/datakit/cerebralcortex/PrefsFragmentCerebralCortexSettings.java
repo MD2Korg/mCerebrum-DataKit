@@ -100,7 +100,7 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
     }
 
     /**
-     *
+     * Creates a preference for restricting the upload of the user's location.
      */
     void createPrefRestrictLocation() {
         CheckBoxPreference checkBoxPreference = (CheckBoxPreference) findPreference("restrict_location");
@@ -115,6 +115,13 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
             checkBoxPreference.setChecked(false);
         }
         checkBoxPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            /**
+             * Changes the value of the preference.
+             *
+             * @param preference Preference to change.
+             * @param newValue New value for the preference.
+             * @return Whether the change was successful or not.
+             */
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 Log.d(TAG, "check=" + newValue);
@@ -358,7 +365,7 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
     }
 
     /**
-     * Creates a back button so the user can close this application.
+     * Creates a back button so the user can close this activity.
      */
     private void setBackButton() {
         final Button button = (Button) getActivity().findViewById(R.id.button_2);

@@ -1,6 +1,6 @@
-package org.md2k.datakit.cerebralcortex;
 /*
- * Copyright (c) 2016, The University of Memphis, MD2K Center
+ * Copyright (c) 2018, The University of Memphis, MD2K Center of Excellence
+ *
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,6 +25,8 @@ package org.md2k.datakit.cerebralcortex;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+package org.md2k.datakit.cerebralcortex;
+
 import java.io.IOException;
 
 import okhttp3.Interceptor;
@@ -37,6 +39,9 @@ import okio.BufferedSink;
 import okio.GzipSink;
 import okio.Okio;
 
+/**
+ *
+ */
 class GzipRequestInterceptor implements Interceptor {
     @Override
     public Response intercept(Chain chain) throws IOException {

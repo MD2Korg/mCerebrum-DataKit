@@ -31,7 +31,7 @@ import android.content.Context;
 import java.io.IOException;
 
 /**
- *
+ * Provides methods for managing data.
  */
 public class DataManager {
 

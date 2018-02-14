@@ -1,3 +1,30 @@
+/*
+ * Copyright (c) 2018, The University of Memphis, MD2K Center of Excellence
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 package org.md2k.datakit;
 
 import android.os.Bundle;
@@ -35,62 +62,63 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 /**
- * Copyright (c) 2015, The University of Memphis, MD2K Center
- * - Syed Monowar Hossain <monowar.hossain@gmail.com>
- * All rights reserved.
- * <p/>
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- * <p/>
- * * Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer.
- * <p/>
- * * Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- * <p/>
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Preferences fragment for privacy settings
  */
 public class PrefsFragmentPrivacySettings extends PreferenceFragment {
+
+    /** Constant used for logging. <p>Uses <code>class.getSimpleName()</code>.</p> */
     private static final String TAG = PrefsFragmentPrivacySettings.class.getSimpleName();
+
+    /** Privacy configuration object. */
     PrivacyConfig privacyConfig;
+
+    /** Message handler. */
     Handler handler;
+
+    /** PrivacyData object. */
     PrivacyData newPrivacyData;
+
+    /** PrivacyManager object. */
     PrivacyManager privacyManager;
+
+    /** Time remaining in the privacy duration. */
     long remainingTime;
 
+    /**
+     * Creates the privacy settings screen.
+     *
+     * @param savedInstanceState Previous state of this activity, if it existed.
+     */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate...");
         if(getActivity().getIntent().hasExtra("REMAINING_TIME")){
-            remainingTime=getActivity().getIntent().getLongExtra("REMAINING_TIME",Long.MAX_VALUE);
+            remainingTime = getActivity().getIntent().getLongExtra("REMAINING_TIME",Long.MAX_VALUE);
         }else{
-            remainingTime=Long.MAX_VALUE;
+            remainingTime = Long.MAX_VALUE;
         }
         getPreferenceManager().getSharedPreferences().edit().clear().apply();
-        privacyConfig=ConfigurationManager.getInstance(getActivity()).configuration.privacy;
-        newPrivacyData=new PrivacyData();
+        privacyConfig = ConfigurationManager.getInstance(getActivity()).configuration.privacy;
+        newPrivacyData = new PrivacyData();
         handler = new Handler();
         addPreferencesFromResource(R.xml.pref_privacy);
         try {
-            privacyManager=PrivacyManager.getInstance(getActivity());
+            privacyManager = PrivacyManager.getInstance(getActivity());
         } catch (IOException e) {
             e.printStackTrace();
         }
         setupButtonSaveCancel();
     }
 
-
+    /**
+     * Creates a <code>View</code>.
+     *
+     * @param inflater Android LayoutInflater
+     * @param container Android ViewGroup
+     * @param savedInstanceState Previous state of this activity, if it existed.
+     * @return The <code>View</code> that was created.
+     */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -101,15 +129,23 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
         return v;
     }
 
+    /**
+     * Creates a start/stop toggle button and a cancel button.
+     */
     void setupButtonSaveCancel() {
         final Button buttonStartStop = (Button) getActivity().findViewById(R.id.button_1);
         Button buttonCancel = (Button) getActivity().findViewById(R.id.button_2);
 
         buttonStartStop.setOnClickListener(new View.OnClickListener() {
+            /**
+             * Toggles the start/stop button.
+             *
+             * @param v Android view
+             */
             @Override
             public void onClick(View v) {
                 if(privacyManager.isActive()){
-                    PrivacyData privacyData=privacyManager.getPrivacyData();
+                    PrivacyData privacyData = privacyManager.getPrivacyData();
                     privacyData.setStatus(false);
                     privacyManager.insertPrivacy(privacyData);
                     Toast.makeText(getActivity(), "Privacy Mode Off...", Toast.LENGTH_SHORT).show();
@@ -125,6 +161,10 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
         });
         buttonCancel.setText("Close");
         buttonCancel.setOnClickListener(new View.OnClickListener() {
+            /**
+             * Calls <code>.finish()</code>.
+             * @param v Android view.
+             */
             @Override
             public void onClick(View v) {
                 getActivity().finish();
@@ -132,22 +172,24 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
         });
     }
 
+    /**
+     * Sets the starting timestamp and status of <code>newPrivacyData</code> as long as the duration
+     * and privacy type are valid.
+     *
+     * @return Whether the preparation was successful.
+     */
     boolean preparePrivacyData() {
-        if(newPrivacyData.getDuration()==null) {
+        if(newPrivacyData.getDuration() == null) {
             Dialog.simple(getActivity(), "ERROR: Duration", "Duration is not set", "Ok", null, new DialogCallback() {
                 @Override
-                public void onSelected(String value) {
-
-                }
+                public void onSelected(String value) {}
             }).show();
             return false;
         }
         else if (newPrivacyData.getPrivacyTypes() == null || newPrivacyData.getPrivacyTypes().size() == 0) {
             Dialog.simple(getActivity(), "ERROR: Privacy Type", "Privacy Type is not selected", "Ok", null, new DialogCallback() {
                 @Override
-                public void onSelected(String value) {
-
-                }
+                public void onSelected(String value) {}
             }).show();
             return false;
         }
@@ -158,6 +200,9 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
         }
     }
 
+    /**
+     * Updates the user interface to reflect the current status of <code>privacyManager</code>.
+     */
     void updateUI() {
         Preference preference = findPreference("status");
         preference.setEnabled(false);
@@ -166,18 +211,24 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
         if (privacyManager.isActive()) {
             ((Button) getActivity().findViewById(R.id.button_1)).setText("Stop");
             pc.setEnabled(false);
-            Spannable summary = new SpannableString("ON (" + DateTime.convertTimestampToTimeStr(privacyManager.getRemainingTime()) + ")");
-            summary.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getActivity(), R.color.red_700)), 0, summary.length(), 0);
+            Spannable summary = new SpannableString("ON (" + DateTime
+                                .convertTimestampToTimeStr(privacyManager.getRemainingTime()) + ")");
+            summary.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getActivity(), R.color.red_700)),
+                                0, summary.length(), 0);
             preference.setSummary(summary);
         } else {
             ((Button) getActivity().findViewById(R.id.button_1)).setText("Start");
             pc.setEnabled(true);
             Spannable summary = new SpannableString("OFF");
-            summary.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getActivity(), R.color.teal_700)), 0, summary.length(), 0);
+            summary.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getActivity(), R.color.teal_700)),
+                                0, summary.length(), 0);
             preference.setSummary(summary);
         }
     }
 
+    /**
+     * Runnable used to update the user interface every second.
+     */
     Runnable runnable = new Runnable() {
         @Override
         public void run() {
@@ -188,28 +239,44 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
         }
     };
 
+    /**
+     * Posts runnable messages on activity resume.
+     */
     @Override
     public void onResume() {
         handler.post(runnable);
         super.onResume();
     }
 
+    /**
+     * Removes runnable messages currently in the handler when the activity is paused.
+     */
     @Override
     public void onPause() {
         handler.removeCallbacks(runnable);
         super.onPause();
     }
+
+    /**
+     * Calls <code>setupPreferences()</code> when the activity is started.
+     */
     @Override
     public void onStart(){
         setupPreferences();
         super.onStart();
     }
 
+    /**
+     * Wrapper method that calls <code>setupDuration()</code> and <code>setupPrivacyType()</code>.
+     */
     void setupPreferences() {
         setupDuration();
         setupPrivacyType();
     }
 
+    /**
+     * Provides the user with a list of privacy types to choose from.
+     */
     void setupPrivacyType() {
         final ArrayList<PrivacyType> privacyTypes = privacyConfig.privacy_type_options;
         final MultiSelectListPreference listPreference = (MultiSelectListPreference) findPreference("privacy_type");
@@ -222,22 +289,30 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
         listPreference.setEntries(entries);
         listPreference.setEntryValues(entryValues);
         if (privacyManager.isActive()) {
-            String list="";
-            for(int i=0;i<privacyManager.getPrivacyData().getPrivacyTypes().size();i++){
-                if(!list.equals("")) list+=", ";
-                list+=privacyManager.getPrivacyData().getPrivacyTypes().get(i).getTitle();
+            String list = "";
+            for(int i = 0; i < privacyManager.getPrivacyData().getPrivacyTypes().size(); i++){
+                if(!list.equals("")) list += ", ";
+                list += privacyManager.getPrivacyData().getPrivacyTypes().get(i).getTitle();
             }
             listPreference.setSummary(list);
         } else {
             Spannable summary = new SpannableString("(Click Here)");
-            summary.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getActivity(), R.color.red_700)), 0, summary.length(), 0);
+            summary.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getActivity(), R.color.red_700)),
+                0, summary.length(), 0);
             listPreference.setSummary(summary);
         }
         listPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            /**
+             * Sets the new privacy type.
+             *
+             * @param preference Preference to change.
+             * @param newValue New value of the preference.
+             * @return Whether the change was successful or not.
+             */
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 ArrayList<PrivacyType> privacyTypeSelected= new ArrayList<>();
-                String list="";
+                String list = "";
                 for (int i = 0; i < privacyTypes.size(); i++){
                     if(((HashSet)newValue).contains(privacyTypes.get(i).getId())) {
                         privacyTypeSelected.add(privacyTypes.get(i));
@@ -253,13 +328,16 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
         });
     }
 
+    /**
+     * Provides the user with a list of duration options to choose from.
+     */
     void setupDuration() {
         final ArrayList<Duration> durations = privacyConfig.duration_options;
         final ListPreference listPreference = (ListPreference) findPreference("duration");
         ArrayList<String> entries = new ArrayList<>();
         ArrayList<String> entryValues = new ArrayList<>();
         for (int i = 0; i < durations.size(); i++) {
-            if(durations.get(i).getValue()<=remainingTime) {
+            if(durations.get(i).getValue() <= remainingTime) {
                 entries.add(durations.get(i).getTitle());
                 entryValues.add(durations.get(i).getId());
             }
@@ -271,10 +349,18 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
 
         } else {
             Spannable summary = new SpannableString("(Click Here)");
-            summary.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getActivity(), R.color.red_700)), 0, summary.length(), 0);
+            summary.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getActivity(), R.color.red_700)),
+                0, summary.length(), 0);
             listPreference.setSummary(summary);
         }
         listPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            /**
+             * Sets the new privacy duration.
+             *
+             * @param preference Preference to change.
+             * @param newValue New value of the preference.
+             * @return Whether the change was successful or not.
+             */
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 int index = listPreference.findIndexOfValue(newValue.toString());
@@ -289,5 +375,4 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
             }
         });
     }
-
 }
