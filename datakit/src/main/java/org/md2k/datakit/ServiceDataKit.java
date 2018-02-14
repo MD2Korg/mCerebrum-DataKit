@@ -54,7 +54,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 /**
- *
+ * <code>DataKit</code> background service.
  */
 public class ServiceDataKit extends Service {
 
