@@ -69,12 +69,17 @@ public class RoutingManager {
     /** Android context. */
     private Context context;
 
-
+    /** <code>DatabaseLogger</code> for interacting with the database. */
     private DatabaseLogger databaseLogger;
 
-
+    /** List of data source message publishers. */
     private Publishers publishers;
 
+    /**
+     * Constructor
+     *
+     * @throws IOException
+     */
     private RoutingManager(Context context) throws IOException {
         Log.d(TAG, "RoutingManager()....constructor()");
         this.context = context;
@@ -82,12 +87,28 @@ public class RoutingManager {
         publishers = new Publishers();
     }
 
+    /**
+     * Returns this instance of this class.
+     *
+     * @throws IOException
+     */
     public static RoutingManager getInstance(Context context) throws IOException {
         if (instance == null)
             instance = new RoutingManager(context);
         return instance;
     }
 
+    /**
+     * Registers the given data source.
+     *
+     * <p>
+     *     If the data source is persistent, the data source gets added to the list of <code>Publisher</code>s
+     *     and subscribed to the <code>databaseLogger</code>.
+     * </p>
+     *
+     * @param dataSource Data source to register.
+     * @return A <code>DataSourceClient</code> constructed from the given <code>dataSource</code>.
+     */
     public DataSourceClient register(DataSource dataSource) {
         DataSourceClient dataSourceClient = registerDataSource(dataSource);
         if (dataSource.isPersistent()) {
@@ -98,6 +119,12 @@ public class RoutingManager {
         return dataSourceClient;
     }
 
+    /**
+     * Inserts
+     * @param ds_id
+     * @param dataTypes
+     * @return
+     */
     public Status insert(int ds_id, DataType[] dataTypes) {
         return publishers.receivedData(ds_id, dataTypes, false);
     }
@@ -171,6 +198,9 @@ public class RoutingManager {
         return dataSourceClient;
     }
 
+    /**
+     * Closes the <code>RoutingManager</code>, <code>publishers</code>, and <code>databaseLogger</code>.
+     */
     public void close() {
         Log.d(TAG, "RoutingManager()...close()...");
         if (instance != null) {
@@ -181,31 +211,39 @@ public class RoutingManager {
     }
 
     public Status updateSummary(DataSource dataSource, DataType dataType) {
-        Status status=null;
-        for(int i=0;i<4;i++) {
-            int ds_id=registerSummary(dataSource, i);
+        Status status = null;
+        for(int i = 0; i < 4; i++) {
+            int ds_id = registerSummary(dataSource, i);
             long updatedTimestamp = getUpdatedTimestamp(dataType.getDateTime(), i);
             ArrayList<DataType> dataTypeLast = query(ds_id, 1);
-            if(dataTypeLast.size()==0){
-                status= publishers.receivedData(ds_id, new DataType[]{createDataType(dataType, null, updatedTimestamp)}, false);
-            }else if(i==0){
-                status= publishers.receivedData(ds_id, new DataType[]{createDataType(dataType, dataTypeLast.get(0), updatedTimestamp)}, true);
+            if(dataTypeLast.size() == 0){
+                status = publishers.receivedData(ds_id, new DataType[]{createDataType(dataType, null,
+                    updatedTimestamp)}, false);
+            }else if(i == 0){
+                status = publishers.receivedData(ds_id, new DataType[]{createDataType(dataType, dataTypeLast.get(0),
+                    updatedTimestamp)}, true);
             }else if (dataTypeLast.get(0).getDateTime() != updatedTimestamp) {
-                status= publishers.receivedData(ds_id, new DataType[]{createDataType(dataType, null, updatedTimestamp)}, false);
+                status = publishers.receivedData(ds_id, new DataType[]{createDataType(dataType, null,
+                    updatedTimestamp)}, false);
             } else {
-                status= publishers.receivedData(ds_id, new DataType[]{createDataType(dataType, dataTypeLast.get(0),updatedTimestamp)}, true);
+                status = publishers.receivedData(ds_id, new DataType[]{createDataType(dataType, dataTypeLast.get(0),
+                    updatedTimestamp)}, true);
             }
         }
         return status;
     }
     private int registerSummary(DataSource dataSource, int now){
-        String type=dataSource.getType();
+        String type = dataSource.getType();
         DataSourceBuilder dataSourceBuilder=new DataSourceBuilder(dataSource);
         switch(now) {
-            case 0: dataSourceBuilder = dataSourceBuilder.setType(type+"_SUMMARY_TOTAL");break;
-            case 1: dataSourceBuilder = dataSourceBuilder.setType(type+"_SUMMARY_MINUTE");break;
-            case 2: dataSourceBuilder = dataSourceBuilder.setType(type+"_SUMMARY_HOUR");break;
-            case 3: dataSourceBuilder = dataSourceBuilder.setType(type+"_SUMMARY_DAY");break;
+            case 0: dataSourceBuilder = dataSourceBuilder.setType(type + "_SUMMARY_TOTAL");
+                break;
+            case 1: dataSourceBuilder = dataSourceBuilder.setType(type + "_SUMMARY_MINUTE");
+                break;
+            case 2: dataSourceBuilder = dataSourceBuilder.setType(type + "_SUMMARY_HOUR");
+                break;
+            case 3: dataSourceBuilder = dataSourceBuilder.setType(type + "_SUMMARY_DAY");
+                break;
             default:
         }
         DataSourceClient dataSourceClient = register(dataSourceBuilder.build());
@@ -216,48 +254,48 @@ public class RoutingManager {
     private DataType createDataType(DataType dataType, DataType dataTypeLast, long time){
         if(dataType instanceof DataTypeDouble) {
             double sampleCur = ((DataTypeDouble) dataType).getSample();
-            double sampleLast=0;
-            if(dataTypeLast!=null) {
+            double sampleLast = 0;
+            if(dataTypeLast != null) {
                 sampleLast = ((DataTypeDouble) dataTypeLast).getSample();
             }
             return new DataTypeDouble(time, sampleCur+sampleLast);
         }
         if(dataType instanceof DataTypeDoubleArray) {
             double[] sampleCur = ((DataTypeDoubleArray) dataType).getSample();
-            double[] sampleFinal=new double[sampleCur.length];
+            double[] sampleFinal = new double[sampleCur.length];
             System.arraycopy(sampleCur, 0, sampleFinal, 0, sampleCur.length);
-            if(dataTypeLast!=null) {
+            if(dataTypeLast != null) {
                 double[] sampleLast = ((DataTypeDoubleArray) dataTypeLast).getSample();
-                for(int i=0;i<sampleLast.length;i++)
-                    sampleFinal[i]+=sampleLast[i];
+                for(int i = 0; i < sampleLast.length; i++)
+                    sampleFinal[i] += sampleLast[i];
             }
             return new DataTypeDoubleArray(time, sampleFinal);
         }
         if(dataType instanceof DataTypeInt) {
             int sampleCur = ((DataTypeInt) dataType).getSample();
-            int sampleLast=0;
-            if(dataTypeLast!=null) {
+            int sampleLast = 0;
+            if(dataTypeLast != null) {
                 sampleLast = ((DataTypeInt) dataTypeLast).getSample();
             }
             return new DataTypeInt(time, sampleCur+sampleLast);
         }
         if(dataType instanceof DataTypeIntArray) {
             int[] sampleCur = ((DataTypeIntArray) dataType).getSample();
-            int[] sampleFinal=new int[sampleCur.length];
+            int[] sampleFinal = new int[sampleCur.length];
             System.arraycopy(sampleCur, 0, sampleFinal, 0, sampleCur.length);
-            if(dataTypeLast!=null) {
+            if(dataTypeLast != null) {
                 if(dataTypeLast instanceof DataTypeInt)
-                    sampleCur=null;
+                    sampleCur = null;
                 int[] sampleLast = ((DataTypeIntArray) dataTypeLast).getSample();
-                for(int i=0;i<sampleLast.length;i++)
-                    sampleFinal[i]+=sampleLast[i];
+                for(int i = 0; i < sampleLast.length; i++)
+                    sampleFinal[i] += sampleLast[i];
             }
             return new DataTypeIntArray(time, sampleFinal);
         }
         if(dataType instanceof DataTypeLong) {
             long sampleCur = ((DataTypeLong) dataType).getSample();
-            long sampleLast=0;
-            if(dataTypeLast!=null) {
+            long sampleLast = 0;
+            if(dataTypeLast != null) {
                 sampleLast = ((DataTypeLong) dataTypeLast).getSample();
             }
 
@@ -267,19 +305,19 @@ public class RoutingManager {
         }
         if(dataType instanceof DataTypeLongArray) {
             long[] sampleCur = ((DataTypeLongArray) dataType).getSample();
-            long[] sampleFinal=new long[sampleCur.length];
+            long[] sampleFinal = new long[sampleCur.length];
             System.arraycopy(sampleCur, 0, sampleFinal, 0, sampleCur.length);
-            if(dataTypeLast!=null) {
+            if(dataTypeLast != null) {
                 long[] sampleLast = ((DataTypeLongArray) dataTypeLast).getSample();
-                for(int i=0;i<sampleLast.length;i++)
-                    sampleFinal[i]+=sampleLast[i];
+                for(int i = 0; i < sampleLast.length; i++)
+                    sampleFinal[i] += sampleLast[i];
             }
             return new DataTypeLongArray(time, sampleFinal);
         }
         if(dataType instanceof DataTypeFloat) {
             float sampleCur = ((DataTypeFloat) dataType).getSample();
-            float sampleLast=0;
-            if(dataTypeLast!=null) {
+            float sampleLast = 0;
+            if(dataTypeLast != null) {
                 sampleLast = ((DataTypeFloat) dataTypeLast).getSample();
             }
 
@@ -287,12 +325,12 @@ public class RoutingManager {
         }
         if(dataType instanceof DataTypeFloatArray) {
             float[] sampleCur = ((DataTypeFloatArray) dataType).getSample();
-            float[] sampleFinal=new float[sampleCur.length];
+            float[] sampleFinal = new float[sampleCur.length];
             System.arraycopy(sampleCur, 0, sampleFinal, 0, sampleCur.length);
             if(dataTypeLast!=null) {
                 float[] sampleLast = ((DataTypeFloatArray) dataTypeLast).getSample();
-                for(int i=0;i<sampleLast.length;i++)
-                    sampleFinal[i]+=sampleLast[i];
+                for(int i = 0; i < sampleLast.length; i++)
+                    sampleFinal[i] += sampleLast[i];
             }
             return new DataTypeFloatArray(time, sampleFinal);
         }
@@ -308,12 +346,14 @@ public class RoutingManager {
             case 1:
                 return c.getTimeInMillis();
             case 2:
-                c.set(Calendar.MINUTE, 0); return c.getTimeInMillis();
+                c.set(Calendar.MINUTE, 0);
+                return c.getTimeInMillis();
             case 3:
                 c.set(Calendar.MINUTE, 0);
                 c.set(Calendar.HOUR_OF_DAY, 0);
                 return c.getTimeInMillis();
-            default: return curTime;
+            default:
+                return curTime;
         }
     }
 }

@@ -36,7 +36,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- *
+ * Publishes messages on behalf of a particular <code>DataSource</code>.
  */
 public class Publisher {
 

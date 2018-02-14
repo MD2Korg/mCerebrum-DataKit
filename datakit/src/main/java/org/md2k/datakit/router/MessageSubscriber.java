@@ -36,7 +36,7 @@ import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.messagehandler.MessageType;
 
 /**
- *
+ * Handles message subscribing for the <code>Publisher</code> class.
  */
 public class MessageSubscriber{
 
