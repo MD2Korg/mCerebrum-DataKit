@@ -1,14 +1,6 @@
-package org.md2k.datakit.cerebralcortex;
-
-import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
-import android.view.MenuItem;
-
-import org.md2k.datakit.R;
-
 /*
- * Copyright (c) 2016, The University of Memphis, MD2K Center
- * - Syed Monowar Hossain <monowar.hossain@gmail.com>
+ * Copyright (c) 2018, The University of Memphis, MD2K Center of Excellence
+ *
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,8 +25,24 @@ import org.md2k.datakit.R;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+package org.md2k.datakit.cerebralcortex;
+
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.view.MenuItem;
+
+import org.md2k.datakit.R;
+
+/**
+ * Settings activity for <code>CerebralCortex</code>.
+ */
 public class ActivityCerebralCortexSettings extends AppCompatActivity {
 
+    /**
+     * Creates the activity.
+     *
+     * @param savedInstanceState Previous state of this activity, if it existed.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,6 +56,12 @@ public class ActivityCerebralCortexSettings extends AppCompatActivity {
         }
     }
 
+    /**
+     * Finishes the activity if the home button is pressed on the device.
+     *
+     * @param item Menu item that was selected.
+     * @return Whether home or back was pressed.
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
