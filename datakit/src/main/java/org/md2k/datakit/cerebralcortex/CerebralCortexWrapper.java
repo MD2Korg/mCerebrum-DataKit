@@ -77,14 +77,14 @@ import rx.functions.Func1;
 import static android.content.Context.CONNECTIVITY_SERVICE;
 
 /**
- *
+ * Provides a wrapper for <code>CerebralCortex</code> API calls.
  */
 public class CerebralCortexWrapper extends Thread {
 
     /** Constant used for logging. <p>Uses <code>class.getSimpleName()</code>.</p> */
     private static final String TAG = CerebralCortexWrapper.class.getSimpleName();
 
-
+    /** Directory for raw data. */
     private static String raw_directory = "";
 
     /** Android context. */
@@ -93,11 +93,16 @@ public class CerebralCortexWrapper extends Thread {
     /** List of restricted or ignored <code>DataSource</code>s. */
     private List<DataSource> restricted;
 
-
+    /** Gson */
     private Gson gson = new GsonBuilder().serializeNulls().create();
 
+    /** Network to use for high frequency uploads. */
     private String network_high_freq;
+
+    /** Network to use for low frequency uploads. */
     private String network_low_freq;
+
+    /** Subscription for observing file pruning. */
     private Subscription subsPrune;
 
     /**
@@ -131,22 +136,20 @@ public class CerebralCortexWrapper extends Thread {
     }
 
     /**
+     * Compresses the data stream and then pushes it to <code>CerebralCortex</code>.
      *
-     * @param dsc <code>DataSourcClient</code>
-     * @param ccWebAPICalls
-     * @param ar
-     * @param dsMetadata
-     * @param dbLogger
+     * @param dsc <code>DataSourceClient</code> to upload.
+     * @param ccWebAPICalls <code>CerebralCortex</code> Web API Calls.
+     * @param ar Authorization response.
+     * @param dsMetadata Metadata for the data stream.
+     * @param dbLogger Database logger
      */
     private void publishDataStream(DataSourceClient dsc, CCWebAPICalls ccWebAPICalls, AuthResponse ar,
                                     DataStream dsMetadata, DatabaseLogger dbLogger) {
         Log.d("abc", "upload start...  id=" + dsc.getDs_id() + " source=" + dsc.getDataSource().getType());
         boolean cont = true;
-
         int BLOCK_SIZE_LIMIT = Constants.DATA_BLOCK_SIZE_LIMIT;
-
         long count = 0;
-
         while (cont) {
             cont = false;
 
@@ -155,7 +158,6 @@ public class CerebralCortexWrapper extends Thread {
 
             objects = dbLogger.queryLastKey(dsc.getDs_id(), Constants.DATA_BLOCK_SIZE_LIMIT);
             count = dbLogger.queryCount(dsc.getDs_id(), true).getSample();
-
 
             if (objects.size() > 0) {
                 String outputTempFile = FileManager.getDirectory(context, FileManager.INTERNAL_SDCARD_PREFERRED) + "/upload_temp.gz";
@@ -194,23 +196,39 @@ public class CerebralCortexWrapper extends Thread {
     }
 
     /**
+     * Deletes archive and corrupt files.
      *
-     * @param prunes
+     * @param prunes ArrayList of data source identifiers to delete.
      */
     private void deleteArchiveFile(final ArrayList<Integer> prunes) {
         final int[] current = new int[1];
-        if (prunes == null || prunes.size() == 0) return;
+        if (prunes == null || prunes.size() == 0)
+            return;
         current[0] = 0;
         if (subsPrune != null && !subsPrune.isUnsubscribed())
             subsPrune.unsubscribe();
 
         subsPrune = Observable.range(1, 1000000).takeUntil(new Func1<Integer, Boolean>() {
+            /**
+             * Deletes the files in the directory when called.
+             *
+             * @param aLong Needed for proper override.
+             * @return Whether the deletion was completed or not.
+             */
             @Override
             public Boolean call(Integer aLong) {
                 Log.d("abc", "current=" + current[0] + " size=" + prunes.size());
-                if (current[0] >= prunes.size()) return true;
+                if (current[0] >= prunes.size())
+                    return true;
                 File directory = new File(raw_directory + "/raw" + current[0]);
                 FilenameFilter ff = new FilenameFilter() {
+                    /**
+                     * Method checks if the file is marked archive or corrupt.
+                     *
+                     * @param dir Directory the file is in.
+                     * @param filename File to check.
+                     * @return Whether the file is acceptable or not.
+                     */
                     @Override
                     public boolean accept(File dir, String filename) {
                         if (filename.contains("_archive") || filename.contains("_corrupt"))
@@ -238,21 +256,23 @@ public class CerebralCortexWrapper extends Thread {
     }
 
     /**
+     * Publishes data files to the server.
      *
      * @param dsc <code>DataSourceClient</code>
      * @param ccWebAPICalls
      * @param ar
-     * @param dsMetadata
+     * @param dsMetadata Metadata for the given data stream.
      */
     private void publishDataFiles(DataSourceClient dsc, CCWebAPICalls ccWebAPICalls, AuthResponse ar,
                                     DataStream dsMetadata)  {
         File directory = new File(raw_directory + "/raw" + dsc.getDs_id());
         FilenameFilter ff = new FilenameFilter() {
             /**
+             * Method checks if the file is marked archive or corrupt and if so, rejects them.
              *
-             * @param dir
-             * @param filename
-             * @return
+             * @param dir Directory the file is in.
+             * @param filename File to check.
+             * @return Whether the file is acceptable or not.
              */
             @Override
             public boolean accept(File dir, String filename) {
@@ -289,6 +309,12 @@ public class CerebralCortexWrapper extends Thread {
     }
 
 
+    /**
+     * Checks if the given data source is in the restricted list.
+     *
+     * @param dsc <code>DataSourceClient</code> to search for.
+     * @return Whether the given data source is the restricted list.
+     */
     private boolean inRestrictedList(DataSourceClient dsc) {
         for (DataSource d : restricted) {
             if (dsc.getDataSource().getType().equals(d.getType())) {
@@ -298,6 +324,9 @@ public class CerebralCortexWrapper extends Thread {
         return false;
     }
 
+    /**
+     * Starts the uploading process and handles authentication to the server.
+     */
     public void run() {
         if (ServerCP.getServerAddress(context) == null) return;
         Log.w("CerebralCortex", "Starting publishdataKitData");
@@ -328,11 +357,9 @@ public class CerebralCortexWrapper extends Thread {
         CCWebAPICalls ccWebAPICalls = new CCWebAPICalls(ccService);
 
         //TODO: The username needs to be available here for the metadata builder
-//        String username = "string";
 
         //TODO: Either authenticate with Cerebral Cortex service here or pass in the AuthReponse Object
         //TODO: Password needs hashed with SHA256 to obtains string needed
-//        AuthResponse ar = ccWebAPICalls.authenticateUser(username, "473287f8298dba7163a897908958f7c0eae733e25d2e027992ea2edc9bed2fa8");
         AuthResponse ar = ccWebAPICalls.authenticateUser(username, passwordHash);
 
 
@@ -349,7 +376,6 @@ public class CerebralCortexWrapper extends Thread {
         List<DataSourceClient> dataSourceClients = dbLogger.find(dataSourceBuilder.build());
         ArrayList<Integer> prune = new ArrayList<>();
         ArrayList<Integer> pruneFiles = new ArrayList<>();
-
 
         for (DataSourceClient dsc : dataSourceClients) {
             if (!inRestrictedList(dsc)) {

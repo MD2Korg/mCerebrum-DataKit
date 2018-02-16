@@ -53,7 +53,7 @@ import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 
 /**
- *
+ * Class for creating gzip files for high frequency data.
  */
 public class gzipLogger {
 
@@ -87,10 +87,10 @@ public class gzipLogger {
     }
 
     /**
+     * Compresses high frequency data into gzip files.
      *
-     *
-     * @param hfValues
-     * @param hfValueCount
+     * @param hfValues Array of high frequency content values.
+     * @param hfValueCount Number of high frequency values.
      * @return Status after the insertion.
      */
     public Status insert(ContentValues[] hfValues, int hfValueCount) {

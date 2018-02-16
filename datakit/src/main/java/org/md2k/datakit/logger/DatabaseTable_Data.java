@@ -383,91 +383,110 @@ public class DatabaseTable_Data {
         return true;
     }
     public void pruneSyncData(final SQLiteDatabase db, final ArrayList<Integer> prunes) {
-        final int[] current=new int[1];
-        if(prunes==null || prunes.size()==0) return;
-        current[0]=0;
-        if(subsPrune!=null && !subsPrune.isUnsubscribed())
+        final int[] current = new int[1];
+        if(prunes == null || prunes.size() == 0) return;
+        current[0] = 0;
+        if(subsPrune != null && !subsPrune.isUnsubscribed())
             subsPrune.unsubscribe();
         subsPrune = Observable.range(1,1000000).takeUntil(new Func1<Integer, Boolean>() {
+            /**
+             * @param aLong
+             * @return
+             */
                     @Override
                     public Boolean call(Integer aLong) {
-                        Log.d("abc","current="+current[0]+" size="+prunes.size());
-                        if(current[0]>=prunes.size()) return true;
-                        DataTypeLong countRow = queryCount(db, prunes.get(current[0]),  false);
-                        Log.d("abc","id="+prunes.get(current[0])+" count="+countRow.getSample());
-                        if(countRow.getSample()>MAX_DATA_ROW){
-                            long prune=countRow.getSample()-MAX_DATA_ROW;
-                            Log.d("abc","id="+prunes.get(current[0])+" before delete interval="+aLong);
-                            if(prune>MAX_DATA_ROW) prune=MAX_DATA_ROW;
-                            String ALTER_TBL ="delete from " + TABLE_NAME +
-                                    " where _id in (select _id from "+TABLE_NAME+" where datasource_id="+Integer.toString(prunes.get(current[0]))+" AND cc_sync=1 order by _id limit "+Long.toString(prune)+")";
+                        Log.d("abc", "current=" + current[0] + " size=" + prunes.size());
+                        if(current[0] >= prunes.size())
+                            return true;
+                        DataTypeLong countRow = queryCount(db, prunes.get(current[0]), false);
+                        Log.d("abc", "id=" + prunes.get(current[0]) + " count=" + countRow.getSample());
+                        if(countRow.getSample() > MAX_DATA_ROW){
+                            long prune = countRow.getSample() - MAX_DATA_ROW;
+                            Log.d("abc", "id=" + prunes.get(current[0]) + " before delete interval=" + aLong);
+                            if(prune > MAX_DATA_ROW) prune = MAX_DATA_ROW;
+                            String ALTER_TBL = "delete from " + TABLE_NAME + " where _id in (select _id from "
+                                    + TABLE_NAME + " where datasource_id=" + Integer.toString(prunes.get(current[0]))
+                                    + " AND cc_sync=1 order by _id limit " + Long.toString(prune)+")";
                             db.execSQL(ALTER_TBL);
-                            Log.d("abc","id="+prunes.get(current[0])+" after delete");
+                            Log.d("abc", "id=" + prunes.get(current[0]) + " after delete");
                         }else{
-                            Log.d("abc","current++");
+                            Log.d("abc", "current++");
                             current[0]++;
                         }
                         return false;
                     }
         }).subscribe(new Observer<Integer>() {
             @Override
-            public void onCompleted() {
-
-            }
+            public void onCompleted() {}
 
             @Override
-            public void onError(Throwable e) {
-
-            }
+            public void onError(Throwable e) {}
 
             @Override
-            public void onNext(Integer aLong) {
-
-            }
+            public void onNext(Integer aLong) {}
         });
 
     }
+
+    /**
+     * Prunes synced data from the database.
+     *
+     * @param db Database to prune.
+     * @param dsid Data source identifier.
+     */
     public void pruneSyncData(final SQLiteDatabase db, final int dsid) {
         Subscription s = subscriptionPrune.get(dsid);
-        if(s!=null && !s.isUnsubscribed()) s.unsubscribe();
-        if(subsPrune!=null && !subsPrune.isUnsubscribed()) subsPrune.unsubscribe();
+        if(s != null && !s.isUnsubscribed())
+            s.unsubscribe();
+        if(subsPrune != null && !subsPrune.isUnsubscribed())
+            subsPrune.unsubscribe();
         Random rn = new Random();
-        int value=15+rn.nextInt(30);
-        s=Observable.interval(rn.nextInt(5),value, TimeUnit.SECONDS).subscribeOn(Schedulers.newThread()).observeOn(Schedulers.newThread()).takeUntil(new Func1<Long, Boolean>() {
+        int value = 15 + rn.nextInt(30);
+        s = Observable.interval(rn.nextInt(5),value, TimeUnit.SECONDS).subscribeOn(Schedulers.newThread())
+                        .observeOn(Schedulers.newThread()).takeUntil(new Func1<Long, Boolean>() {
+            /**
+             * Deletes the given number of rows for the given data source identifier from the given table.
+             *
+             * @param aLong Delete interval.
+             * @return Whether the deletion is complete or not.
+             */
             @Override
             public Boolean call(Long aLong) {
-                DataTypeLong countRow = queryCount(db, dsid,  false);
-                if(countRow.getSample()>MAX_DATA_ROW){
-                    long prune=countRow.getSample()-MAX_DATA_ROW;
-                    Log.d("abc","id="+dsid+" before delete interval="+aLong);
-                    if(prune>MAX_DATA_ROW) prune=MAX_DATA_ROW;
-                    String ALTER_TBL ="delete from " + TABLE_NAME +
-                            " where _id in (select _id from "+TABLE_NAME+" where datasource_id="+Integer.toString(dsid)+" AND cc_sync=1 order by _id limit "+Long.toString(prune)+")";
+                DataTypeLong countRow = queryCount(db, dsid, false);
+                if(countRow.getSample() > MAX_DATA_ROW){
+                    long prune = countRow.getSample() - MAX_DATA_ROW;
+                    Log.d("abc","id=" + dsid + " before delete interval=" + aLong);
+                    if(prune > MAX_DATA_ROW) prune = MAX_DATA_ROW;
+                    String ALTER_TBL = "delete from " + TABLE_NAME + " where _id in (select _id from "
+                            + TABLE_NAME + " where datasource_id=" + Integer.toString(dsid)
+                            + " AND cc_sync=1 order by _id limit " + Long.toString(prune) + ")";
                     db.execSQL(ALTER_TBL);
-                    Log.d("abc","id="+dsid+" after delete");
+                    Log.d("abc", "id=" + dsid + " after delete");
                     return false;
-                }else return true;
+                }else
+                    return true;
             }
         }).subscribe(new Observer<Long>() {
+            /** Logs on completion. */
             @Override
             public void onCompleted() {
-                Log.d("abc","id="+dsid+" onCompleted()");
+                Log.d("abc","id=" + dsid + " onCompleted()");
             }
 
+            /** Logs on error. */
             @Override
             public void onError(Throwable e) {
-                Log.d("abc","id="+dsid+" error e="+e.getMessage());
-
+                Log.d("abc", "id=" + dsid + " error e=" + e.getMessage());
             }
 
+            /** Logs on next. */
             @Override
             public void onNext(Long aLong) {
-                Log.d("abc","id="+dsid+" onNext()");
-
+                Log.d("abc", "id=" + dsid + " onNext()");
             }
         });
         subscriptionPrune.put(dsid, s);
-        Log.d("abc","id="+dsid+" after added to sparse array");
+        Log.d("abc", "id=" + dsid + " after added to sparse array");
     }
 
     public synchronized boolean setSyncedBit(SQLiteDatabase db, int dsid, long lastSyncKey) {

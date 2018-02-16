@@ -273,7 +273,8 @@ public class PrivacyManager {
     private DataSource createDataSourcePrivacy() {
         Platform platform = new PlatformBuilder().setType(PlatformType.PHONE).build();
         Application application = new ApplicationBuilder().setId(context.getPackageName()).build();
-        return new DataSourceBuilder().setType(DataSourceType.PRIVACY).setPlatform(platform).setApplication(application).build();
+        return new DataSourceBuilder().setType(DataSourceType.PRIVACY).setPlatform(platform)
+                .setApplication(application).build();
     }
 
     public void close() {
