@@ -191,7 +191,7 @@ public class RoutingManager {
      * Unregisters the given data source by removing it from the <code>Publisher</code> array.
      *
      * @param ds_id Data source identifier to remove.
-     * @return The status after unregistration.
+     * @return The status after the given data source has been unregistered.
      */
     public Status unregister(int ds_id) {
         int statusCode = publishers.remove(ds_id);

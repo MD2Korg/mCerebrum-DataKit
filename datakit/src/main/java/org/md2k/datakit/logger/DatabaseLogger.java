@@ -296,11 +296,11 @@ public class DatabaseLogger extends SQLiteOpenHelper {
     }
 
     /**
-     *
+     * Returns the number of rows in the query, either synced or unsynced.
      *
      * @param ds_id Data source identifier.
      * @param unsynced Whether the query is unsynced or synced.
-     * @return The count.
+     * @return The number of rows in the query.
      */
     public DataTypeLong queryCount(int ds_id, boolean unsynced) {
         return databaseTable_data.queryCount(db, ds_id, unsynced);
