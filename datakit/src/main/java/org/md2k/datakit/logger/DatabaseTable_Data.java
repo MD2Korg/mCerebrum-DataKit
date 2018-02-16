@@ -123,26 +123,26 @@ public class DatabaseTable_Data {
     /** Content values array for hight frequency data. */
     private ContentValues[] hfValues = new ContentValues[HFVALUE_LIMIT];
 
-    /**  */
+    /** Number of <code>ContentValues</code> to insert into the database. */
     private int cValueCount = 0;
 
-    /**  */
+    /** Number of <code>ContentValues</code> for high frequency data. */
     private int hfValueCount = 0;
 
-    /**  */
+    /** Time of the last insertion. */
     long lastUnlock = 0;
 
-    /**  */
+    /** Used for turning <code>DataSource</code> objects into byte arrays. TODO: Serialization? */
     Kryo kryo;
 
-    /**  */
+    /** <code>GzipLogger</code> for creating gzip files of high frequency data. */
     private gzipLogger gzLogger;
 
     /**
      * Creates a data table in the database if one does not already exist.
      *
      * @param db database to check.
-     * @param gzl
+     * @param gzl <code>GzipLogger</code>.
      */
     DatabaseTable_Data(SQLiteDatabase db, gzipLogger gzl) {
         subscriptionPrune = new SparseArray<Subscription>();
@@ -152,26 +152,37 @@ public class DatabaseTable_Data {
     }
 
     /**
-     * Removes the indexes
-     * @param db
+     * Removes the table from the database.
+     *
+     * @param db Database.
      */
     public synchronized void removeAll(SQLiteDatabase db) {
         db.execSQL("DROP INDEX index_datasource_id");
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
     }
 
+    /**
+     * Creates the tables for the database if needed.
+     *
+     * @param db Database.
+     */
     public synchronized void createIfNotExists(SQLiteDatabase db) {
         db.execSQL(SQL_CREATE_DATA);
         db.execSQL(SQL_CREATE_DATA_INDEX);
         db.execSQL(SQL_CREATE_CC_INDEX);
     }
-//important part
+
+    /**
+     * Starts a transaction, inserts all available <code>ContentValues</code>, and ends the transaction.
+     *
+     * @param db Database
+     * @param tableName Name of the table to insert rows into.
+     * @return The status after insertion.
+     */
     private synchronized Status insertDB(SQLiteDatabase db, String tableName) {
         try {
-
             if (cValueCount == 0)
                 return new Status(Status.SUCCESS);
-
 
             long st = System.currentTimeMillis();
             db.beginTransaction();
@@ -179,6 +190,7 @@ public class DatabaseTable_Data {
             for (int i = 0; i < cValueCount; i++)
                 db.insert(tableName, null, cValues[i]);
             cValueCount = 0;
+
             try {
                 db.setTransactionSuccessful();
             } finally {
@@ -190,6 +202,14 @@ public class DatabaseTable_Data {
         return new Status(Status.SUCCESS);
     }
 
+    /**
+     * Updates the given data source in the database.
+     *
+     * @param db Database.
+     * @param dsid Data source identifier.
+     * @param dataType Data type to update.
+     * @return Always returns true.
+     */
     public synchronized boolean update(SQLiteDatabase db, int dsid, DataType dataType) {
         try {
             insertDB(db, TABLE_NAME);
@@ -202,6 +222,15 @@ public class DatabaseTable_Data {
         }
     }
 
+    /**
+     * Updates or inserts the data type accordingly.
+     *
+     * @param db Database.
+     * @param dataSourceId Data source identifier.
+     * @param dataType Data type to insert.
+     * @param isUpdate Whether the data is an update.
+     * @return The status after insertion.
+     */
     public synchronized Status insert(SQLiteDatabase db, int dataSourceId, DataType[] dataType, boolean isUpdate) {
         if (isUpdate) {
             for (DataType aDataType : dataType) update(db, dataSourceId, aDataType);
@@ -212,6 +241,14 @@ public class DatabaseTable_Data {
     }
 
 
+    /**
+     * Inserts the given data into a <code>ContentValues</code> object.
+     *
+     * @param db Database.
+     * @param dataSourceId Data source identifier.
+     * @param dataType Data type to insert.
+     * @return The status after insertion.
+     */
     private synchronized Status insert(SQLiteDatabase db, int dataSourceId, DataType dataType) {
         Status status = new Status(Status.SUCCESS);
         if (dataType.getDateTime() - lastUnlock >= WAITTIME || cValueCount >= CVALUE_LIMIT) {
@@ -224,11 +261,26 @@ public class DatabaseTable_Data {
         return status;
     }
 
+    /**
+     * Wrapper method for <code>insertHF()</code> that iterates through a data type array.
+     *
+     * @param dataSourceId Data source identifier.
+     * @param dataType Data type to insert.
+     * @return The status after insertion.
+     */
     public synchronized Status insertHF(int dataSourceId, DataTypeDoubleArray[] dataType) {
-        for (DataTypeDoubleArray aDataType : dataType) insertHF(dataSourceId, aDataType);
+        for (DataTypeDoubleArray aDataType : dataType)
+            insertHF(dataSourceId, aDataType);
         return new Status(Status.SUCCESS);
     }
 
+    /**
+     * Insert high frequency data into a <code>ContentValues</code> object.
+     *
+     * @param dataSourceId Data source identifier.
+     * @param dataType Data type to insert.
+     * @return The status after insertion.
+     */
     private synchronized Status insertHF(int dataSourceId, DataTypeDoubleArray dataType) {
         Status status = new Status(Status.SUCCESS);
         if (dataType.getDateTime() - lastUnlock >= WAITTIME || hfValueCount >= HFVALUE_LIMIT) {
@@ -242,6 +294,13 @@ public class DatabaseTable_Data {
     }
 
 
+    /**
+     * Prepares a high frequency <code>ContentValues</code> object.
+     *
+     * @param dataSourceId Data source identifier.
+     * @param dataType Data type to convert.
+     * @return The constructed <code>ContentValues</code> object.
+     */
     public synchronized ContentValues prepareDataHF(int dataSourceId, DataTypeDoubleArray dataType) {
         ContentValues contentValues = new ContentValues();
         byte[] dataTypeArray = dataType.toRawBytes();
@@ -253,6 +312,14 @@ public class DatabaseTable_Data {
     }
 
 
+    /**
+     * Creates a selection command string for the given data source during the given time frame.
+     *
+     * @param ds_id Data stream identifier.
+     * @param starttimestamp Beginning of the time frame.
+     * @param endtimestamp End of the time frame.
+     * @return The prepared selection string.
+     */
     private synchronized String[] prepareSelectionArgs(int ds_id, long starttimestamp, long endtimestamp) {
         ArrayList<String> selectionArgs = new ArrayList<>();
         selectionArgs.add(String.valueOf(ds_id));
@@ -261,25 +328,48 @@ public class DatabaseTable_Data {
         return selectionArgs.toArray(new String[selectionArgs.size()]);
     }
 
+    /**
+     * Creates a selection command string for the given data source.
+     *
+     * @param ds_id Data source to select for.
+     * @return The prepared selection string.
+     */
     private synchronized String[] prepareSelectionArgs(int ds_id) {
         ArrayList<String> selectionArgs = new ArrayList<>();
         selectionArgs.add(String.valueOf(ds_id));
         return selectionArgs.toArray(new String[selectionArgs.size()]);
     }
 
+    /**
+     * Creates a selection command string.
+     *
+     * @return The prepared selection string.
+     */
     private synchronized String prepareSelection() {
         String selection;
         selection = C_DATASOURCE_ID + "=? AND " + C_DATETIME + " >=? AND " + C_DATETIME + " <=?";
         return selection;
     }
 
+    /**
+     * Creates a selection command string for the last samples.
+     *
+     * @return The prepared selection string.
+     */
     private synchronized String prepareSelectionLastSamples() {
         String selection;
         selection = C_DATASOURCE_ID + "=?";
         return selection;
     }
 
-
+    /**
+     * Queries the database for the given data source during the given time frame.
+     *
+     * @param ds_id Data source identifier.
+     * @param starttimestamp Beginning of the time frame.
+     * @param endtimestamp End of the time frame.
+     * @return The result of the query.
+     */
     public synchronized ArrayList<DataType> query(SQLiteDatabase db, int ds_id, long starttimestamp, long endtimestamp) {
         long totalst = System.currentTimeMillis();
         insertDB(db, TABLE_NAME);
@@ -306,6 +396,14 @@ public class DatabaseTable_Data {
         return dataTypes;
     }
 
+    /**
+     * Queries the database for the last n samples of the given data source.
+     *
+     * @param db Database.
+     * @param ds_id Data source identifier.
+     * @param last_n_sample Last n samples to return.
+     * @return A list of <code>DataType</code>s matching the query.
+     */
     public synchronized ArrayList<DataType> query(SQLiteDatabase db, int ds_id, int last_n_sample) {
         long totalst = System.currentTimeMillis();
         insertDB(db, TABLE_NAME);
@@ -330,11 +428,20 @@ public class DatabaseTable_Data {
     }
 
 
+    /**
+     * Queries the database for the last inserted key.
+     *
+     * @param db Database.
+     * @param ds_id Data source identifier.
+     * @param limit Limit on how many rows to return in the query.
+     * @return A list of <code>RowObject</code>s that match the query.
+     */
     public synchronized ArrayList<RowObject> queryLastKey(SQLiteDatabase db, int ds_id, int limit) {
         long totalst = System.currentTimeMillis();
         insertDB(db, TABLE_NAME);
         ArrayList<RowObject> rowObjects = new ArrayList<>();
-        String sql = "select _id, sample from data where cc_sync = 0 and datasource_id=" + Integer.toString(ds_id) + " LIMIT " + Integer.toString(limit);
+        String sql = "select _id, sample from data where cc_sync = 0 and datasource_id=" + Integer.toString(ds_id)
+                + " LIMIT " + Integer.toString(limit);
         Cursor mCursor = db.rawQuery(sql, null);
         if (mCursor.moveToFirst()) {
             do {
@@ -349,15 +456,24 @@ public class DatabaseTable_Data {
             } while (mCursor.moveToNext());
         }
         mCursor.close();
-
         return rowObjects;
     }
 
+    /**
+     * Queries the database for already synced data.
+     *
+     * @param db Database.
+     * @param ds_id Data stream identifier.
+     * @param ageLimit Limit on the age of the data.
+     * @param limit Limit on how many rows to return in the query.
+     * @return A list of <code>RowObject</code>s that match the query.
+     */
     public synchronized ArrayList<RowObject> querySyncedData(SQLiteDatabase db, int ds_id, long ageLimit, int limit) {
         long totalst = System.currentTimeMillis();
         insertDB(db, TABLE_NAME);
         ArrayList<RowObject> rowObjects = new ArrayList<>(limit);
-        String sql = "select _id, sample from data where cc_sync = 1 and datasource_id=" + Integer.toString(ds_id) + " and datetime <= " + ageLimit + " LIMIT " + Integer.toString(limit);
+        String sql = "select _id, sample from data where cc_sync = 1 and datasource_id=" + Integer.toString(ds_id)
+                + " and datetime <= " + ageLimit + " LIMIT " + Integer.toString(limit);
         Cursor mCursor = db.rawQuery(sql, null);
         if (mCursor.moveToFirst()) {
             do {
@@ -376,12 +492,27 @@ public class DatabaseTable_Data {
     }
 
 
+    /**
+     * Deletes the already synced data from the database.
+     *
+     * @param db Database.
+     * @param dsid Data source identifier.
+     * @param lastSyncKey Key of the last synced data.
+     * @return Always returns true.
+     */
     public synchronized boolean removeSyncedData(SQLiteDatabase db, int dsid, long lastSyncKey) {
         insertDB(db, TABLE_NAME);
         String[] args = new String[]{Long.toString(lastSyncKey), Integer.toString(dsid)};
         db.delete(TABLE_NAME, "cc_sync = 1 AND _id <= ? AND datasource_id = ?", args);
         return true;
     }
+
+    /**
+     * Prunes already synced data from the database.
+     *
+     * @param db Database.
+     * @param prunes List of data sources to prune.
+     */
     public void pruneSyncData(final SQLiteDatabase db, final ArrayList<Integer> prunes) {
         final int[] current = new int[1];
         if(prunes == null || prunes.size() == 0) return;
@@ -390,31 +521,33 @@ public class DatabaseTable_Data {
             subsPrune.unsubscribe();
         subsPrune = Observable.range(1,1000000).takeUntil(new Func1<Integer, Boolean>() {
             /**
-             * @param aLong
+             * Prunes the database if it is too large.
+             *
+             * @param aLong Delete interval
              * @return
              */
-                    @Override
-                    public Boolean call(Integer aLong) {
-                        Log.d("abc", "current=" + current[0] + " size=" + prunes.size());
-                        if(current[0] >= prunes.size())
-                            return true;
-                        DataTypeLong countRow = queryCount(db, prunes.get(current[0]), false);
-                        Log.d("abc", "id=" + prunes.get(current[0]) + " count=" + countRow.getSample());
-                        if(countRow.getSample() > MAX_DATA_ROW){
-                            long prune = countRow.getSample() - MAX_DATA_ROW;
-                            Log.d("abc", "id=" + prunes.get(current[0]) + " before delete interval=" + aLong);
-                            if(prune > MAX_DATA_ROW) prune = MAX_DATA_ROW;
-                            String ALTER_TBL = "delete from " + TABLE_NAME + " where _id in (select _id from "
-                                    + TABLE_NAME + " where datasource_id=" + Integer.toString(prunes.get(current[0]))
-                                    + " AND cc_sync=1 order by _id limit " + Long.toString(prune)+")";
-                            db.execSQL(ALTER_TBL);
-                            Log.d("abc", "id=" + prunes.get(current[0]) + " after delete");
-                        }else{
-                            Log.d("abc", "current++");
-                            current[0]++;
-                        }
-                        return false;
-                    }
+            @Override
+            public Boolean call(Integer aLong) {
+                Log.d("abc", "current=" + current[0] + " size=" + prunes.size());
+                if(current[0] >= prunes.size())
+                    return true;
+                DataTypeLong countRow = queryCount(db, prunes.get(current[0]), false);
+                Log.d("abc", "id=" + prunes.get(current[0]) + " count=" + countRow.getSample());
+                if(countRow.getSample() > MAX_DATA_ROW){
+                    long prune = countRow.getSample() - MAX_DATA_ROW;
+                    Log.d("abc", "id=" + prunes.get(current[0]) + " before delete interval=" + aLong);
+                    if(prune > MAX_DATA_ROW) prune = MAX_DATA_ROW;
+                    String ALTER_TBL = "delete from " + TABLE_NAME + " where _id in (select _id from "
+                            + TABLE_NAME + " where datasource_id=" + Integer.toString(prunes.get(current[0]))
+                            + " AND cc_sync=1 order by _id limit " + Long.toString(prune)+")";
+                    db.execSQL(ALTER_TBL);
+                    Log.d("abc", "id=" + prunes.get(current[0]) + " after delete");
+                }else{ // These logs are "abc", logs at line 368 are "DataKit"
+                    Log.d("abc", "current++");
+                    current[0]++;
+                }
+                return false;
+            }
         }).subscribe(new Observer<Integer>() {
             @Override
             public void onCompleted() {}
@@ -425,7 +558,6 @@ public class DatabaseTable_Data {
             @Override
             public void onNext(Integer aLong) {}
         });
-
     }
 
     /**
@@ -489,6 +621,14 @@ public class DatabaseTable_Data {
         Log.d("abc", "id=" + dsid + " after added to sparse array");
     }
 
+    /**
+     * Sets the synced bit of the last synced key.
+     *
+     * @param db Database.
+     * @param dsid Data source identifier.
+     * @param lastSyncKey Key of the last sync.
+     * @return Always returns true;
+     */
     public synchronized boolean setSyncedBit(SQLiteDatabase db, int dsid, long lastSyncKey) {
         insertDB(db, TABLE_NAME);
         ContentValues values = new ContentValues();
@@ -496,11 +636,16 @@ public class DatabaseTable_Data {
         values.put("cc_sync", bit);
         String[] args = new String[]{Long.toString(lastSyncKey), Integer.toString(dsid)};
         db.update(TABLE_NAME, values, "cc_sync = 0 AND _id <= ? AND datasource_id = ?", args);
-
         return true;
     }
 
 
+    /**
+     * Returns the number of rows in the query.
+     *
+     * @param db Database
+     * @return The number of rows in the query.
+     */
     public synchronized DataTypeLong querySize(SQLiteDatabase db) {
         long totalst = System.currentTimeMillis();
         insertDB(db, TABLE_NAME);
@@ -516,6 +661,14 @@ public class DatabaseTable_Data {
         return count;
     }
 
+    /**
+     * Counts the number of rows that are either synced or not synced.
+     *
+     * @param db Database
+     * @param ds_id Data source identifier.
+     * @param unsynced Whether the query is unsynced or not.
+     * @return The number of rows matching the query.
+     */
     public synchronized DataTypeLong queryCount(SQLiteDatabase db, int ds_id, boolean unsynced) {
         long totalst = System.currentTimeMillis();
         String sql = "select count(_id)as c from " + TABLE_NAME + " where " + C_DATASOURCE_ID + " = " + ds_id;
@@ -532,6 +685,9 @@ public class DatabaseTable_Data {
         return count;
     }
 
+    /**
+     * Clears <code>subscriptionPrune</code> and unsubscribes <code>subsPrune</code>.
+     */
     void stopPruning() {
         for (int i = 0; i < subscriptionPrune.size(); i++) {
             int key = subscriptionPrune.keyAt(i);
@@ -539,10 +695,17 @@ public class DatabaseTable_Data {
             if (s != null && !s.isUnsubscribed()) s.unsubscribe();
         }
         subscriptionPrune.clear();
-        if(subsPrune!=null && !subsPrune.isUnsubscribed()) subsPrune.unsubscribe();
-
+        if(subsPrune != null && !subsPrune.isUnsubscribed())
+            subsPrune.unsubscribe();
     }
 
+    /**
+     * Puts the <code>DataType</code> into a <code>ContentValues</code> object.
+     *
+     * @param dataSourceId Data source identifier.
+     * @param dataType Data type to prepare
+     * @return The constructed <code>ContentValues</code> object.
+     */
     public synchronized ContentValues prepareData(int dataSourceId, DataType dataType) {
         ContentValues contentValues = new ContentValues();
 
@@ -555,10 +718,21 @@ public class DatabaseTable_Data {
     }
 
 
+    /**
+     * Commits an insertion into the database.
+     *
+     * @param db Database to commit to.
+     */
     public synchronized void commit(SQLiteDatabase db) {
         insertDB(db, TABLE_NAME);
     }
 
+    /**
+     * Converts a <code>DataType</code> to a byte array.
+     *
+     * @param dataType <code>DataType</code> to convert.
+     * @return A byte array containing the data type.
+     */
     private synchronized byte[] toBytes(DataType dataType) {
         byte[] bytes;
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -569,12 +743,16 @@ public class DatabaseTable_Data {
         return bytes;
     }
 
+    /**
+     * Reads a <code>DataType</code> from a byte array.
+     *
+     * @param bytes Array to read the <code>DataType</code> from.
+     * @return The <code>DataType</code> read from the array.
+     */
     private synchronized DataType fromBytes(byte[] bytes) {
         Input input = new Input(new ByteArrayInputStream(bytes));
         DataType dataType = (DataType) kryo.readClassAndObject(input);
         input.close();
         return dataType;
     }
-
-
 }
