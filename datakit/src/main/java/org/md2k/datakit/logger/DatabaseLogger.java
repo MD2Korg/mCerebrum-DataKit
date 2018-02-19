@@ -72,6 +72,10 @@ public class DatabaseLogger extends SQLiteOpenHelper {
     /**
      * Constructor
      *
+     * <p>
+     *     This method initializes the data storage system to log data to both SQLite and gzip files.
+     * </p>
+     *
      * @param context Android context
      * @param path Path to the database.
      */

@@ -64,17 +64,12 @@ public class DatabaseTable_Data {
     /** Name fo the table. <p>Default is <code>"data"</code>.</p> */
     public static String TABLE_NAME = "data";
 
-
-    /**  */
     private static String C_ID = "_id";
 
-    /**  */
     private static String C_CLOUD_SYNC_BIT = "cc_sync";
 
-    /**  */
     private static String C_DATETIME = "datetime";
 
-    /**  */
     private static String C_SAMPLE = "sample";
 
     /** <code>DataSource</code> identifier. */
@@ -89,17 +84,14 @@ public class DatabaseTable_Data {
     /** Maximum number of rows in the data table. */
     private static final int MAX_DATA_ROW = 50000;
 
-    /**  */
     private SparseArray<Subscription> subscriptionPrune;
 
-    /**  */
     private Subscription subsPrune;
 
-    /**  */
+    /** Command string to create an index into the database based on <code>datasource_id</code>. */
     private static final String SQL_CREATE_DATA_INDEX = "CREATE INDEX IF NOT EXISTS index_datasource_id on "
                                                         + TABLE_NAME + " (" + C_DATASOURCE_ID + ");";
-
-    /**  */
+    /** Command string to create an index into the database based on <code>datasource_id</code> and <code>cloud_sync_bit</code>. */
     private static final String SQL_CREATE_CC_INDEX = "CREATE INDEX IF NOT EXISTS index_cc_datasource_id on "
                                         + TABLE_NAME + " (" + C_DATASOURCE_ID + ", " + C_CLOUD_SYNC_BIT + ");";
 
@@ -132,7 +124,7 @@ public class DatabaseTable_Data {
     /** Time of the last insertion. */
     long lastUnlock = 0;
 
-    /** Used for turning <code>DataSource</code> objects into byte arrays. TODO: Serialization? */
+    /** Used for turning <code>DataSource</code> objects into byte arrays, or serialization. */
     Kryo kryo;
 
     /** <code>GzipLogger</code> for creating gzip files of high frequency data. */

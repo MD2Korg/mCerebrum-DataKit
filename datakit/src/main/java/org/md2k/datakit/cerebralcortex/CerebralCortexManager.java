@@ -86,7 +86,7 @@ public class CerebralCortexManager {
                 task.setPriority(Thread.MIN_PRIORITY);
                 long time = AppInfo.serviceRunningTime(context.getApplicationContext(),
                                                             org.md2k.datakit.Constants.SERVICE_NAME);
-                if (time > 0) { //TWH: TEMPORARY ??
+                if (time > 0) {
                     task.start();
                 }
             } catch (IOException e) {}

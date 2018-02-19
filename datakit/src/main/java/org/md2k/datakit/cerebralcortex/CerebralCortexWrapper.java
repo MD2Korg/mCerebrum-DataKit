@@ -108,6 +108,9 @@ public class CerebralCortexWrapper extends Thread {
     /**
      * Constructor
      *
+     * <p>
+     *     Sets up the uploader and introduces a list of data sources to not be uploaded.
+     * </p>
      * @throws IOException
      */
     public CerebralCortexWrapper(Context context, List<DataSource> restricted) throws IOException {
@@ -136,7 +139,12 @@ public class CerebralCortexWrapper extends Thread {
     }
 
     /**
-     * Compresses the data stream and then pushes it to <code>CerebralCortex</code>.
+     * Main upload method for an individual <code>DataStream</code>.
+     *
+     * <p>
+     *     This method is responsible for offloading all unsynced data from low-frequency sources.
+     *     The data is offloaded to an SQLite database.
+     * </p>
      *
      * @param dsc <code>DataSourceClient</code> to upload.
      * @param ccWebAPICalls <code>CerebralCortex</code> Web API Calls.
@@ -191,12 +199,12 @@ public class CerebralCortexWrapper extends Thread {
                 cont = true;
             }
         }
-        Log.d("abc", "upload done... prune...  id=" + dsc.getDs_id() + " source=" + dsc.getDataSource().getType());
+        Log.d(TAG, "upload done... prune...  id=" + dsc.getDs_id() + " source=" + dsc.getDataSource().getType());
 
     }
 
     /**
-     * Deletes archive and corrupt files.
+     * Frees space on the device by removing any raw data files that have already been synced to the cloud.
      *
      * @param prunes ArrayList of data source identifiers to delete.
      */
@@ -256,7 +264,11 @@ public class CerebralCortexWrapper extends Thread {
     }
 
     /**
-     * Publishes data files to the server.
+     * Main upload method for an individual raw <code>DataStream</code>.
+     *
+     * <p>
+     *     This method is responsible for offloading all unsynced data from high-frequency sources.
+     * </p>
      *
      * @param dsc <code>DataSourceClient</code>
      * @param ccWebAPICalls
@@ -325,7 +337,24 @@ public class CerebralCortexWrapper extends Thread {
     }
 
     /**
-     * Starts the uploading process and handles authentication to the server.
+     * Executes the upload routine.
+     *
+     * <p>
+     *      The upload routine is as follows:
+     *      <ul>
+     *          <li>First, the user is authenticated.</li>
+     *          <li>Then, for each data source:</li>
+     *              <ul>
+     *                  <li>data source is checked for restriction.</li>
+     *                  <li>low frequency network connection type is checked for validity.</li>
+     *                  <li>low frequency data is published to the server.</li>
+     *                  <li>high frequency network connection type is checked for validity.</li>
+     *                  <li>high frequency data is published to the server.</li>
+     *              </ul>
+     *          <li>After all data sources have been published, the synced data is removed from the database.</li>
+     *          <li>And finally, the raw files are deleted.</li>
+     *      </ul>
+     * </p>
      */
     public void run() {
         if (ServerCP.getServerAddress(context) == null) return;
@@ -356,14 +385,8 @@ public class CerebralCortexWrapper extends Thread {
         CerebralCortexWebApi ccService = ApiUtils.getCCService(serverURL);
         CCWebAPICalls ccWebAPICalls = new CCWebAPICalls(ccService);
 
-        //TODO: The username needs to be available here for the metadata builder
-
-        //TODO: Either authenticate with Cerebral Cortex service here or pass in the AuthReponse Object
-        //TODO: Password needs hashed with SHA256 to obtains string needed
+        // Authenticate the user.
         AuthResponse ar = ccWebAPICalls.authenticateUser(username, passwordHash);
-
-
-        //TODO: If authentication fails at any point in time, a prompt should be given to reauthenticate
 
         if (ar != null) {
             messenger("Authenticated with server");
@@ -377,26 +400,40 @@ public class CerebralCortexWrapper extends Thread {
         ArrayList<Integer> prune = new ArrayList<>();
         ArrayList<Integer> pruneFiles = new ArrayList<>();
 
+        // Iterate over the data sources
         for (DataSourceClient dsc : dataSourceClients) {
+
+            // Check if the current data source is on the restricted list.
             if (!inRestrictedList(dsc)) {
                 MetadataBuilder metadataBuilder = new MetadataBuilder();
                 DataStream dsMetadata = metadataBuilder.buildDataStreamMetadata(ar.getUserUuid(), dsc);
 
+                // Check for valid low frequency network connection type.
                 if (isNetworkConnectionValid(network_low_freq)) {
                     Log.d("abc", "trying to upload from database id=" + dsc.getDs_id());
                     messenger("Publishing data for " + dsc.getDs_id() + " (" + dsc.getDataSource().getId() + ":" + dsc.getDataSource().getType() + ") to " + dsMetadata.getIdentifier());
+
+                    // Publish the data to the server.
                     publishDataStream(dsc, ccWebAPICalls, ar, dsMetadata, dbLogger);
                     prune.add(dsc.getDs_id());
                 }
+
+                // Check for valid high frequency network connection type.
                 if (isNetworkConnectionValid(network_high_freq)) {
                     Log.d("abc", "trying to upload from file id=" + dsc.getDs_id());
                     messenger("Publishing raw data for " + dsc.getDs_id() + " (" + dsc.getDataSource().getId() + ":" + dsc.getDataSource().getType() + ") to " + dsMetadata.getIdentifier());
                     pruneFiles.add(dsc.getDs_id());
+
+                    // Publish the data to the server.
                     publishDataFiles(dsc, ccWebAPICalls, ar, dsMetadata);
                 }
             }
         }
+
+        // Remove SQLite data that has been synced.
         dbLogger.pruneSyncData(prune);
+
+        // Delete raw archive files that have been synced.
         deleteArchiveFile(pruneFiles);
         messenger("Upload Complete");
     }

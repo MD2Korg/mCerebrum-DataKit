@@ -61,7 +61,6 @@ public class PrivacyConfiguration {
      * Returns an arrayList of duration options.
      *
      * @return An arrayList of duration options.
-     * TODO: Enumeration?
      */
     public ArrayList<Duration> getDuration(){
         return privacyConfig.duration_options;
@@ -71,7 +70,6 @@ public class PrivacyConfiguration {
      * Returns an arrayList of privacy type options.
      *
      * @return An arrayList of privacy type options.
-     * * TODO: Enumeration?
      */
     public ArrayList<PrivacyType> getPrivacyType(){
         return privacyConfig.privacy_type_options;

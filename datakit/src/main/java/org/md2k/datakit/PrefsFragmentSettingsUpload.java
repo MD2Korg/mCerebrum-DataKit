@@ -104,9 +104,9 @@ public class PrefsFragmentSettingsUpload extends PreferenceFragment {
     }
 
     /**
-     * TODO: This is a duplicate of <code>getFreqShowFromValue</code>. Can I delete? Could write a wrapper method instead if needed.
-     * @param show
-     * @return
+     * Determines which network type to show based on the given value.
+     * @param show Value from <code>network_type_show</code>.
+     * @return The corresponding network type from <code>network_type_value</code>.
      */
     private String getFreqValueFromShow(String show){
         if(show == null)
