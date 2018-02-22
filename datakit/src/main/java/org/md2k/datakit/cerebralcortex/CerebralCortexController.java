@@ -1,15 +1,6 @@
-package org.md2k.datakit.cerebralcortex;
-
-import android.content.Context;
-
-import org.md2k.utilities.Report.Log;
-
-import java.io.IOException;
-
 /*
- * Copyright (c) 2015, The University of Memphis, MD2K Center
- * - Syed Monowar Hossain <monowar.hossain@gmail.com>
- * - Timothy Hnat <twhnat@memphis.edu>
+ * Copyright (c) 2018, The University of Memphis, MD2K Center of Excellence
+ *
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,27 +24,77 @@ import java.io.IOException;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+package org.md2k.datakit.cerebralcortex;
+
+import android.content.Context;
+
+import org.md2k.utilities.Report.Log;
+
+import java.io.IOException;
+
+/**
+ * Provides methods for determining if <code>CerebralCortex</code> is active and/or available.
+ */
 public class CerebralCortexController {
+
+    /** Constant used for logging. <p>Uses <code>class.getSimpleName()</code>.</p> */
     private static final String TAG = CerebralCortexController.class.getSimpleName();
+
+    /** This instance of this class. */
     private static CerebralCortexController instance = null;
+
+    /**
+     * Instance of the <code>cerebralCortexManager</code> class.
+     *
+     * <p>
+     *     Used to connect to <code>CerebralCortex</code>
+     * </p>
+     */
     private static CerebralCortexManager cerebralCortexManager;
+
+    /** Android context. */
     Context context;
 
+    /**
+     * Constructor
+     *
+     * <p>
+     *     This constructor gets logged.
+     * </p>
+     *
+     * @throws IOException
+     */
     private CerebralCortexController(Context context) throws IOException {
         Log.d(TAG, "CerebralCortexController()...constructor()...");
         this.context = context;
         cerebralCortexManager = CerebralCortexManager.getInstance(context);
     }
 
+    /**
+     * Returns this instance of <code>CerebralCortexController</code>.
+     *
+     * @throws IOException
+     */
     public static CerebralCortexController getInstance(Context context) throws IOException {
-        if (instance == null) instance = new CerebralCortexController(context);
+        if (instance == null)
+            instance = new CerebralCortexController(context);
         return instance;
     }
 
+    /**
+     * Determines if <code>cerebralCortexManager</code> is actively running.
+     *
+     * @return Whether <code>cerebralCortexManager</code> is active.
+     */
     public boolean isActive() {
         return cerebralCortexManager.isActive();
     }
 
+    /**
+     * Determines if <code>cerebralCortexManager</code> is available.
+     * @return Whether <code>cerebralCortexManager</code> is available.
+     */
     public boolean isAvailable() {
         return cerebralCortexManager.isAvailable();
     }

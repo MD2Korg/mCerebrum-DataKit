@@ -1,8 +1,6 @@
-package org.md2k.datakit.cerebralcortex;
-
 /*
- * Copyright (c) 2016, The University of Memphis, MD2K Center
- * - Timothy Hnat <twhnat@memphis.edu>
+ * Copyright (c) 2018, The University of Memphis, MD2K Center of Excellence
+ *
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +24,24 @@ package org.md2k.datakit.cerebralcortex;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+package org.md2k.datakit.cerebralcortex;
+
+/**
+ * Defines constants used when interacting with <code>cerebralcortex</code>.
+ */
 public class Constants {
+
+    /**
+     * Maximum size of a data block.
+     * <p>
+     *      Default set to 1000 rows.
+     * </p>
+     */
     public static final int DATA_BLOCK_SIZE_LIMIT = 1000;
+
+    /**
+     * Status of <code>CerebralCortex</code>.
+     */
     public static final String CEREBRAL_CORTEX_STATUS = "CerebralCortex_Status";
 }

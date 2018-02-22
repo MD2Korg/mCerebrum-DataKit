@@ -1,3 +1,30 @@
+/*
+ * Copyright (c) 2018, The University of Memphis, MD2K Center of Excellence
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 package org.md2k.datakit.cerebralcortex;
 
 import android.content.Context;
@@ -49,46 +76,43 @@ import rx.functions.Func1;
 
 import static android.content.Context.CONNECTIVITY_SERVICE;
 
-
-/*
- * Copyright (c) 2016, The University of Memphis, MD2K Center
- * - Timothy W. Hnat <twhnat@memphis.edu>
- * - Syed Monowar Hossain <monowar.hossain@gmail.com>
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * * Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer.
- *
- * * Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/**
+ * Provides a wrapper for <code>CerebralCortex</code> API calls.
  */
-
 public class CerebralCortexWrapper extends Thread {
+
+    /** Constant used for logging. <p>Uses <code>class.getSimpleName()</code>.</p> */
     private static final String TAG = CerebralCortexWrapper.class.getSimpleName();
+
+    /** Directory for raw data. */
     private static String raw_directory = "";
 
+    /** Android context. */
     private Context context;
+
+    /** List of restricted or ignored <code>DataSource</code>s. */
     private List<DataSource> restricted;
+
+    /** Gson */
     private Gson gson = new GsonBuilder().serializeNulls().create();
+
+    /** Network to use for high frequency uploads. */
     private String network_high_freq;
+
+    /** Network to use for low frequency uploads. */
     private String network_low_freq;
+
+    /** Subscription for observing file pruning. */
     private Subscription subsPrune;
 
+    /**
+     * Constructor
+     *
+     * <p>
+     *     Sets up the uploader and introduces a list of data sources to not be uploaded.
+     * </p>
+     * @throws IOException
+     */
     public CerebralCortexWrapper(Context context, List<DataSource> restricted) throws IOException {
         Configuration configuration = ConfigurationManager.getInstance(context).configuration;
         this.context = context;
@@ -96,9 +120,15 @@ public class CerebralCortexWrapper extends Thread {
         this.network_high_freq = configuration.upload.network_high_frequency;
         this.network_low_freq = configuration.upload.network_low_frequency;
 
-        raw_directory = FileManager.getDirectory(context, FileManager.INTERNAL_SDCARD_PREFERRED) + org.md2k.datakit.Constants.RAW_DIRECTORY;
+        raw_directory = FileManager.getDirectory(context, FileManager.INTERNAL_SDCARD_PREFERRED)
+                                + org.md2k.datakit.Constants.RAW_DIRECTORY;
     }
 
+    /**
+     * Sends broadcast messages containing the given message and an extra name, <code>"CC_Upload"</code>.
+     *
+     * @param message Message to put into the broadcast.
+     */
     private void messenger(String message) {
         Intent intent = new Intent(Constants.CEREBRAL_CORTEX_STATUS);
         Time t = new Time(System.currentTimeMillis());
@@ -108,15 +138,26 @@ public class CerebralCortexWrapper extends Thread {
         LocalBroadcastManager.getInstance(this.context).sendBroadcast(intent);
     }
 
-
-    private void publishDataStream(DataSourceClient dsc, CCWebAPICalls ccWebAPICalls, AuthResponse ar, DataStream dsMetadata, DatabaseLogger dbLogger) {
+    /**
+     * Main upload method for an individual <code>DataStream</code>.
+     *
+     * <p>
+     *     This method is responsible for offloading all unsynced data from low-frequency sources.
+     *     The data is offloaded to an SQLite database.
+     * </p>
+     *
+     * @param dsc <code>DataSourceClient</code> to upload.
+     * @param ccWebAPICalls <code>CerebralCortex</code> Web API Calls.
+     * @param ar Authorization response.
+     * @param dsMetadata Metadata for the data stream.
+     * @param dbLogger Database logger
+     */
+    private void publishDataStream(DataSourceClient dsc, CCWebAPICalls ccWebAPICalls, AuthResponse ar,
+                                    DataStream dsMetadata, DatabaseLogger dbLogger) {
         Log.d("abc", "upload start...  id=" + dsc.getDs_id() + " source=" + dsc.getDataSource().getType());
         boolean cont = true;
-
         int BLOCK_SIZE_LIMIT = Constants.DATA_BLOCK_SIZE_LIMIT;
-
         long count = 0;
-
         while (cont) {
             cont = false;
 
@@ -125,7 +166,6 @@ public class CerebralCortexWrapper extends Thread {
 
             objects = dbLogger.queryLastKey(dsc.getDs_id(), Constants.DATA_BLOCK_SIZE_LIMIT);
             count = dbLogger.queryCount(dsc.getDs_id(), true).getSample();
-
 
             if (objects.size() > 0) {
                 String outputTempFile = FileManager.getDirectory(context, FileManager.INTERNAL_SDCARD_PREFERRED) + "/upload_temp.gz";
@@ -159,24 +199,44 @@ public class CerebralCortexWrapper extends Thread {
                 cont = true;
             }
         }
-        Log.d("abc", "upload done... prune...  id=" + dsc.getDs_id() + " source=" + dsc.getDataSource().getType());
+        Log.d(TAG, "upload done... prune...  id=" + dsc.getDs_id() + " source=" + dsc.getDataSource().getType());
 
     }
 
+    /**
+     * Frees space on the device by removing any raw data files that have already been synced to the cloud.
+     *
+     * @param prunes ArrayList of data source identifiers to delete.
+     */
     private void deleteArchiveFile(final ArrayList<Integer> prunes) {
         final int[] current = new int[1];
-        if (prunes == null || prunes.size() == 0) return;
+        if (prunes == null || prunes.size() == 0)
+            return;
         current[0] = 0;
         if (subsPrune != null && !subsPrune.isUnsubscribed())
             subsPrune.unsubscribe();
 
         subsPrune = Observable.range(1, 1000000).takeUntil(new Func1<Integer, Boolean>() {
+            /**
+             * Deletes the files in the directory when called.
+             *
+             * @param aLong Needed for proper override.
+             * @return Whether the deletion was completed or not.
+             */
             @Override
             public Boolean call(Integer aLong) {
                 Log.d("abc", "current=" + current[0] + " size=" + prunes.size());
-                if (current[0] >= prunes.size()) return true;
+                if (current[0] >= prunes.size())
+                    return true;
                 File directory = new File(raw_directory + "/raw" + current[0]);
                 FilenameFilter ff = new FilenameFilter() {
+                    /**
+                     * Method checks if the file is marked archive or corrupt.
+                     *
+                     * @param dir Directory the file is in.
+                     * @param filename File to check.
+                     * @return Whether the file is acceptable or not.
+                     */
                     @Override
                     public boolean accept(File dir, String filename) {
                         if (filename.contains("_archive") || filename.contains("_corrupt"))
@@ -193,27 +253,39 @@ public class CerebralCortexWrapper extends Thread {
             }
         }).subscribe(new Observer<Integer>() {
             @Override
-            public void onCompleted() {
-
-            }
+            public void onCompleted() {}
 
             @Override
-            public void onError(Throwable e) {
-
-            }
+            public void onError(Throwable e) {}
 
             @Override
-            public void onNext(Integer aLong) {
-
-            }
+            public void onNext(Integer aLong) {}
         });
-
     }
 
-
-    private void publishDataFiles(DataSourceClient dsc, CCWebAPICalls ccWebAPICalls, AuthResponse ar, DataStream dsMetadata)  {
+    /**
+     * Main upload method for an individual raw <code>DataStream</code>.
+     *
+     * <p>
+     *     This method is responsible for offloading all unsynced data from high-frequency sources.
+     * </p>
+     *
+     * @param dsc <code>DataSourceClient</code>
+     * @param ccWebAPICalls
+     * @param ar
+     * @param dsMetadata Metadata for the given data stream.
+     */
+    private void publishDataFiles(DataSourceClient dsc, CCWebAPICalls ccWebAPICalls, AuthResponse ar,
+                                    DataStream dsMetadata)  {
         File directory = new File(raw_directory + "/raw" + dsc.getDs_id());
         FilenameFilter ff = new FilenameFilter() {
+            /**
+             * Method checks if the file is marked archive or corrupt and if so, rejects them.
+             *
+             * @param dir Directory the file is in.
+             * @param filename File to check.
+             * @return Whether the file is acceptable or not.
+             */
             @Override
             public boolean accept(File dir, String filename) {
                 if (filename.contains("_archive") || filename.contains("_corrupt"))
@@ -234,30 +306,27 @@ public class CerebralCortexWrapper extends Thread {
                 if (fileTimestamp < currentTimestamp) {
                     Log.d(TAG, file.getAbsolutePath());
 
-                    Boolean resultUpload = ccWebAPICalls.putArchiveDataAndMetadata(ar.getAccessToken().toString(), dsMetadata, file.getAbsolutePath());
+                    Boolean resultUpload = ccWebAPICalls.putArchiveDataAndMetadata(ar.getAccessToken()
+                                                        .toString(), dsMetadata, file.getAbsolutePath());
                     if (resultUpload) {
                         File newFile = new File(file.getAbsolutePath());
                         newFile.delete();
-/*
-                        File newFile = new File(file.getAbsolutePath().replace(".csv.gz", "_archive.csv.gz"));
-                        if (file.renameTo(newFile)) {
-                            Log.d(TAG, "Successfully renamed file: " + file.getAbsolutePath());
-                        }
-*/
                     } else {
                         Log.e(TAG, "Error uploading file: " + file.getName());
                         return;
                     }
                 }
-
             }
-
         }
-
-
     }
 
 
+    /**
+     * Checks if the given data source is in the restricted list.
+     *
+     * @param dsc <code>DataSourceClient</code> to search for.
+     * @return Whether the given data source is the restricted list.
+     */
     private boolean inRestrictedList(DataSourceClient dsc) {
         for (DataSource d : restricted) {
             if (dsc.getDataSource().getType().equals(d.getType())) {
@@ -266,29 +335,27 @@ public class CerebralCortexWrapper extends Thread {
         }
         return false;
     }
-/*
-    private UserCP readUser(){
-        UserCP userInfo=new UserCP();
-        UserInfoSelection s= new UserInfoSelection();
-        UserInfoCursor c = s.query(context);
-        if(c.moveToNext()) {
-            userInfo.set(c);
-        }
-        c.close();
-        return userInfo;
-    }
-    private ConfigCP readConfig(){
-        ConfigCP configInfo=new ConfigCP();
-        ConfigInfoSelection s= new ConfigInfoSelection();
-        ConfigInfoCursor c = s.query(context);
-        if(c.moveToNext()) {
-            configInfo.set(c);
-        }
-        c.close();
-        return configInfo;
-    }
-*/
 
+    /**
+     * Executes the upload routine.
+     *
+     * <p>
+     *      The upload routine is as follows:
+     *      <ul>
+     *          <li>First, the user is authenticated.</li>
+     *          <li>Then, for each data source:</li>
+     *              <ul>
+     *                  <li>data source is checked for restriction.</li>
+     *                  <li>low frequency network connection type is checked for validity.</li>
+     *                  <li>low frequency data is published to the server.</li>
+     *                  <li>high frequency network connection type is checked for validity.</li>
+     *                  <li>high frequency data is published to the server.</li>
+     *              </ul>
+     *          <li>After all data sources have been published, the synced data is removed from the database.</li>
+     *          <li>And finally, the raw files are deleted.</li>
+     *      </ul>
+     * </p>
+     */
     public void run() {
         if (ServerCP.getServerAddress(context) == null) return;
         Log.w("CerebralCortex", "Starting publishdataKitData");
@@ -318,29 +385,13 @@ public class CerebralCortexWrapper extends Thread {
         CerebralCortexWebApi ccService = ApiUtils.getCCService(serverURL);
         CCWebAPICalls ccWebAPICalls = new CCWebAPICalls(ccService);
 
-        //TODO: The username needs to be available here for the metadata builder
-//        String username = "string";
-
-        //TODO: Either authenticate with Cerebral Cortex service here or pass in the AuthReponse Object
-        //TODO: Password needs hashed with SHA256 to obtains string needed
-//        AuthResponse ar = ccWebAPICalls.authenticateUser(username, "473287f8298dba7163a897908958f7c0eae733e25d2e027992ea2edc9bed2fa8");
+        // Authenticate the user.
         AuthResponse ar = ccWebAPICalls.authenticateUser(username, passwordHash);
-
-
-        //TODO: If authentication fails at any point in time, a prompt should be given to reauthenticate
 
         if (ar != null) {
             messenger("Authenticated with server");
         } else {
             messenger("Authentication Failed");
-/*
-            Intent intent = new Intent();
-            intent.setComponent(new ComponentName("org.md2k.mcerebrum", "org.md2k.mcerebrum.UI.login.ActivityLogin"));
-            PendingIntent pendingIntent=PendingIntent.getActivity(context, 0, intent, 0);
-
-            PugNotification.with(context).load().identifier(312).title("Data upload failed").smallIcon(R.mipmap.ic_launcher)
-                    .message("Data upload failed. Please login again").autoCancel(true).click(pendingIntent).simple().build();
-*/
             return;
         }
 
@@ -349,43 +400,62 @@ public class CerebralCortexWrapper extends Thread {
         ArrayList<Integer> prune = new ArrayList<>();
         ArrayList<Integer> pruneFiles = new ArrayList<>();
 
-
+        // Iterate over the data sources
         for (DataSourceClient dsc : dataSourceClients) {
+
+            // Check if the current data source is on the restricted list.
             if (!inRestrictedList(dsc)) {
                 MetadataBuilder metadataBuilder = new MetadataBuilder();
                 DataStream dsMetadata = metadataBuilder.buildDataStreamMetadata(ar.getUserUuid(), dsc);
 
+                // Check for valid low frequency network connection type.
                 if (isNetworkConnectionValid(network_low_freq)) {
                     Log.d("abc", "trying to upload from database id=" + dsc.getDs_id());
                     messenger("Publishing data for " + dsc.getDs_id() + " (" + dsc.getDataSource().getId() + ":" + dsc.getDataSource().getType() + ") to " + dsMetadata.getIdentifier());
+
+                    // Publish the data to the server.
                     publishDataStream(dsc, ccWebAPICalls, ar, dsMetadata, dbLogger);
                     prune.add(dsc.getDs_id());
                 }
+
+                // Check for valid high frequency network connection type.
                 if (isNetworkConnectionValid(network_high_freq)) {
                     Log.d("abc", "trying to upload from file id=" + dsc.getDs_id());
                     messenger("Publishing raw data for " + dsc.getDs_id() + " (" + dsc.getDataSource().getId() + ":" + dsc.getDataSource().getType() + ") to " + dsMetadata.getIdentifier());
                     pruneFiles.add(dsc.getDs_id());
+
+                    // Publish the data to the server.
                     publishDataFiles(dsc, ccWebAPICalls, ar, dsMetadata);
                 }
             }
         }
-        dbLogger.pruneSyncData(prune);
-        deleteArchiveFile(pruneFiles);
-//        dbLogger.pruneSyncData(dsc.getDs_id());
 
+        // Remove SQLite data that has been synced.
+        dbLogger.pruneSyncData(prune);
+
+        // Delete raw archive files that have been synced.
+        deleteArchiveFile(pruneFiles);
         messenger("Upload Complete");
     }
 
+    /**
+     * Check network connectivity.
+     *
+     * @param value Type of network connection.
+     * @return Whether the network connection is working.
+     */
     private boolean isNetworkConnectionValid(String value) {
-        if (value == null || value.equalsIgnoreCase("ANY")) return true;
-        if (value.equalsIgnoreCase("NONE")) return false;
+        if (value == null || value.equalsIgnoreCase("ANY"))
+            return true;
+        if (value.equalsIgnoreCase("NONE"))
+            return false;
+
         ConnectivityManager manager = (ConnectivityManager) context.getSystemService(CONNECTIVITY_SERVICE);
+
         if (value.equalsIgnoreCase("WIFI")) {
-            return manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI)
-                    .isConnectedOrConnecting();
+            return manager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).isConnectedOrConnecting();
         }
-        return manager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE)
-                .isConnectedOrConnecting();
+        return manager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).isConnectedOrConnecting();
     }
 
 

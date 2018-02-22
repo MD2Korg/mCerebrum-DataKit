@@ -1,7 +1,6 @@
-package org.md2k.datakit;
 /*
- * Copyright (c) 2016, The University of Memphis, MD2K Center
- * - Syed Monowar Hossain <monowar.hossain@gmail.com>
+ * Copyright (c) 2018, The University of Memphis, MD2K Center of Excellence
+ *
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,6 +25,8 @@ package org.md2k.datakit;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+package org.md2k.datakit;
+
 import android.content.Context;
 
 import org.md2k.datakit.cerebralcortex.ServiceCerebralCortex;
@@ -35,7 +36,15 @@ import org.md2k.mcerebrum.commons.permission.ResultCallback;
 import org.md2k.mcerebrum.core.access.MCerebrum;
 import org.md2k.mcerebrum.core.access.MCerebrumInfo;
 
+/**
+ * Initializes <code>MCereburm</code>.
+ */
 public class MyMCerebrumInit extends MCerebrumInfo {
+    /**
+     * Sets background services, permissions, and configurations for <code>MCerebrum</code>.
+     *
+     * @param context Android context
+     */
     @Override
     public void update(final Context context){
         MCerebrum.setBackgroundService(context, ServiceCerebralCortex.class);
@@ -44,9 +53,16 @@ public class MyMCerebrumInit extends MCerebrumInfo {
         MCerebrum.setPermissionActivity(context, ActivityPermission.class);
         MCerebrum.setConfigured(context, true);
         MCerebrum.setConfigureExact(context, true);
+
         if(!MCerebrum.getPermission(context)) {
             PermissionInfo p = new PermissionInfo();
             p.getPermissions(context, new ResultCallback<Boolean>() {
+
+                /**
+                 * Uses <code>result</code> to set <code>MCerebrum</code> permissions.
+                 *
+                 * @param result Result of the callback from <code>p.getPermissions()</code>.
+                 */
                 @Override
                 public void onResult(Boolean result) {
                     MCerebrum.setPermission(context, result);

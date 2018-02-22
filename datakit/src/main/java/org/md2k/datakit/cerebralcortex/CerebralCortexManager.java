@@ -1,23 +1,6 @@
-package org.md2k.datakit.cerebralcortex;
-
-import android.content.Context;
-import android.content.Intent;
-import android.os.Handler;
-import android.support.v4.content.LocalBroadcastManager;
-
-import org.md2k.datakit.configuration.Configuration;
-import org.md2k.datakit.configuration.ConfigurationManager;
-import org.md2k.mcerebrum.core.access.appinfo.AppInfo;
-import org.md2k.mcerebrum.core.access.serverinfo.ServerCP;
-import org.md2k.utilities.Apps;
-
-import java.io.IOException;
-
-
 /*
- * Copyright (c) 2015, The University of Memphis, MD2K Center
- * - Timothy Hnat <twhnat@memphis.edu>
- * - Syed Monowar Hossain <monowar.hossain@gmail.com>
+ * Copyright (c) 2018, The University of Memphis, MD2K Center of Excellence
+ *
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,17 +24,56 @@ import java.io.IOException;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+package org.md2k.datakit.cerebralcortex;
+
+import android.content.Context;
+import android.content.Intent;
+import android.os.Handler;
+import android.support.v4.content.LocalBroadcastManager;
+
+import org.md2k.datakit.configuration.Configuration;
+import org.md2k.datakit.configuration.ConfigurationManager;
+import org.md2k.mcerebrum.core.access.appinfo.AppInfo;
+import org.md2k.mcerebrum.core.access.serverinfo.ServerCP;
+import org.md2k.utilities.Apps;
+
+import java.io.IOException;
+
+/**
+ * Manages the publishing of data to <code>CerebralCortex</code>.
+ */
 public class CerebralCortexManager {
+
+    /** This instance of this class. */
     private static CerebralCortexManager instance;
+
+    /** Instance of <code>CerebralCortexWrapper</code>. */
     private static CerebralCortexWrapper task;
+
+    /** Android context. */
     private Context context;
+
+    /** Whether <code>CerebralCortex</code> is active or not. */
     private boolean active;
+
+    /** Configuration object. */
     private Configuration configuration;
+
+    /** Handler for messages. */
     private Handler handler;
+
+    /**
+     * Runnable that triggers uploading data to <code>CerebralCortex</code>.
+     */
     private Runnable publishData = new Runnable() {
+        /**
+         * Recursively posts upload messages to the handler to push data to <code>CerebralCortex</code>
+         * on the configured upload interval.
+         */
         @Override
         public void run() {
-            if(ServerCP.getServerAddress(context)==null) {
+            if(ServerCP.getServerAddress(context) == null) {
                 LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent("SERVER_ERROR"));
                 stop();
                 return;
@@ -62,41 +84,41 @@ public class CerebralCortexManager {
             try {
                 task = new CerebralCortexWrapper(context, configuration.upload.restricted_datasource);
                 task.setPriority(Thread.MIN_PRIORITY);
-                long time = AppInfo.serviceRunningTime(context.getApplicationContext(), org.md2k.datakit.Constants.SERVICE_NAME);
-                if (time > 0) { //TWH: TEMPORARY
+                long time = AppInfo.serviceRunningTime(context.getApplicationContext(),
+                                                            org.md2k.datakit.Constants.SERVICE_NAME);
+                if (time > 0) {
                     task.start();
                 }
-            } catch (IOException e) {
-/*
-                AlertDialogs.AlertDialog(context, "Error", e.getMessage(), R.drawable.ic_error_red_50dp, "Ok", null, null, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-
-                    }
-                });
-*/
-            }
-
-
+            } catch (IOException e) {}
             handler.postDelayed(publishData, configuration.upload.interval);
         }
     };
 
+    /**
+     * Constructor
+     *
+     * @param context Android context.
+     */
     private CerebralCortexManager(Context context) {
         this.context = context;
         handler = new Handler();
         active = false;
-        configuration=ConfigurationManager.getInstance(context).configuration;
-
-
+        configuration = ConfigurationManager.getInstance(context).configuration;
     }
 
+    /**
+     * Returns this instance of <code>CerebralCortexManager</code>.
+     * @throws IOException
+     */
     public static CerebralCortexManager getInstance(Context context) throws IOException {
         if (instance == null)
             instance = new CerebralCortexManager(context);
         return instance;
     }
 
+    /**
+     * Posts <code>publishData</code> messages to the handler.
+     */
     void start() {
         if (configuration.upload.enabled) {
             active = true;
@@ -104,15 +126,28 @@ public class CerebralCortexManager {
         }
     }
 
+    /**
+     * Determines if <code>CerebralCortex</code> is active.
+     * @return Whether <code>CerebralCortex</code> is active.
+     */
     boolean isActive() {
         return active;
     }
 
+    /**
+     * Sets <code>CerebralCortex</code> to not active and removes any remaining
+     * <code>publishData</code> callbacks from the handler.
+     */
     void stop() {
         active = false;
         handler.removeCallbacks(publishData);
     }
 
+    /**
+     * <code>CerebralCortex</code> is available when <code>configuration</code> is not null.
+     *
+     * @return Whether <code>CerebralCortex</code> is available.
+     */
     boolean isAvailable() {
         return (configuration != null);
     }

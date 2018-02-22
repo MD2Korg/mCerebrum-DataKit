@@ -1,13 +1,6 @@
-package org.md2k.datakit.router;
-
-import org.md2k.datakit.logger.DatabaseLogger;
-import org.md2k.datakitapi.datatype.DataType;
-import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
-import org.md2k.datakitapi.status.Status;
-
-/**
- * Copyright (c) 2015, The University of Memphis, MD2K Center
- * - Syed Monowar Hossain <monowar.hossain@gmail.com>
+/*
+ * Copyright (c) 2018, The University of Memphis, MD2K Center of Excellence
+ *
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,17 +25,52 @@ import org.md2k.datakitapi.status.Status;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+package org.md2k.datakit.router;
+
+import org.md2k.datakit.logger.DatabaseLogger;
+import org.md2k.datakitapi.datatype.DataType;
+import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
+import org.md2k.datakitapi.status.Status;
+
+/**
+ * Manages calls to <code>DatabaseLogger</code>.
+ */
 public class DatabaseSubscriber {
+
+    /** Constant used for logging. <p>Uses <code>class.getSimpleName()</code>.</p> */
     private static final String TAG = DatabaseSubscriber.class.getSimpleName();
+
+    /** <code>DatabaseLogger</code> object used to interact with the database. */
     DatabaseLogger databaseLogger;
+
+    /**
+     * Constructor
+     *
+     * @param databaseLogger Used to interact with the database.
+     */
     public DatabaseSubscriber(DatabaseLogger databaseLogger){
-        this.databaseLogger=databaseLogger;
+        this.databaseLogger = databaseLogger;
     }
 
+    /**
+     * Calls <code>databaseLogger</code> to insert the given data point(s).
+     *
+     * @param ds_id Data source identifier.
+     * @param data Array of data types to insert.
+     * @param isUpdate Whether this insertion is an update.
+     * @return The status after insertion.
+     */
     public Status insert(int ds_id, DataType[] data, boolean isUpdate) {
         return databaseLogger.insert(ds_id, data, isUpdate);
     }
 
+    /**
+     * Calls <code>databaseLogger</code> to insert high frequency data.
+     *
+     * @param ds_id Data source identifier.
+     * @param data Array of data types to insert.
+     * @return The status after insertion.
+     */
     public Status insertHF(int ds_id, DataTypeDoubleArray[] data) {
         return databaseLogger.insertHF(ds_id, data);
     }

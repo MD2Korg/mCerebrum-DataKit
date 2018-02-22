@@ -1,3 +1,30 @@
+/*
+ * Copyright (c) 2018, The University of Memphis, MD2K Center of Excellence
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 package org.md2k.datakit.cerebralcortex;
 
 import android.app.AlertDialog;
@@ -29,39 +56,26 @@ import org.md2k.utilities.Report.Log;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-/*
- * Copyright (c) 2015, The University of Memphis, MD2K Center
- * - Syed Monowar Hossain <monowar.hossain@gmail.com>
- * - Timothy Hnat <twhnat@memphis.edu>
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * * Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer.
- *
- * * Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/**
+ * Preference fragment for <code>CerebralCortex</code> settings.
  */
-
 public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
+
+    /** Constant used for logging. <p>Uses <code>class.getSimpleName()</code>.</p> */
     private static final String TAG = PrefsFragmentCerebralCortexSettings.class.getSimpleName();
+
+    /** <code>Config</code> object made from the default configuration file. */
     Config defaultConfig;
+
+    /** <code>Config</code> object made from the non-default configuration file. */
     Config config;
 
+    /**
+     * Tries to read the default configuration, then the non-default configuration and creates
+     * preferences as they are defined in the configuration files.
+     *
+     * @param savedInstanceState Previous state of this activity, if it existed.
+     */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -85,6 +99,9 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
         setSaveButton();
     }
 
+    /**
+     * Creates a preference for restricting the upload of the user's location.
+     */
     void createPrefRestrictLocation() {
         CheckBoxPreference checkBoxPreference = (CheckBoxPreference) findPreference("restrict_location");
         if (defaultConfig != null) {
@@ -98,6 +115,13 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
             checkBoxPreference.setChecked(false);
         }
         checkBoxPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            /**
+             * Changes the value of the preference.
+             *
+             * @param preference Preference to change.
+             * @param newValue New value for the preference.
+             * @return Whether the change was successful or not.
+             */
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 Log.d(TAG, "check=" + newValue);
@@ -113,6 +137,12 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
         });
     }
 
+    /**
+     * Converts the given timestamp to a string of the format: "HH Hour mm Minute ss Second".
+     *
+     * @param timestamp Timestamp to convert.
+     * @return The string in the format: "HH Hour mm Minute ss Second".
+     */
     String convertTimeToString(long timestamp) {
         String timeStr = "";
         timestamp /= 1000;
@@ -130,6 +160,9 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
         return timeStr;
     }
 
+    /**
+     * Creates a preference for <code>"upload_interval"</code>.
+     */
     void createPrefInterval() {
         final ListPreference listPreference = (ListPreference) findPreference("upload_interval");
         if (defaultConfig != null) {
@@ -143,6 +176,13 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
             listPreference.setSummary(convertTimeToString(config.getUpload_interval()));
         }
         listPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            /**
+             * Allows the user to change given preference.
+             *
+             * @param preference Preference to change.
+             * @param newValue New value of the preference.
+             * @return Whether the change was successful or not.
+             */
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 if ("custom".equals(newValue)) {
@@ -152,11 +192,13 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
                     listPreference.setSummary(convertTimeToString(config.getUpload_interval()));
                 }
                 return false;
-
             }
         });
     }
 
+    /**
+     * Creates a preference for <code>"history_time"</code>.
+     */
     void createPrefHistory() {
         final ListPreference listPreferenceHistory = (ListPreference) findPreference("history_time");
         if (defaultConfig != null) {
@@ -170,6 +212,13 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
             listPreferenceHistory.setSummary(convertTimeToString(config.getHistory_time()));
         }
         listPreferenceHistory.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            /**
+             * Allows the user to change given preference.
+             *
+             * @param preference Preference to change.
+             * @param newValue New value of the preference.
+             * @return Whether the change was successful or not.
+             */
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 if ("custom".equals(newValue)) {
@@ -179,11 +228,14 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
                     listPreferenceHistory.setSummary(convertTimeToString(config.getHistory_time()));
                 }
                 return false;
-
             }
         });
     }
 
+    /**
+     * Show the <code>"upload_interval"</code> editing dialog to the user.
+     * @param preference <code>"upload_interval"</code> perference.
+     */
     void showEditDialog(final Preference preference) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Upload Interval (in Minutes)");
@@ -192,6 +244,12 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
         builder.setView(input);
 
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            /**
+             * Sets the <code>"upload_interval"</code> after the user confirms the new value.
+             *
+             * @param dialog Dialog which received the click.
+             * @param which Which button in the dialog was clicked.
+             */
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 config.setUpload_interval(Long.parseLong(input.getText().toString()) * 60 * 1000);
@@ -199,6 +257,12 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            /**
+             * Cancels the dialog if the user clicks the cancel button.
+             *
+             * @param dialog Dialog which received the click.
+             * @param which Which button in the dialog was clicked.
+             */
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.cancel();
@@ -207,6 +271,10 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
         builder.show();
     }
 
+    /**
+     * Show the <code>"history_time"</code> editing dialog to the user.
+     * @param preference <code>"history_time"</code> perference.
+     */
     void showHistoryEditDialog(final Preference preference) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("History to keep (in Minutes)");
@@ -215,6 +283,12 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
         builder.setView(input);
 
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            /**
+             * Sets the <code>"history_time"</code> after the user confirms the new value.
+             *
+             * @param dialog Dialog which received the click.
+             * @param which Which button in the dialog was clicked.
+             */
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 config.setHistory_time(Long.parseLong(input.getText().toString()) * 60 * 1000);
@@ -222,6 +296,12 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            /**
+             * Cancels the dialog if the user clicks the cancel button.
+             *
+             * @param dialog Dialog which received the click.
+             * @param which Which button in the dialog was clicked.
+             */
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.cancel();
@@ -230,6 +310,9 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
         builder.show();
     }
 
+    /**
+     * Allows the user to change the <code>"api_url"</code> preference.
+     */
     void createPrefAPIURL() {
         EditTextPreference editTextPreference = (EditTextPreference) findPreference("api_url");
         if (defaultConfig != null) {
@@ -244,10 +327,18 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
         }
 
         editTextPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            /**
+             * Sets the new URL for uploading to the user specified value.
+             *
+             * @param preference Preference to change.
+             * @param newValue New value of the preference.
+             * @return Whether the change was successful or not.
+             */
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 String temp = (String) newValue;
-                if (temp == null || temp.length() == 0) return false;
+                if (temp == null || temp.length() == 0)
+                    return false;
                 config.setUrl(temp);
                 preference.setSummary(temp);
                 return false;
@@ -255,6 +346,14 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
         });
     }
 
+    /**
+     * Creates a <code>View</code>.
+     *
+     * @param inflater Android LayoutInflater
+     * @param container Android ViewGroup
+     * @param savedInstanceState Previous state of this activity, if it existed.
+     * @return The <code>View</code> that was created.
+     */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -265,6 +364,9 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
         return v;
     }
 
+    /**
+     * Creates a back button so the user can close this activity.
+     */
     private void setBackButton() {
         final Button button = (Button) getActivity().findViewById(R.id.button_2);
         button.setText("Close");
@@ -275,13 +377,17 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
         });
     }
 
+    /**
+     * Creates a save button so the user can save the current configuration.
+     */
     private void setSaveButton() {
         final Button button = (Button) getActivity().findViewById(R.id.button_1);
         button.setText("Save");
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 if (Apps.isServiceRunning(getActivity(), ServiceCerebralCortex.class.getName())) {
-                    Dialog.simple(getActivity(), "Save and Restart?", "Save configuration file and restart Data Uploader App?", "Yes", "Cancel", new DialogCallback() {
+                    Dialog.simple(getActivity(), "Save and Restart?", "Save configuration file and "
+                            + "restart Data Uploader App?", "Yes", "Cancel", new DialogCallback() {
                         @Override
                         public void onSelected(String value) {
                             switch (value) {
@@ -295,11 +401,11 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
                                     break;
 
                                 case "Cancel":
-                                    Toast.makeText(getActivity(), "!!! Error: Configuration file is not saved.", Toast.LENGTH_LONG).show();
+                                    Toast.makeText(getActivity(), "!!! Error: Configuration file"
+                                            + " is not saved.", Toast.LENGTH_LONG).show();
                                     getActivity().finish();
                                     break;
                             }
-
                         }
                     }).show();
                 } else {
@@ -310,6 +416,9 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
         });
     }
 
+    /**
+     * Saves the configuration file.
+     */
     void saveConfigurationFile() {
         try {
             ConfigManager.write(config);
@@ -318,5 +427,4 @@ public class PrefsFragmentCerebralCortexSettings extends PreferenceFragment {
             Toast.makeText(getActivity(), "!!!Error:" + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
-
 }

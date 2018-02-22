@@ -1,6 +1,6 @@
-package org.md2k.datakit.cerebralcortex;
 /*
- * Copyright (c) 2016, The University of Memphis, MD2K Center
+ * Copyright (c) 2018, The University of Memphis, MD2K Center of Excellence
+ *
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,6 +25,8 @@ package org.md2k.datakit.cerebralcortex;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+package org.md2k.datakit.cerebralcortex;
+
 import java.io.IOException;
 
 import okhttp3.Interceptor;
@@ -37,7 +39,17 @@ import okio.BufferedSink;
 import okio.GzipSink;
 import okio.Okio;
 
+/**
+ * This interceptor compresses the HTTP request body.
+ */
 class GzipRequestInterceptor implements Interceptor {
+    /**
+     * Intercepts HTTP requests and compresses them.
+     *
+     * @param chain The interceptor chain.
+     * @return The compressed HTTP response.
+     * @throws IOException
+     */
     @Override
     public Response intercept(Chain chain) throws IOException {
         Request originalRequest = chain.request();
@@ -47,13 +59,21 @@ class GzipRequestInterceptor implements Interceptor {
 
         Request compressedRequest = originalRequest.newBuilder()
                 .header("Content-Encoding", "gzip")
-                .method(originalRequest.method(), forceContentLength(gzip(originalRequest.body())))
+                .method(originalRequest.method(),
+                        forceContentLength(gzip(originalRequest.body())))
                 .build();
         return chain.proceed(compressedRequest);
     }
 
     /**
-     * https://github.com/square/okhttp/issues/350
+     * Returns a new <code>RequestBody</code> with a <code>contentLength</code> the same size as the
+     * buffer the parametrized <code>RequestBody</code> is written to.
+     *
+     * <p>
+     *     https://github.com/square/okhttp/issues/350
+     * </p>
+     *
+     * @param requestBody <code>RequestBody</code>.
      */
     private RequestBody forceContentLength(final RequestBody requestBody) throws IOException {
         final Buffer buffer = new Buffer();
@@ -76,18 +96,40 @@ class GzipRequestInterceptor implements Interceptor {
         };
     }
 
+    /**
+     *
+     *
+     * @param body <code>RequestBody</code>.
+     * @return A new <code>RequestBody</code>.
+     */
     private RequestBody gzip(final RequestBody body) {
         return new RequestBody() {
+            /**
+             * Returns the content type of the body.
+             *
+             * @return The content type of the body.
+             */
             @Override
             public MediaType contentType() {
                 return body.contentType();
             }
 
+            /**
+             * Returns the compressed content length.
+             *
+             * @return Always returns -1 because we don't know the compressed length in advance.
+             */
             @Override
             public long contentLength() {
-                return -1; // We don't know the compressed length in advance!
+                return -1;
             }
 
+            /**
+             * Writes the <code>RequestBody</code> to a <code>BufferedSink</code>.
+             *
+             * @param sink <code>BufferedSink</code>
+             * @throws IOException
+             */
             @Override
             public void writeTo(BufferedSink sink) throws IOException {
                 BufferedSink gzipSink = Okio.buffer(new GzipSink(sink));

@@ -1,11 +1,6 @@
-package org.md2k.datakit.operation;
-
-import android.content.Context;
-import java.io.IOException;
-
-/**
- * Copyright (c) 2015, The University of Memphis, MD2K Center
- * - Syed Monowar Hossain <monowar.hossain@gmail.com>
+/*
+ * Copyright (c) 2018, The University of Memphis, MD2K Center of Excellence
+ *
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,18 +24,47 @@ import java.io.IOException;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+package org.md2k.datakit.operation;
+
+import android.content.Context;
+import java.io.IOException;
+
+/**
+ * Provides methods for managing data.
+ */
 public class DataManager {
+
+    /** Constant used for logging. <p>Uses <code>class.getSimpleName()</code>.</p> */
     private static final String TAG = DataManager.class.getSimpleName();
+
+    /** Android context. */
     Context context;
-    private static DataManager instance=null;
+
+    /** Instance of a <code>DataManager</code> object. */
+    private static DataManager instance = null;
+
+    /**
+     * Constructor
+     *
+     * @throws IOException
+     */
+    private DataManager(Context context) throws IOException {
+        this.context = context;
+    }
+
+    /**
+     * Returns this instance of the <code>DataManager</code>.
+     *
+     * <p>
+     *   If an instance doesn't already exist, it creates one.
+     * </p>
+     *
+     * @throws IOException
+     */
     public static DataManager getInstance(Context context) throws IOException {
-        if(instance==null)
-            instance=new DataManager(context);
+        if(instance == null)
+            instance = new DataManager(context);
         return instance;
     }
-
-    private DataManager(Context context) throws IOException {
-        this.context=context;
-    }
-
 }
