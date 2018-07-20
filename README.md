@@ -17,8 +17,6 @@ Download and install the latest [DataKit](https://github.com/MD2Korg/mCerebrum-D
 - When done, go back to the folder.
 - Tap on the apk file and select Open/Install. It should be able to install.
 
-## Examples
-
 ## References
 <!-- - [UbiComp 2015](http://ubicomp.org/ubicomp2015/program/accepted-papers.html)
 *cStress: Towards a Gold Standard for Continuous Stress Assessment in the Mobile Environment*
