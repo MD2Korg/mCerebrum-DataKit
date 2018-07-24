@@ -23,7 +23,7 @@ Download and install the latest [DataKit](https://github.com/MD2Korg/mCerebrum-D
 Karen Hovsepian, Mustafa al'absi, Emre Ertin, Thomas Kamarck, Motoshiro Nakajima, Santosh Kumar [pdf](http://dl.acm.org/citation.cfm?id=2807526)
 
 ## Contributing
-Please read our [Contributing Guidelines]() for details on the process for submitting pull requests to us.
+Please read our [Contributing Guidelines](https://md2k.org/software/under-the-hood/contributing) for details on the process for submitting pull requests to us.
 
 We use the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html).
 
