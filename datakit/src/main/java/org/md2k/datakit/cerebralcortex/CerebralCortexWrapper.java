@@ -169,7 +169,7 @@ public class CerebralCortexWrapper extends Thread {
             count = dbLogger.queryCount(dsc.getDs_id(), true).getSample();
 
             if (objects.size() > 0) {
-                String outputTempFile = FileManager.getDirectory(context, FileManager.INTERNAL_SDCARD_PREFERRED) + randomUUID().toString(); // change this to use UUID instead of "/upload_temp.gz"
+                String outputTempFile = FileManager.getDirectory(context, FileManager.INTERNAL_SDCARD_PREFERRED) + randomUUID().toString() + ".gz"; // change this to use UUID instead of "/upload_temp.gz"
                 File outputfile = new File(outputTempFile);
                 try {
                     FileOutputStream output = new FileOutputStream(outputfile, false);
@@ -195,6 +195,8 @@ public class CerebralCortexWrapper extends Thread {
                     Log.e(TAG, "Error uploading file: " + outputTempFile + " for SQLite database dump");
                     return;
                 }
+                // delete the temporary file here
+                outputfile.delete();
             }
             if (objects.size() == BLOCK_SIZE_LIMIT) {
                 cont = true;
