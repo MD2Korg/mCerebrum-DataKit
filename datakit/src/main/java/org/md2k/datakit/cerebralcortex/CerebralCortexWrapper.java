@@ -33,14 +33,16 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
 import android.support.v4.content.LocalBroadcastManager;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import com.google.gson.JsonElement;
+import org.json.JSONObject;
 import org.md2k.datakit.configuration.Configuration;
 import org.md2k.datakit.configuration.ConfigurationManager;
 import org.md2k.datakit.logger.DatabaseLogger;
-import org.md2k.datakitapi.datatype.DataTypeLong;
-import org.md2k.datakitapi.datatype.RowObject;
+import org.md2k.datakitapi.datatype.*;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceBuilder;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
@@ -63,16 +65,18 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.sql.Time;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.zip.GZIPOutputStream;
 
+import org.msgpack.core.MessagePack;
+import org.msgpack.core.MessagePacker;
+import org.msgpack.jackson.dataformat.MessagePackFactory;
 import rx.Observable;
 import rx.Observer;
 import rx.Subscription;
 import rx.functions.Func1;
+
+import com.bosphere.filelogger.FL;
 
 import static android.content.Context.CONNECTIVITY_SERVICE;
 import static java.util.UUID.randomUUID;
@@ -105,6 +109,7 @@ public class CerebralCortexWrapper extends Thread {
 
     /** Subscription for observing file pruning. */
     private Subscription subsPrune;
+
 
     /**
      * Constructor
@@ -157,6 +162,7 @@ public class CerebralCortexWrapper extends Thread {
                                     DataStream dsMetadata, DatabaseLogger dbLogger) {
         Log.d("abc", "upload start...  id=" + dsc.getDs_id() + " source=" + dsc.getDataSource().getType());
         boolean cont = true;
+        boolean canUpload = true;
         int BLOCK_SIZE_LIMIT = Constants.DATA_BLOCK_SIZE_LIMIT;
         long count = 0;
         while (cont) {
@@ -169,41 +175,256 @@ public class CerebralCortexWrapper extends Thread {
             count = dbLogger.queryCount(dsc.getDs_id(), true).getSample();
 
             if (objects.size() > 0) {
-                String outputTempFile = FileManager.getDirectory(context, FileManager.INTERNAL_SDCARD_PREFERRED) + randomUUID().toString() + ".gz"; 
+                List<HashMap<String, String>> dataDescList = dsMetadata.getDataDescriptor();
+                ArrayList<String> headers = new ArrayList<>();
+                headers.add("Timestamp");
+                for (HashMap<String, String> dataDescriptor : dataDescList) {
+                    Log.e("MessagePack", "Generating headers...");
+                    if (dataDescriptor.containsKey("NAME")) {
+                        if (dataDescriptor.get("NAME").isEmpty()) {
+                            FL.w(TAG, "DataDescriptor has no name.");
+                            canUpload = false;
+                        } else {
+                            headers.add(dataDescriptor.get("NAME"));
+                        }
+                    } else if (dataDescriptor.containsKey("name")) {
+                        if (dataDescriptor.get("name").isEmpty()) {
+                            FL.w(TAG, "DataDescriptor has no name.");
+                            canUpload = false;
+                        } else {
+                            headers.add(dataDescriptor.get("name"));
+                        }
+                    } else if (dataDescriptor.containsKey("Name")) {
+                        if (dataDescriptor.get("Name").isEmpty()) {
+                            FL.w(TAG, "DataDescriptor has no name.");
+                            canUpload = false;
+                        } else {
+                            headers.add(dataDescriptor.get("Name"));
+                        }
+                    } else if (dataDescList.size() <= 0) {
+                        FL.e(TAG, "DataDescriptor not properly defined. This datastream (" + dsMetadata.getName() + ") will not be uploaded. Ds_id: " + dsc.getDs_id());
+                        canUpload = false;
+                    }
+                }
+
+                int k = 0;
+                for (String header : headers) {
+                    if (header.contains(" ")) {
+                        Log.e("MessagePack", "Removing spaces...");
+                        headers.set(k, header.replaceAll(" ", "_"));
+                    }
+                    k++;
+                }
+
+                String outputTempFile = FileManager.getDirectory(context, FileManager.INTERNAL_SDCARD_PREFERRED) + dsc.getDs_id() + "-" + randomUUID().toString() + ".msgpack";
                 File outputfile = new File(outputTempFile);
                 try {
-                    FileOutputStream output = new FileOutputStream(outputfile, false);
-                    Writer writer = new OutputStreamWriter(new GZIPOutputStream(output), "UTF-8");
-
-                    for (RowObject obj : objects) {
-                        writer.write(obj.csvString() + "\n");
+                    int datalength = 1;
+                    if (objects.get(0).data instanceof DataTypeBooleanArray) {
+                        datalength = ((DataTypeBooleanArray) objects.get(0).data).getSample().length;
+                    } else if (objects.get(0).data instanceof DataTypeDoubleArray) {
+                        datalength = ((DataTypeDoubleArray) objects.get(0).data).getSample().length;
+                    } else if (objects.get(0).data instanceof DataTypeFloatArray) {
+                        datalength = ((DataTypeFloatArray) objects.get(0).data).getSample().length;
+                    } else if (objects.get(0).data instanceof DataTypeIntArray) {
+                        datalength = ((DataTypeIntArray) objects.get(0).data).getSample().length;
+                    } else if (objects.get(0).data instanceof DataTypeJSONObjectArray) {
+                        datalength = ((DataTypeJSONObjectArray) objects.get(0).data).getSample().size();
+                    } else if (objects.get(0).data instanceof DataTypeLongArray) {
+                        datalength = ((DataTypeLongArray) objects.get(0).data).getSample().length;
+                    } else if (objects.get(0).data instanceof DataTypeStringArray) {
+                        datalength = ((DataTypeStringArray) objects.get(0).data).getSample().length;
                     }
-                    writer.close();
-                    output.close();
-                } catch (IOException e) {
+                    if (datalength > headers.size() - 1) { // -1 because of "Timestamp"
+                        FL.e(TAG, "DataDescriptor not properly defined. This datastream (" + dsMetadata.getName() + ") will not be uploaded. Ds_id: " + dsc.getDs_id());
+                        canUpload = false;
+                        break;
+//                        for (int i = 2; i <= datalength; i++) {
+//                            headers.add("value_" + (i - 1));
+//                        }
+                    }
+
+                    if (canUpload) {
+                        MessagePacker packer = MessagePack.newDefaultPacker(new FileOutputStream(outputfile));
+                        // Pack headers
+                        packer.packArrayHeader(headers.size());
+                        for (String header : headers) {
+                            packer.packString(header);
+                        }
+
+                        for (RowObject row : objects) {  // checks if datatype is an array
+                            // Pack data
+                            packer.packArrayHeader(datalength + 1);
+                            packer.packLong(row.data.getDateTime());
+                            Log.e("MessagePack", "Now packing..." + headers.toString());
+                            packData(packer, row.data);
+                            Log.e("MessagePack", "Packing complete.");
+                        }
+                        packer.close();
+                    }
+                        //                    FileOutputStream output = new FileOutputStream(outputfile, false);
+                        //                    Writer writer = new OutputStreamWriter(new GZIPOutputStream(output), "UTF-8");
+                        //
+                        //                    for (RowObject obj : objects) {
+                        //                        writer.write(obj.csvString() + "\n");
+                        //                    }
+                        //                    writer.close();
+                        //                    output.close();
+                    } catch(IOException e){
                     Log.e("CerebralCortex", "Compressed file creation failed" + e);
                     e.printStackTrace();
                     return;
-                }
+                    }
 
-                messenger("Offloading data: " + dsc.getDs_id() + "(Remaining: " + count + ")");
-                Boolean resultUpload = ccWebAPICalls.putArchiveDataAndMetadata(ar.getAccessToken().toString(), dsMetadata, outputTempFile);
-                if (resultUpload) {
-                    dbLogger.setSyncedBit(dsc.getDs_id(), objects.get(objects.size() - 1).rowKey);
-
-                } else {
-                    Log.e(TAG, "Error uploading file: " + outputTempFile + " for SQLite database dump");
-                    return;
+                    //                messenger("Offloading data: " + dsc.getDs_id() + "(Remaining: " + count + ")");
+                    //                Boolean resultUpload = ccWebAPICalls.putArchiveDataAndMetadata(ar.getAccessToken().toString(), dsMetadata, outputTempFile);
+                    //                if (resultUpload) {
+                    //                    dbLogger.setSyncedBit(dsc.getDs_id(), objects.get(objects.size() - 1).rowKey);
+                    //
+                    //                } else {
+                    //                    Log.e(TAG, "Error uploading file: " + outputTempFile + " for SQLite database dump");
+                    //                    return;
+                    //                }
+                    //                // delete the temporary file here
+                    //                outputfile.delete();
+                if (objects.size() == BLOCK_SIZE_LIMIT) {
+                    cont = true;
                 }
-                // delete the temporary file here
-                outputfile.delete();
-            }
-            if (objects.size() == BLOCK_SIZE_LIMIT) {
-                cont = true;
             }
         }
         Log.d(TAG, "upload done... prune...  id=" + dsc.getDs_id() + " source=" + dsc.getDataSource().getType());
 
+    }
+
+    private MessagePacker packData(MessagePacker packer, DataType data) {
+        try {
+            if (data instanceof DataTypeBoolean) {
+                packer.packBoolean(((DataTypeBoolean) data).getSample());
+                Log.e("MessagePack", "Now packing..." + ((DataTypeBoolean) data).getSample());
+            }
+            else if (data instanceof DataTypeBooleanArray) {
+                if (((DataTypeBooleanArray) data).getSample().length <= 1) {
+                    packer.packBoolean(((DataTypeBooleanArray) data).getSample()[0]);
+                    Log.e("MessagePack", "Now packing array..." + ((DataTypeBooleanArray) data).getSample()[0]);
+                } else {
+                    for (boolean datapoint : ((DataTypeBooleanArray) data).getSample()) {
+                        Log.e("MessagePack", "Now packing array..." + datapoint);
+                        packer.packBoolean(datapoint);
+                    }
+                }
+            }
+            else if (data instanceof DataTypeByte) {
+                packer.packByte(((DataTypeByte) data).getSample());
+                Log.e("MessagePack", "Now packing..." + ((DataTypeByte) data).getSample());
+            }
+            else if (data instanceof DataTypeByteArray) {
+                if (((DataTypeByteArray) data).getSample().length <=1 ) {
+                    packer.packByte(((DataTypeByteArray) data).getSample()[0]);
+                    Log.e("MessagePack", "Now packing..." + ((DataTypeByteArray) data).getSample()[0]);
+                } else {
+                    for (byte datapoint : ((DataTypeByteArray) data).getSample()) {
+                        Log.e("MessagePack", "Now packing array..." + datapoint);
+                        packer.packByte(datapoint);
+                    }
+                }
+            }
+            else if (data instanceof DataTypeDouble) {
+                packer.packDouble(((DataTypeDouble) data).getSample());
+                Log.e("MessagePack", "Now packing..." + ((DataTypeDouble) data).getSample());
+            }
+            else if (data instanceof DataTypeDoubleArray) {
+                if (((DataTypeDoubleArray) data).getSample().length <= 1) {
+                    packer.packDouble(((DataTypeDoubleArray) data).getSample()[0]);
+                    Log.e("MessagePack", "Now packing..." + ((DataTypeDoubleArray) data).getSample()[0]);
+                } else {
+                    Log.e("MessagePack", "array length: " + ((DataTypeDoubleArray) data).getSample().length);
+                    for (double datapoint : ((DataTypeDoubleArray) data).getSample()) {
+                        Log.e("MessagePack", "Now packing double array..." + datapoint);
+                        packer.packDouble(datapoint);
+                    }
+                }
+            }
+            else if (data instanceof DataTypeFloat) {
+                packer.packFloat(((DataTypeFloat) data).getSample());
+                Log.e("MessagePack", "Now packing..." + ((DataTypeFloat) data).getSample());
+            }
+            else if (data instanceof DataTypeFloatArray) {
+                if (((DataTypeFloatArray) data).getSample().length <= 1) {
+                    packer.packFloat(((DataTypeFloatArray) data).getSample()[0]);
+                    Log.e("MessagePack", "Now packing..." + ((DataTypeFloatArray) data).getSample()[0]);
+                } else {
+                    for (float datapoint : ((DataTypeFloatArray) data).getSample()) {
+                        Log.e("MessagePack", "Now packing array..." + datapoint);
+                        packer.packFloat(datapoint);
+                    }
+                }
+            }
+            else if (data instanceof DataTypeInt) {
+                packer.packInt(((DataTypeInt) data).getSample());
+                Log.e("MessagePack", "Now packing..." + ((DataTypeInt) data).getSample());
+            }
+            else if (data instanceof DataTypeIntArray) {
+                if (((DataTypeIntArray) data).getSample().length <= 1) {
+                    packer.packInt(((DataTypeIntArray) data).getSample()[0]);
+                    Log.e("MessagePack", "Now packing..." + ((DataTypeIntArray) data).getSample()[0]);
+                } else {
+                    for (int datapoint : ((DataTypeIntArray) data).getSample()) {
+                        Log.e("MessagePack", "Now packing array..." + datapoint);
+                        packer.packInt(datapoint);
+                    }
+                }
+            }
+            else if (data instanceof DataTypeJSONObject) {
+                ObjectMapper objectMapper = new ObjectMapper(new MessagePackFactory());
+                byte[] dataAsBytes = objectMapper.writeValueAsBytes(((DataTypeJSONObject) data).getSample());
+            }
+            else if (data instanceof DataTypeJSONObjectArray) {
+                for (JsonElement datapoint: ((DataTypeJSONObjectArray) data).getSample()) {
+                    ObjectMapper objectMapper = new ObjectMapper(new MessagePackFactory());
+                    byte[] datapointAsBytes = objectMapper.writeValueAsBytes(datapoint);
+                }
+            }
+            else if (data instanceof DataTypeLong) {
+                packer.packLong(((DataTypeLong) data).getSample());
+                Log.e("MessagePack", "Now packing..." + ((DataTypeLong) data).getSample());
+            }
+            else if (data instanceof DataTypeLongArray) {
+                if (((DataTypeLongArray) data).getSample().length <= 1) {
+                    packer.packLong(((DataTypeLongArray) data).getSample()[0]);
+                    Log.e("MessagePack", "Now packing..." + ((DataTypeLongArray) data).getSample()[0]);
+                } else {
+                    for (long datapoint : ((DataTypeLongArray) data).getSample()) {
+                        Log.e("MessagePack", "Now packing array..." + datapoint);
+                        packer.packLong(datapoint);
+                    }
+                }
+            }
+            else if (data instanceof DataTypeString) {
+                try {
+                    packer.packString(((DataTypeString) data).getSample());
+                    Log.e("MessagePack", "Now packing..." + ((DataTypeString) data).getSample());
+                } catch(Exception e) {
+                    Log.e("MessagePack", "Null variable: " + data.toString());
+                    packer.packString("NULL");
+                }
+            }
+            else if (data instanceof DataTypeStringArray) {
+                if (((DataTypeStringArray) data).getSample().length <= 1) {
+                    packer.packString(((DataTypeStringArray) data).getSample()[0]);
+                    Log.e("MessagePack", "Now packing..." + ((DataTypeStringArray) data).getSample()[0]);
+                } else {
+                    for (String datapoint : ((DataTypeStringArray) data).getSample()) {
+                        Log.e("MessagePack", "Now packing array..." + datapoint);
+                        packer.packString(datapoint);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            Log.e("CerebralCortex", "Data packing failed" + e);
+            e.printStackTrace();
+            return packer;
+        }
+        return packer;
     }
 
     /**

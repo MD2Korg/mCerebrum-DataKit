@@ -30,7 +30,14 @@ package org.md2k.datakit;
 import android.app.Application;
 import android.content.Context;
 
+import com.bosphere.filelogger.FL;
+import com.bosphere.filelogger.FLConfig;
+import com.bosphere.filelogger.FLConst;
 import org.md2k.mcerebrum.core.access.MCerebrum;
+import org.md2k.utilities.FileManager;
+
+import java.io.File;
+
 
 /**
  * Starting point for execution.
@@ -48,6 +55,16 @@ public class MyApplication extends Application {
         super.onCreate();
         MCerebrum.init(getApplicationContext(), MyMCerebrumInit.class);
         context = this;
+
+        FL.init(new FLConfig.Builder(this)
+                .minLevel(FLConst.Level.V)
+                .logToFile(true)
+                .dir(new File(FileManager.getDirectory(context, FileManager.INTERNAL_SDCARD_PREFERRED) + "logcat"))
+                .retentionPolicy(FLConst.DEFAULT_MAX_FILE_COUNT) // ~7 days of restless logging
+                .maxFileCount(7) // 7 files
+                .maxTotalSize(1024 * 1024) // 1 mb each
+                .build());
+        FL.setEnabled(true);
     }
 
     /**

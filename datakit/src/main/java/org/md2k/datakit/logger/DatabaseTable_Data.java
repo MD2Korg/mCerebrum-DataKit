@@ -127,20 +127,20 @@ public class DatabaseTable_Data {
     /** Used for turning <code>DataSource</code> objects into byte arrays, or serialization. */
     Kryo kryo;
 
-    /** <code>GzipLogger</code> for creating gzip files of high frequency data. */
-    private gzipLogger gzLogger;
+    /** <code>csvLogger</code> for creating csv files of high frequency data. */
+    private csvLogger csvLogger;
 
     /**
      * Creates a data table in the database if one does not already exist.
      *
      * @param db database to check.
-     * @param gzl <code>GzipLogger</code>.
+     * @param csvl <code>csvLogger</code>.
      */
-    DatabaseTable_Data(SQLiteDatabase db, gzipLogger gzl) {
+    DatabaseTable_Data(SQLiteDatabase db, csvLogger csvl) {
         subscriptionPrune = new SparseArray<Subscription>();
         kryo = new Kryo();
         createIfNotExists(db);
-        gzLogger = gzl;
+        csvLogger = csvl;
     }
 
     /**
@@ -276,7 +276,7 @@ public class DatabaseTable_Data {
     private synchronized Status insertHF(int dataSourceId, DataTypeDoubleArray dataType) {
         Status status = new Status(Status.SUCCESS);
         if (dataType.getDateTime() - lastUnlock >= WAITTIME || hfValueCount >= HFVALUE_LIMIT) {
-            status = gzLogger.insert(hfValues, hfValueCount);
+            status = csvLogger.insert(hfValues, hfValueCount);
             hfValueCount = 0;
             lastUnlock = dataType.getDateTime();
         }

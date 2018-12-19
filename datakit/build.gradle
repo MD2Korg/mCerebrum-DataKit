@@ -18,7 +18,7 @@ apply plugin: 'com.neenbedankt.android-apt'
 repositories {
     maven { url 'https://maven.fabric.io/public' }
 }
-
+/*
 def store_file = "keystore_missing"
 if (hasProperty('MD2K_RELEASE_STORE_FILE')) {
     store_file = MD2K_RELEASE_STORE_FILE
@@ -55,7 +55,7 @@ if (hasProperty('MD2K_RELEASE_KEY_PASSWORD')) {
 } else {
     println "ERROR: " + key_password
 }
-
+*/
 android {
     compileSdkVersion 25
     buildToolsVersion '25.0.3'
@@ -68,7 +68,7 @@ android {
         multiDexEnabled true //important
     }
 
-
+/*
     signingConfigs {
         release {
 
@@ -78,7 +78,7 @@ android {
             keyPassword key_password
         }
     }
-
+*/
     packagingOptions {
         exclude 'META-INF/DEPENDENCIES'
         exclude 'META-INF/NOTICE'
@@ -89,7 +89,7 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
 //            signingConfig getSigningConfig()
-            signingConfig signingConfigs.release
+//            signingConfig signingConfigs.release
             applicationVariants.all { variant ->
                 variant.outputs.each { output ->
                     output.outputFile = new File(output.outputFile.parent, output.outputFile.name.replace("-release", "${variant.versionName}"))
@@ -121,4 +121,10 @@ dependencies {
     compile 'com.squareup.okhttp3:okhttp:3.4.1'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     apt 'com.bluelinelabs:logansquare-compiler:1.3.7'
+    
+    // Things Tilley has added for Messagepack Integration
+    compile 'org.msgpack:msgpack-core:0.8.16'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.7'
+    compile 'org.msgpack:jackson-dataformat-msgpack:0.8.16'
+    compile 'com.github.bosphere.android-filelogger:filelogger:1.0.7'
 }

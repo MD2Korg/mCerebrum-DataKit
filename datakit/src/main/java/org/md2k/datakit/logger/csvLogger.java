@@ -55,7 +55,7 @@ import java.util.zip.GZIPOutputStream;
 /**
  * Class for creating gzip files for high frequency data.
  */
-public class gzipLogger {
+public class csvLogger {
 
     /** Datetime constant. */
     private static final String C_DATETIME = "datetime";
@@ -80,7 +80,7 @@ public class gzipLogger {
      *
      * @param context Android context
      */
-    public gzipLogger(Context context) {
+    public csvLogger(Context context) {
         outputStreams = new HashMap<>();
         Configuration configuration = ConfigurationManager.getInstance(context).configuration;
         RAWDIR = FileManager.getDirectory(context, FileManager.EXTERNAL_SDCARD_PREFERRED) + Constants.RAW_DIRECTORY;

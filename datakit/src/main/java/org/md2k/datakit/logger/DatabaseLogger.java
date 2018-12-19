@@ -67,7 +67,7 @@ public class DatabaseLogger extends SQLiteOpenHelper {
     SQLiteDatabase db = null;
 
     /** <code>GzipLogger</code> */
-    gzipLogger gzLogger = null;
+    csvLogger gzLogger = null;
 
     /**
      * Constructor
@@ -85,7 +85,7 @@ public class DatabaseLogger extends SQLiteOpenHelper {
         Log.d(TAG, "DataBaseLogger() db isopen=" + db.isOpen() + " readonly=" + db.isReadOnly()
                                 + " isWriteAheadLoggingEnabled=" + db.isWriteAheadLoggingEnabled());
         databaseTable_dataSource = new DatabaseTable_DataSource(db);
-        gzLogger = new gzipLogger(context);
+        gzLogger = new csvLogger(context);
         databaseTable_data = new DatabaseTable_Data(db, gzLogger);
     }
 
