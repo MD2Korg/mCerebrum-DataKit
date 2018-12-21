@@ -208,7 +208,7 @@ public class CerebralCortexWrapper extends Thread {
                         for (RowObject row : objects) {  // checks if datatype is an array
                             // Pack data
                             packer.packArrayHeader(datalength + 1);
-                            packer.packLong(row.data.getDateTime());
+                            packer.packLong(row.data.getDateTime() * 1000);
                             packData(packer, row.data);
                         }
                         packer.close();
@@ -224,7 +224,7 @@ public class CerebralCortexWrapper extends Thread {
                             return;
                         }
                         // delete the temporary file here
-                        //zippedmsgpack.delete();
+                        zippedmsgpack.delete();
 
                     } catch (IOException e) {
                         Log.e("CerebralCortex", "MessagePack creation failed" + e);
@@ -439,7 +439,7 @@ public class CerebralCortexWrapper extends Thread {
     private File msgpackZipper(File msgpack) {
         try {
             Log.e("MessagePack", "Opening gzip buffer");
-            String gzipfilename = msgpack.getAbsolutePath() + ".gzip";
+            String gzipfilename = msgpack.getAbsolutePath() + ".gz";
             File gzipfile = new File(gzipfilename);
             FileInputStream input = new FileInputStream(msgpack);
             GZIPOutputStream gzipout = new GZIPOutputStream(new FileOutputStream(gzipfile));
@@ -572,7 +572,7 @@ public class CerebralCortexWrapper extends Thread {
                     File outputfile = new File(file.getAbsolutePath() + ".msgpack");
                     Log.d("HFUpload", "Generating headers");
                     ArrayList<String> headers = generateHeaders(dsMetadata, dsc);
-                    headers.add(1, "Timezone");
+                    headers.add(1, "Localtime");
 
                     try {
                         BufferedReader lineReader = new BufferedReader(new FileReader(file));
@@ -584,6 +584,9 @@ public class CerebralCortexWrapper extends Thread {
 
                         if (canUpload) {
                             MessagePacker rawPacker = MessagePack.newDefaultPacker(new FileOutputStream(outputfile));
+                            rawPacker.packArrayHeader(headers.size());
+                            for (String header: headers)
+                                rawPacker.packString(header);
                             while ((line = lineReader.readLine()) != null) {
                                 String[] lineArray = line.split(",");
                                 if (lineArray.length != headers.size()) {
@@ -592,9 +595,11 @@ public class CerebralCortexWrapper extends Thread {
                                     rawPacker.packArrayHeader(lineArray.length);
                                     int i = 0;
                                     for (String datapoint : lineArray) {
-                                        if (i < 2)
-                                            rawPacker.packLong(Long.parseLong(datapoint));
-                                        else
+                                        if (i < 2) {
+                                            if (i == 0)
+                                                rawPacker.packLong(Long.parseLong(datapoint) * 1000);
+                                            rawPacker.packLong(Long.parseLong(datapoint) + Long.parseLong(lineArray[i - 1]) * 1000);
+                                        } else
                                             rawPacker.packDouble(Double.parseDouble(datapoint));
                                         i++;
                                     }
