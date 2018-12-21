@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -106,20 +107,13 @@ public class csvLogger {
                 outputDir.mkdirs();
                 String date = new SimpleDateFormat("yyyyMMddHH", Locale.US)
                                                         .format(new Date(System.currentTimeMillis()));
-                String filename = date + "_" + ds_id + ".csv.gz";
+                String filename = date + "_" + ds_id + ".csv";
                 File outputfile = new File(outputDir + "/" + filename);
                 FileOutputStream output;
                 try {
-                    output = new FileOutputStream(outputfile, true);
-                    Writer writer = new OutputStreamWriter(new GZIPOutputStream(output), "UTF-8");
+                    Writer writer = new OutputStreamWriter(new FileOutputStream(outputfile, true), StandardCharsets.UTF_8);
                     outputStreams.put(ds_id, writer);
                 } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                    return new Status(Status.INTERNAL_ERROR);
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                    return new Status(Status.INTERNAL_ERROR);
-                } catch (IOException e) {
                     e.printStackTrace();
                     return new Status(Status.INTERNAL_ERROR);
                 }

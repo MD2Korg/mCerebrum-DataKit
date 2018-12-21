@@ -29,7 +29,6 @@ package org.md2k.datakit.cerebralcortex;
 
 import android.content.Context;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
 import android.support.v4.content.LocalBroadcastManager;
 
@@ -38,7 +37,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import com.google.gson.JsonElement;
-import org.json.JSONObject;
 import org.md2k.datakit.configuration.Configuration;
 import org.md2k.datakit.configuration.ConfigurationManager;
 import org.md2k.datakit.logger.DatabaseLogger;
@@ -46,7 +44,6 @@ import org.md2k.datakitapi.datatype.*;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceBuilder;
 import org.md2k.datakitapi.source.datasource.DataSourceClient;
-import org.md2k.datakitapi.time.DateTime;
 import org.md2k.mcerebrum.core.access.serverinfo.ServerCP;
 import org.md2k.mcerebrum.system.cerebralcortexwebapi.CCWebAPICalls;
 import org.md2k.mcerebrum.system.cerebralcortexwebapi.interfaces.CerebralCortexWebApi;
@@ -57,12 +54,7 @@ import org.md2k.mcerebrum.system.cerebralcortexwebapi.utils.ApiUtils;
 import org.md2k.utilities.FileManager;
 import org.md2k.utilities.Report.Log;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.*;
 import java.sql.Time;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -86,37 +78,59 @@ import static java.util.UUID.randomUUID;
  */
 public class CerebralCortexWrapper extends Thread {
 
-    /** Constant used for logging. <p>Uses <code>class.getSimpleName()</code>.</p> */
+    /**
+     * Constant used for logging. <p>Uses <code>class.getSimpleName()</code>.</p>
+     */
     private static final String TAG = CerebralCortexWrapper.class.getSimpleName();
 
-    /** Directory for raw data. */
+    /**
+     * Directory for raw data.
+     */
     private static String raw_directory = "";
 
-    /** Android context. */
+    /**
+     * Android context.
+     */
     private Context context;
 
-    /** List of restricted or ignored <code>DataSource</code>s. */
+    /**
+     * List of restricted or ignored <code>DataSource</code>s.
+     */
     private List<DataSource> restricted;
 
-    /** Gson */
+    /**
+     * Gson
+     */
     private Gson gson = new GsonBuilder().serializeNulls().create();
 
-    /** Network to use for high frequency uploads. */
+    /**
+     * Network to use for high frequency uploads.
+     */
     private String network_high_freq;
 
-    /** Network to use for low frequency uploads. */
+    /**
+     * Network to use for low frequency uploads.
+     */
     private String network_low_freq;
 
-    /** Subscription for observing file pruning. */
+    /**
+     * Subscription for observing file pruning.
+     */
     private Subscription subsPrune;
+
+    /**
+     * Boolean trigger used to determine if the DataDescriptors are sufficient for the datastream
+     **/
+    private boolean canUpload = true;
 
 
     /**
      * Constructor
      *
      * <p>
-     *     Sets up the uploader and introduces a list of data sources to not be uploaded.
+     * Sets up the uploader and introduces a list of data sources to not be uploaded.
      * </p>
+     *
      * @throws IOException
      */
     public CerebralCortexWrapper(Context context, List<DataSource> restricted) throws IOException {
@@ -127,7 +141,7 @@ public class CerebralCortexWrapper extends Thread {
         this.network_low_freq = configuration.upload.network_low_frequency;
 
         raw_directory = FileManager.getDirectory(context, FileManager.INTERNAL_SDCARD_PREFERRED)
-                                + org.md2k.datakit.Constants.RAW_DIRECTORY;
+                + org.md2k.datakit.Constants.RAW_DIRECTORY;
     }
 
     /**
@@ -148,26 +162,25 @@ public class CerebralCortexWrapper extends Thread {
      * Main upload method for an individual <code>DataStream</code>.
      *
      * <p>
-     *     This method is responsible for offloading all unsynced data from low-frequency sources.
-     *     The data is offloaded to an SQLite database.
+     * This method is responsible for offloading all unsynced data from low-frequency sources.
+     * The data is offloaded to an SQLite database.
      * </p>
      *
-     * @param dsc <code>DataSourceClient</code> to upload.
+     * @param dsc           <code>DataSourceClient</code> to upload.
      * @param ccWebAPICalls <code>CerebralCortex</code> Web API Calls.
-     * @param ar Authorization response.
-     * @param dsMetadata Metadata for the data stream.
-     * @param dbLogger Database logger
+     * @param ar            Authorization response.
+     * @param dsMetadata    Metadata for the data stream.
+     * @param dbLogger      Database logger
      */
     private void publishDataStream(DataSourceClient dsc, CCWebAPICalls ccWebAPICalls, AuthResponse ar,
-                                    DataStream dsMetadata, DatabaseLogger dbLogger) {
+                                   DataStream dsMetadata, DatabaseLogger dbLogger) {
         Log.d("abc", "upload start...  id=" + dsc.getDs_id() + " source=" + dsc.getDataSource().getType());
         boolean cont = true;
-        boolean canUpload = true;
         int BLOCK_SIZE_LIMIT = Constants.DATA_BLOCK_SIZE_LIMIT;
         long count = 0;
+        canUpload = true;
         while (cont) {
             cont = false;
-
 //Computed Data Store
             List<RowObject> objects;
 
@@ -175,77 +188,17 @@ public class CerebralCortexWrapper extends Thread {
             count = dbLogger.queryCount(dsc.getDs_id(), true).getSample();
 
             if (objects.size() > 0) {
-                List<HashMap<String, String>> dataDescList = dsMetadata.getDataDescriptor();
-                ArrayList<String> headers = new ArrayList<>();
-                headers.add("Timestamp");
-                for (HashMap<String, String> dataDescriptor : dataDescList) {
-                    Log.e("MessagePack", "Generating headers...");
-                    if (dataDescriptor.containsKey("NAME")) {
-                        if (dataDescriptor.get("NAME").isEmpty()) {
-                            FL.w(TAG, "DataDescriptor has no name.");
-                            canUpload = false;
-                        } else {
-                            headers.add(dataDescriptor.get("NAME"));
-                        }
-                    } else if (dataDescriptor.containsKey("name")) {
-                        if (dataDescriptor.get("name").isEmpty()) {
-                            FL.w(TAG, "DataDescriptor has no name.");
-                            canUpload = false;
-                        } else {
-                            headers.add(dataDescriptor.get("name"));
-                        }
-                    } else if (dataDescriptor.containsKey("Name")) {
-                        if (dataDescriptor.get("Name").isEmpty()) {
-                            FL.w(TAG, "DataDescriptor has no name.");
-                            canUpload = false;
-                        } else {
-                            headers.add(dataDescriptor.get("Name"));
-                        }
-                    } else if (dataDescList.size() <= 0) {
-                        FL.e(TAG, "DataDescriptor not properly defined. This datastream (" + dsMetadata.getName() + ") will not be uploaded. Ds_id: " + dsc.getDs_id());
-                        canUpload = false;
-                    }
-                }
+                ArrayList<String> headers = generateHeaders(dsMetadata, dsc);
+                int datalength = determineDataLength(objects, headers, dsMetadata, dsc);
 
-                int k = 0;
-                for (String header : headers) {
-                    if (header.contains(" ")) {
-                        Log.e("MessagePack", "Removing spaces...");
-                        headers.set(k, header.replaceAll(" ", "_"));
-                    }
-                    k++;
-                }
-
-                String outputTempFile = FileManager.getDirectory(context, FileManager.INTERNAL_SDCARD_PREFERRED) + dsc.getDs_id() + "-" + randomUUID().toString() + ".msgpack";
+                String outputTempFile = FileManager.getDirectory(context, FileManager.INTERNAL_SDCARD_PREFERRED) +
+                        dsc.getDs_id() + "-" + randomUUID().toString() + ".msgpack";
                 File outputfile = new File(outputTempFile);
-                try {
-                    int datalength = 1;
-                    if (objects.get(0).data instanceof DataTypeBooleanArray) {
-                        datalength = ((DataTypeBooleanArray) objects.get(0).data).getSample().length;
-                    } else if (objects.get(0).data instanceof DataTypeDoubleArray) {
-                        datalength = ((DataTypeDoubleArray) objects.get(0).data).getSample().length;
-                    } else if (objects.get(0).data instanceof DataTypeFloatArray) {
-                        datalength = ((DataTypeFloatArray) objects.get(0).data).getSample().length;
-                    } else if (objects.get(0).data instanceof DataTypeIntArray) {
-                        datalength = ((DataTypeIntArray) objects.get(0).data).getSample().length;
-                    } else if (objects.get(0).data instanceof DataTypeJSONObjectArray) {
-                        datalength = ((DataTypeJSONObjectArray) objects.get(0).data).getSample().size();
-                    } else if (objects.get(0).data instanceof DataTypeLongArray) {
-                        datalength = ((DataTypeLongArray) objects.get(0).data).getSample().length;
-                    } else if (objects.get(0).data instanceof DataTypeStringArray) {
-                        datalength = ((DataTypeStringArray) objects.get(0).data).getSample().length;
-                    }
-                    if (datalength > headers.size() - 1) { // -1 because of "Timestamp"
-                        FL.e(TAG, "DataDescriptor not properly defined. This datastream (" + dsMetadata.getName() + ") will not be uploaded. Ds_id: " + dsc.getDs_id());
-                        canUpload = false;
-                        break;
-//                        for (int i = 2; i <= datalength; i++) {
-//                            headers.add("value_" + (i - 1));
-//                        }
-                    }
 
-                    if (canUpload) {
+                if (canUpload) {
+                    try {
                         MessagePacker packer = MessagePack.newDefaultPacker(new FileOutputStream(outputfile));
+
                         // Pack headers
                         packer.packArrayHeader(headers.size());
                         for (String header : headers) {
@@ -256,175 +209,256 @@ public class CerebralCortexWrapper extends Thread {
                             // Pack data
                             packer.packArrayHeader(datalength + 1);
                             packer.packLong(row.data.getDateTime());
-                            Log.e("MessagePack", "Now packing..." + headers.toString());
                             packData(packer, row.data);
-                            Log.e("MessagePack", "Packing complete.");
                         }
                         packer.close();
-                    }
-                        //                    FileOutputStream output = new FileOutputStream(outputfile, false);
-                        //                    Writer writer = new OutputStreamWriter(new GZIPOutputStream(output), "UTF-8");
-                        //
-                        //                    for (RowObject obj : objects) {
-                        //                        writer.write(obj.csvString() + "\n");
-                        //                    }
-                        //                    writer.close();
-                        //                    output.close();
-                    } catch(IOException e){
-                    Log.e("CerebralCortex", "Compressed file creation failed" + e);
-                    e.printStackTrace();
-                    return;
+                        File zippedmsgpack = msgpackZipper(outputfile);
+
+                        messenger("Offloading data: " + dsc.getDs_id() + "(Remaining: " + count + ")");
+                        Boolean resultUpload = ccWebAPICalls.putArchiveDataAndMetadata(ar.getAccessToken(), dsMetadata, outputTempFile);
+                        if (resultUpload) {
+                            dbLogger.setSyncedBit(dsc.getDs_id(), objects.get(objects.size() - 1).rowKey);
+
+                        } else {
+                            Log.e(TAG, "Error uploading file: " + outputTempFile + " for SQLite database dump");
+                            return;
+                        }
+                        // delete the temporary file here
+                        //zippedmsgpack.delete();
+
+                    } catch (IOException e) {
+                        Log.e("CerebralCortex", "MessagePack creation failed" + e);
+                        e.printStackTrace();
+                        return;
                     }
 
-                    //                messenger("Offloading data: " + dsc.getDs_id() + "(Remaining: " + count + ")");
-                    //                Boolean resultUpload = ccWebAPICalls.putArchiveDataAndMetadata(ar.getAccessToken().toString(), dsMetadata, outputTempFile);
-                    //                if (resultUpload) {
-                    //                    dbLogger.setSyncedBit(dsc.getDs_id(), objects.get(objects.size() - 1).rowKey);
-                    //
-                    //                } else {
-                    //                    Log.e(TAG, "Error uploading file: " + outputTempFile + " for SQLite database dump");
-                    //                    return;
-                    //                }
-                    //                // delete the temporary file here
-                    //                outputfile.delete();
+
+                } else {
+                    Log.e(TAG, "DataDescriptor not properly defined. This datastream (" + dsMetadata.getName() + ") will not be uploaded. Ds_id: " + dsc.getDs_id());
+                    break;
+                }
                 if (objects.size() == BLOCK_SIZE_LIMIT) {
                     cont = true;
                 }
             }
         }
         Log.d(TAG, "upload done... prune...  id=" + dsc.getDs_id() + " source=" + dsc.getDataSource().getType());
-
     }
 
+    /**
+     * Constructs an ArrayList of headers from the name field of the <code>DataDescriptor</code>.
+     *
+     * @param dsMetadata Metadata of the datastream.
+     * @param dsc        <code>DataSourceClient</code> used to get the <code>Ds_id</code> for troubleshooting.
+     * @return The ArrayList of headers.
+     */
+    private ArrayList<String> generateHeaders(DataStream dsMetadata, DataSourceClient dsc) {
+        List<HashMap<String, String>> dataDescList = dsMetadata.getDataDescriptor();
+        ArrayList<String> headers = new ArrayList<>();
+        headers.add("Timestamp");
+        for (HashMap<String, String> dataDescriptor : dataDescList) {
+            Log.e("MessagePack", "Generating headers...");
+            if (dataDescriptor.containsKey("NAME")) {
+                if (dataDescriptor.get("NAME").isEmpty()) {
+                    FL.w(TAG, "DataDescriptor has no name.");
+                    canUpload = false;
+                } else {
+                    headers.add(dataDescriptor.get("NAME"));
+                }
+            } else if (dataDescriptor.containsKey("name")) {
+                if (dataDescriptor.get("name").isEmpty()) {
+                    FL.w(TAG, "DataDescriptor has no name.");
+                    canUpload = false;
+                } else {
+                    headers.add(dataDescriptor.get("name"));
+                }
+            } else if (dataDescriptor.containsKey("Name")) {
+                if (dataDescriptor.get("Name").isEmpty()) {
+                    FL.w(TAG, "DataDescriptor has no name.");
+                    canUpload = false;
+                } else {
+                    headers.add(dataDescriptor.get("Name"));
+                }
+            } else if (dataDescList.size() <= 0) {
+                FL.e(TAG, "DataDescriptor not properly defined. This datastream (" + dsMetadata.getName() + ") will not be uploaded. Ds_id: " + dsc.getDs_id());
+                canUpload = false;
+            }
+        }
+
+        int k = 0;
+        for (String header : headers) {
+            if (header.contains(" ")) {
+                Log.e("MessagePack", "Removing spaces...");
+                headers.set(k, header.replaceAll(" ", "_"));
+            }
+            k++;
+        }
+        return headers;
+    }
+
+    /**
+     * Determines if the <code>DataDescriptor</code> properly describes each column of data. If the
+     * <code>DataDescriptor</code> and number of data columns aren't the same, the datastream will not be uploaded.
+     *
+     * @param objects    List of <code>RowObjects</code> queried from the database.
+     * @param headers    ArrayList of headers as determined from the <code>DataDescriptor</code>.
+     * @param dsMetadata Metadata of the datastream.
+     * @param dsc        <code>DataSourceClient</code> used to get the <code>Ds_id</code> for troubleshooting.
+     * @return The number of columns of data.
+     */
+    private int determineDataLength(List<RowObject> objects, ArrayList<String> headers, DataStream dsMetadata, DataSourceClient dsc) {
+        int datalength = 1;
+        if (objects.get(0).data instanceof DataTypeBooleanArray) {
+            datalength = ((DataTypeBooleanArray) objects.get(0).data).getSample().length;
+        } else if (objects.get(0).data instanceof DataTypeDoubleArray) {
+            datalength = ((DataTypeDoubleArray) objects.get(0).data).getSample().length;
+        } else if (objects.get(0).data instanceof DataTypeFloatArray) {
+            datalength = ((DataTypeFloatArray) objects.get(0).data).getSample().length;
+        } else if (objects.get(0).data instanceof DataTypeIntArray) {
+            datalength = ((DataTypeIntArray) objects.get(0).data).getSample().length;
+        } else if (objects.get(0).data instanceof DataTypeJSONObjectArray) {
+            datalength = ((DataTypeJSONObjectArray) objects.get(0).data).getSample().size();
+        } else if (objects.get(0).data instanceof DataTypeLongArray) {
+            datalength = ((DataTypeLongArray) objects.get(0).data).getSample().length;
+        } else if (objects.get(0).data instanceof DataTypeStringArray) {
+            datalength = ((DataTypeStringArray) objects.get(0).data).getSample().length;
+        }
+        if (datalength != headers.size() - 1) { // -1 because of "Timestamp"
+            FL.e(TAG, "DataDescriptor not properly defined. This datastream (" + dsMetadata.getName() + ") will not be uploaded. Ds_id: " + dsc.getDs_id());
+            canUpload = false;
+        }
+        return datalength;
+    }
+
+    /**
+     * Determines the specific <code>DataType</code> of the data and packs it accordingly.
+     * Note that Array headers are not packed here as the data's array length is determined in <code>determingDataLength</code>
+     * and packed in <code>publishDataStream</code>.
+     *
+     * @param packer MessagePacker that packs the data into the messagepack buffer.
+     * @param data   Data to pack.
+     * @return The amended MessagePacker.
+     */
     private MessagePacker packData(MessagePacker packer, DataType data) {
         try {
-            if (data instanceof DataTypeBoolean) {
+            if (data instanceof DataTypeBoolean)
                 packer.packBoolean(((DataTypeBoolean) data).getSample());
-                Log.e("MessagePack", "Now packing..." + ((DataTypeBoolean) data).getSample());
-            }
+
             else if (data instanceof DataTypeBooleanArray) {
-                if (((DataTypeBooleanArray) data).getSample().length <= 1) {
+                if (((DataTypeBooleanArray) data).getSample().length <= 1)
                     packer.packBoolean(((DataTypeBooleanArray) data).getSample()[0]);
-                    Log.e("MessagePack", "Now packing array..." + ((DataTypeBooleanArray) data).getSample()[0]);
-                } else {
-                    for (boolean datapoint : ((DataTypeBooleanArray) data).getSample()) {
-                        Log.e("MessagePack", "Now packing array..." + datapoint);
+                else {
+                    for (boolean datapoint : ((DataTypeBooleanArray) data).getSample())
                         packer.packBoolean(datapoint);
-                    }
                 }
-            }
-            else if (data instanceof DataTypeByte) {
+            } else if (data instanceof DataTypeByte)
                 packer.packByte(((DataTypeByte) data).getSample());
-                Log.e("MessagePack", "Now packing..." + ((DataTypeByte) data).getSample());
-            }
+
             else if (data instanceof DataTypeByteArray) {
-                if (((DataTypeByteArray) data).getSample().length <=1 ) {
+                if (((DataTypeByteArray) data).getSample().length <= 1)
                     packer.packByte(((DataTypeByteArray) data).getSample()[0]);
-                    Log.e("MessagePack", "Now packing..." + ((DataTypeByteArray) data).getSample()[0]);
-                } else {
-                    for (byte datapoint : ((DataTypeByteArray) data).getSample()) {
-                        Log.e("MessagePack", "Now packing array..." + datapoint);
+                else {
+                    for (byte datapoint : ((DataTypeByteArray) data).getSample())
                         packer.packByte(datapoint);
-                    }
                 }
-            }
-            else if (data instanceof DataTypeDouble) {
+            } else if (data instanceof DataTypeDouble)
                 packer.packDouble(((DataTypeDouble) data).getSample());
-                Log.e("MessagePack", "Now packing..." + ((DataTypeDouble) data).getSample());
-            }
+
             else if (data instanceof DataTypeDoubleArray) {
-                if (((DataTypeDoubleArray) data).getSample().length <= 1) {
+                if (((DataTypeDoubleArray) data).getSample().length <= 1)
                     packer.packDouble(((DataTypeDoubleArray) data).getSample()[0]);
-                    Log.e("MessagePack", "Now packing..." + ((DataTypeDoubleArray) data).getSample()[0]);
-                } else {
-                    Log.e("MessagePack", "array length: " + ((DataTypeDoubleArray) data).getSample().length);
-                    for (double datapoint : ((DataTypeDoubleArray) data).getSample()) {
-                        Log.e("MessagePack", "Now packing double array..." + datapoint);
+                else {
+                    for (double datapoint : ((DataTypeDoubleArray) data).getSample())
                         packer.packDouble(datapoint);
-                    }
                 }
-            }
-            else if (data instanceof DataTypeFloat) {
+            } else if (data instanceof DataTypeFloat)
                 packer.packFloat(((DataTypeFloat) data).getSample());
-                Log.e("MessagePack", "Now packing..." + ((DataTypeFloat) data).getSample());
-            }
+
             else if (data instanceof DataTypeFloatArray) {
-                if (((DataTypeFloatArray) data).getSample().length <= 1) {
+                if (((DataTypeFloatArray) data).getSample().length <= 1)
                     packer.packFloat(((DataTypeFloatArray) data).getSample()[0]);
-                    Log.e("MessagePack", "Now packing..." + ((DataTypeFloatArray) data).getSample()[0]);
-                } else {
-                    for (float datapoint : ((DataTypeFloatArray) data).getSample()) {
-                        Log.e("MessagePack", "Now packing array..." + datapoint);
+                else {
+                    for (float datapoint : ((DataTypeFloatArray) data).getSample())
                         packer.packFloat(datapoint);
-                    }
                 }
-            }
-            else if (data instanceof DataTypeInt) {
+            } else if (data instanceof DataTypeInt)
                 packer.packInt(((DataTypeInt) data).getSample());
-                Log.e("MessagePack", "Now packing..." + ((DataTypeInt) data).getSample());
-            }
             else if (data instanceof DataTypeIntArray) {
-                if (((DataTypeIntArray) data).getSample().length <= 1) {
+                if (((DataTypeIntArray) data).getSample().length <= 1)
                     packer.packInt(((DataTypeIntArray) data).getSample()[0]);
-                    Log.e("MessagePack", "Now packing..." + ((DataTypeIntArray) data).getSample()[0]);
-                } else {
-                    for (int datapoint : ((DataTypeIntArray) data).getSample()) {
-                        Log.e("MessagePack", "Now packing array..." + datapoint);
+                else {
+                    for (int datapoint : ((DataTypeIntArray) data).getSample())
                         packer.packInt(datapoint);
-                    }
                 }
-            }
-            else if (data instanceof DataTypeJSONObject) {
+            } else if (data instanceof DataTypeJSONObject) {
                 ObjectMapper objectMapper = new ObjectMapper(new MessagePackFactory());
                 byte[] dataAsBytes = objectMapper.writeValueAsBytes(((DataTypeJSONObject) data).getSample());
-            }
-            else if (data instanceof DataTypeJSONObjectArray) {
-                for (JsonElement datapoint: ((DataTypeJSONObjectArray) data).getSample()) {
+            } else if (data instanceof DataTypeJSONObjectArray) {
+                for (JsonElement datapoint : ((DataTypeJSONObjectArray) data).getSample()) {
                     ObjectMapper objectMapper = new ObjectMapper(new MessagePackFactory());
                     byte[] datapointAsBytes = objectMapper.writeValueAsBytes(datapoint);
                 }
-            }
-            else if (data instanceof DataTypeLong) {
+            } else if (data instanceof DataTypeLong)
                 packer.packLong(((DataTypeLong) data).getSample());
-                Log.e("MessagePack", "Now packing..." + ((DataTypeLong) data).getSample());
-            }
+
             else if (data instanceof DataTypeLongArray) {
-                if (((DataTypeLongArray) data).getSample().length <= 1) {
+                if (((DataTypeLongArray) data).getSample().length <= 1)
                     packer.packLong(((DataTypeLongArray) data).getSample()[0]);
-                    Log.e("MessagePack", "Now packing..." + ((DataTypeLongArray) data).getSample()[0]);
-                } else {
-                    for (long datapoint : ((DataTypeLongArray) data).getSample()) {
-                        Log.e("MessagePack", "Now packing array..." + datapoint);
+                else {
+                    for (long datapoint : ((DataTypeLongArray) data).getSample())
                         packer.packLong(datapoint);
-                    }
                 }
-            }
-            else if (data instanceof DataTypeString) {
+            } else if (data instanceof DataTypeString) {
                 try {
                     packer.packString(((DataTypeString) data).getSample());
-                    Log.e("MessagePack", "Now packing..." + ((DataTypeString) data).getSample());
-                } catch(Exception e) {
+                } catch (Exception e) {
                     Log.e("MessagePack", "Null variable: " + data.toString());
                     packer.packString("NULL");
                 }
-            }
-            else if (data instanceof DataTypeStringArray) {
-                if (((DataTypeStringArray) data).getSample().length <= 1) {
+            } else if (data instanceof DataTypeStringArray) {
+                if (((DataTypeStringArray) data).getSample().length <= 1)
                     packer.packString(((DataTypeStringArray) data).getSample()[0]);
-                    Log.e("MessagePack", "Now packing..." + ((DataTypeStringArray) data).getSample()[0]);
-                } else {
-                    for (String datapoint : ((DataTypeStringArray) data).getSample()) {
-                        Log.e("MessagePack", "Now packing array..." + datapoint);
+                else {
+                    for (String datapoint : ((DataTypeStringArray) data).getSample())
                         packer.packString(datapoint);
-                    }
                 }
             }
         } catch (IOException e) {
-            Log.e("CerebralCortex", "Data packing failed" + e);
+            Log.e("MessagePack", "Data packing failed " + e);
             e.printStackTrace();
             return packer;
         }
         return packer;
+    }
+
+    /**
+     * Compresses the given MessagePack file using GZIP. The given MessagePack is deleted after compression.
+     *
+     * @param msgpack MessagePack to compress.
+     */
+    private File msgpackZipper(File msgpack) {
+        try {
+            Log.e("MessagePack", "Opening gzip buffer");
+            String gzipfilename = msgpack.getAbsolutePath() + ".gzip";
+            File gzipfile = new File(gzipfilename);
+            FileInputStream input = new FileInputStream(msgpack);
+            GZIPOutputStream gzipout = new GZIPOutputStream(new FileOutputStream(gzipfile));
+            byte[] buffer = new byte[1024];
+            int len;
+            while ((len = input.read(buffer)) != -1) {
+                Log.e("MessagePack", "Writing buffer");
+                gzipout.write(buffer, 0, len);
+            }
+            Log.e("MessagePack", "Closing files");
+            gzipout.close();
+            input.close();
+            msgpack.delete();
+            return gzipfile;
+        } catch (IOException e) {
+            Log.e("CerebralCortex", "Compressed file creation failed" + e);
+            e.printStackTrace();
+            return msgpack;
+        }
     }
 
     /**
@@ -477,13 +511,16 @@ public class CerebralCortexWrapper extends Thread {
             }
         }).subscribe(new Observer<Integer>() {
             @Override
-            public void onCompleted() {}
+            public void onCompleted() {
+            }
 
             @Override
-            public void onError(Throwable e) {}
+            public void onError(Throwable e) {
+            }
 
             @Override
-            public void onNext(Integer aLong) {}
+            public void onNext(Integer aLong) {
+            }
         });
     }
 
@@ -491,16 +528,18 @@ public class CerebralCortexWrapper extends Thread {
      * Main upload method for an individual raw <code>DataStream</code>.
      *
      * <p>
-     *     This method is responsible for offloading all unsynced data from high-frequency sources.
+     * This method is responsible for offloading all unsynced data from high-frequency sources.
      * </p>
      *
-     * @param dsc <code>DataSourceClient</code>
+     * @param dsc           <code>DataSourceClient</code>
      * @param ccWebAPICalls
      * @param ar
-     * @param dsMetadata Metadata for the given data stream.
+     * @param dsMetadata    Metadata for the given data stream.
      */
     private void publishDataFiles(DataSourceClient dsc, CCWebAPICalls ccWebAPICalls, AuthResponse ar,
-                                    DataStream dsMetadata)  {
+                                  DataStream dsMetadata) {
+        canUpload = true;
+        Log.d("HFUpload", "Starting HFupload");
         File directory = new File(raw_directory + "/raw" + dsc.getDs_id());
         FilenameFilter ff = new FilenameFilter() {
             /**
@@ -530,8 +569,50 @@ public class CerebralCortexWrapper extends Thread {
                 if (fileTimestamp < currentTimestamp) {
                     Log.d(TAG, file.getAbsolutePath());
 
-                    Boolean resultUpload = ccWebAPICalls.putArchiveDataAndMetadata(ar.getAccessToken()
-                                                        .toString(), dsMetadata, file.getAbsolutePath());
+                    File outputfile = new File(file.getAbsolutePath() + ".msgpack");
+                    Log.d("HFUpload", "Generating headers");
+                    ArrayList<String> headers = generateHeaders(dsMetadata, dsc);
+                    headers.add(1, "Timezone");
+
+                    try {
+                        BufferedReader lineReader = new BufferedReader(new FileReader(file));
+                        String line = lineReader.readLine();
+                        String[] firstLineArray = line.split(",");
+                        if (firstLineArray.length != headers.size()) {
+                            canUpload = false;
+                        }
+
+                        if (canUpload) {
+                            MessagePacker rawPacker = MessagePack.newDefaultPacker(new FileOutputStream(outputfile));
+                            while ((line = lineReader.readLine()) != null) {
+                                String[] lineArray = line.split(",");
+                                if (lineArray.length != headers.size()) {
+                                    Log.e(TAG, "Line in raw data file missing or corrupt. Line skipped.");
+                                } else {
+                                    rawPacker.packArrayHeader(lineArray.length);
+                                    int i = 0;
+                                    for (String datapoint : lineArray) {
+                                        if (i < 2)
+                                            rawPacker.packLong(Long.parseLong(datapoint));
+                                        else
+                                            rawPacker.packDouble(Double.parseDouble(datapoint));
+                                        i++;
+                                    }
+                                }
+                            }
+                            rawPacker.close();
+                            msgpackZipper(outputfile);
+                        } else {
+                            Log.e(TAG, "DataDescriptor not properly defined. This datastream (" + dsMetadata.getName() + ") will not be uploaded. Ds_id: " + dsc.getDs_id());
+                            break;
+                        }
+
+                    } catch (IOException e) {
+                        Log.e("CerebralCortex", "Raw Messagepack creation failed " + e);
+                        e.printStackTrace();
+                        return;
+                    }
+                    Boolean resultUpload = ccWebAPICalls.putArchiveDataAndMetadata(ar.getAccessToken(), dsMetadata, file.getAbsolutePath());
                     if (resultUpload) {
                         File newFile = new File(file.getAbsolutePath());
                         newFile.delete();
@@ -564,20 +645,20 @@ public class CerebralCortexWrapper extends Thread {
      * Executes the upload routine.
      *
      * <p>
-     *      The upload routine is as follows:
-     *      <ul>
-     *          <li>First, the user is authenticated.</li>
-     *          <li>Then, for each data source:</li>
-     *              <ul>
-     *                  <li>data source is checked for restriction.</li>
-     *                  <li>low frequency network connection type is checked for validity.</li>
-     *                  <li>low frequency data is published to the server.</li>
-     *                  <li>high frequency network connection type is checked for validity.</li>
-     *                  <li>high frequency data is published to the server.</li>
-     *              </ul>
-     *          <li>After all data sources have been published, the synced data is removed from the database.</li>
-     *          <li>And finally, the raw files are deleted.</li>
-     *      </ul>
+     * The upload routine is as follows:
+     * <ul>
+     * <li>First, the user is authenticated.</li>
+     * <li>Then, for each data source:</li>
+     * <ul>
+     * <li>data source is checked for restriction.</li>
+     * <li>low frequency network connection type is checked for validity.</li>
+     * <li>low frequency data is published to the server.</li>
+     * <li>high frequency network connection type is checked for validity.</li>
+     * <li>high frequency data is published to the server.</li>
+     * </ul>
+     * <li>After all data sources have been published, the synced data is removed from the database.</li>
+     * <li>And finally, the raw files are deleted.</li>
+     * </ul>
      * </p>
      */
     public void run() {
@@ -681,6 +762,4 @@ public class CerebralCortexWrapper extends Thread {
         }
         return manager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).isConnectedOrConnecting();
     }
-
-
 }
