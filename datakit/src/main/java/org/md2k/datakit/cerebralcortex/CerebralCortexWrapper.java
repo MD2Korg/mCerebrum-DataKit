@@ -75,6 +75,7 @@ import rx.Subscription;
 import rx.functions.Func1;
 
 import static android.content.Context.CONNECTIVITY_SERVICE;
+import static java.util.UUID.randomUUID;
 
 /**
  * Provides a wrapper for <code>CerebralCortex</code> API calls.
@@ -168,7 +169,7 @@ public class CerebralCortexWrapper extends Thread {
             count = dbLogger.queryCount(dsc.getDs_id(), true).getSample();
 
             if (objects.size() > 0) {
-                String outputTempFile = FileManager.getDirectory(context, FileManager.INTERNAL_SDCARD_PREFERRED) + "/upload_temp.gz";
+                String outputTempFile = FileManager.getDirectory(context, FileManager.INTERNAL_SDCARD_PREFERRED) + randomUUID().toString() + ".gz"; 
                 File outputfile = new File(outputTempFile);
                 try {
                     FileOutputStream output = new FileOutputStream(outputfile, false);
@@ -194,6 +195,8 @@ public class CerebralCortexWrapper extends Thread {
                     Log.e(TAG, "Error uploading file: " + outputTempFile + " for SQLite database dump");
                     return;
                 }
+                // delete the temporary file here
+                outputfile.delete();
             }
             if (objects.size() == BLOCK_SIZE_LIMIT) {
                 cont = true;
