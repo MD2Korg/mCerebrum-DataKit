@@ -69,7 +69,7 @@ public class PrefsFragmentSettingsDatabase extends PreferenceFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        configuration = ConfigurationManager.getInstance(getActivity()).configuration;
+        configuration = ConfigurationManager.read(getActivity());
         Log.d(TAG, "configuration=" + configuration);
         getPreferenceManager().getSharedPreferences().edit().clear().apply();
         getPreferenceManager().getSharedPreferences().edit().putString("key_storage", configuration.database.location).apply();
@@ -130,7 +130,7 @@ public class PrefsFragmentSettingsDatabase extends PreferenceFragment {
             public void onClick(View v) {
                 SharedPreferences sharedPreferences = getPreferenceManager().getSharedPreferences();
                 configuration.database.location = sharedPreferences.getString("key_storage", configuration.database.location);
-                ConfigurationManager.getInstance(getActivity()).write();
+                ConfigurationManager.write(configuration);
                 Toast.makeText(getActivity(), "Saved...", Toast.LENGTH_LONG).show();
                 setupPreferences();
             }
@@ -161,11 +161,11 @@ public class PrefsFragmentSettingsDatabase extends PreferenceFragment {
     void setupStorage() {
         ListPreference preference = (ListPreference) findPreference("key_storage");
         String storage = getPreferenceManager().getSharedPreferences().getString("key_storage",
-            configuration.database.location);
+                configuration.database.location);
         preference.setValue(storage);
         Log.d(TAG, "shared=" + storage + " config=" + configuration.database.location);
         preference.setSummary(findString(getResources().getStringArray(R.array.sdcard_values),
-            getResources().getStringArray(R.array.sdcard_text), storage));
+                getResources().getStringArray(R.array.sdcard_text), storage));
         preference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             /**
              * Changes the storage location.
@@ -177,7 +177,7 @@ public class PrefsFragmentSettingsDatabase extends PreferenceFragment {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 getPreferenceManager().getSharedPreferences().edit().putString("key_storage",
-                    newValue.toString()).apply();
+                        newValue.toString()).apply();
                 setupPreferences();
                 return false;
             }
@@ -205,9 +205,9 @@ public class PrefsFragmentSettingsDatabase extends PreferenceFragment {
     void setupSDCardSpace() {
         Preference preference = findPreference("key_sdcard_size");
         String location = getPreferenceManager().getSharedPreferences().getString("key_storage",
-            configuration.database.location);
+                configuration.database.location);
         preference.setSummary(FileManager.getLocationType(getActivity(), location) + " ["
-            + FileManager.getSDCardSizeString(getActivity(), location) + "]");
+                + FileManager.getSDCardSizeString(getActivity(), location) + "]");
     }
 
     /**
@@ -216,7 +216,7 @@ public class PrefsFragmentSettingsDatabase extends PreferenceFragment {
     void setupDatabaseSize() {
         Preference preference = findPreference("key_file_size");
         String location = getPreferenceManager().getSharedPreferences().getString("key_storage",
-            configuration.database.location);
+                configuration.database.location);
         long fileSize = FileManager.getFileSize(getActivity(), location, Constants.DATABASE_FILENAME);
         preference.setSummary(FileManager.formatSize(fileSize));
     }
@@ -227,7 +227,7 @@ public class PrefsFragmentSettingsDatabase extends PreferenceFragment {
     void setupDatabaseFile() {
         Preference preference = findPreference("key_directory");
         String location = getPreferenceManager().getSharedPreferences().getString("key_storage",
-            configuration.database.location);
+                configuration.database.location);
         String filename = FileManager.getDirectory(getActivity(), location) + Constants.DATABASE_FILENAME;
         preference.setSummary(filename);
     }
@@ -268,27 +268,27 @@ public class PrefsFragmentSettingsDatabase extends PreferenceFragment {
      */
     void clearDatabase() {
         Dialog.simple(getActivity(), "Clear Database", "Clear Database? \n\n"
-            + "Data can't be recovered after deletion\n\n"
-            + "Some apps may have problems after this operation. If it is, please restart those apps",
-            "Yes", "Cancel", new DialogCallback() {
-                /**
-                 * Calls <code>DatabaseDeleteAsyncTask()</code> or <code>getActivity().finish()</code>
-                 * accordingly.
-                 *
-                 * @param value Value of the selected dialog button.
-                 */
-            @Override
-            public void onSelected(String value) {
-                if (value.equals("Yes")) {
-                    sendLocalBroadcast("stop");
-                    new DatabaseDeleteAsyncTask().execute();
-                } else {
-                    if (getActivity().getIntent().getBooleanExtra("delete", false))
-                        getActivity().finish();
-                }
+                        + "Data can't be recovered after deletion\n\n"
+                        + "Some apps may have problems after this operation. If it is, please restart those apps",
+                "Yes", "Cancel", new DialogCallback() {
+                    /**
+                     * Calls <code>DatabaseDeleteAsyncTask()</code> or <code>getActivity().finish()</code>
+                     * accordingly.
+                     *
+                     * @param value Value of the selected dialog button.
+                     */
+                    @Override
+                    public void onSelected(String value) {
+                        if (value.equals("Yes")) {
+                            sendLocalBroadcast("stop");
+                            new DatabaseDeleteAsyncTask().execute();
+                        } else {
+                            if (getActivity().getIntent().getBooleanExtra("delete", false))
+                                getActivity().finish();
+                        }
 
-            }
-        }).show();
+                    }
+                }).show();
     }
 
     /**
@@ -328,10 +328,8 @@ public class PrefsFragmentSettingsDatabase extends PreferenceFragment {
         @Override
         protected String doInBackground(String... strings) {
             try {
-                String location = ConfigurationManager.getInstance(getActivity())
-                    .configuration.database.location;
-                String filename = FileManager.getDirectory(getActivity(), location)
-                    + Constants.DATABASE_FILENAME;
+                String location = ConfigurationManager.read(getActivity()).database.location;
+                String filename = FileManager.getDirectory(getActivity(), location) + Constants.DATABASE_FILENAME;
                 FileManager.deleteFile(filename);
             } catch (Exception ignored) {}
             return null;

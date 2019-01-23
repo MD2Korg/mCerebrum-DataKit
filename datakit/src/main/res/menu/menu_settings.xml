@@ -3,16 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".AutoSenseActivity">
     <item
-        android:id="@+id/action_about"
-        android:icon="@drawable/ic_info_teal_48dp"
-        android:title="About" />
-    <item
         android:id="@+id/action_settings"
         android:icon="@drawable/ic_settings_white_48dp"
         serviceApp:showAsAction="ifRoom"
         android:title="Settings" />
-    <item
-        android:id="@+id/action_copyright"
-        android:icon="@drawable/ic_copyright_teal_48dp"
-        android:title="Copyright" />
 </menu>

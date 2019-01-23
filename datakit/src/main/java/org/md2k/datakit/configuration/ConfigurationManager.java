@@ -45,63 +45,25 @@ import java.io.InputStreamReader;
  * <code>Configuration</code> objects.
  */
 public class ConfigurationManager {
-
-    /** Configuration object. */
-    public Configuration configuration;
-
-    /** This instance of this class. */
-    private static ConfigurationManager instance = null;
-
-    /**
-     * Returns this instance of <code>ConfigurationManager</code>.
-     *
-     * @param context Android context.
-     * @return This instance of <code>ConfigurationManager</code>.
-     */
-    public static ConfigurationManager getInstance(Context context){
-        if(instance == null) instance = new ConfigurationManager(context);
-        return instance;
-    }
-
-    /**
-     * Constructor
-     *
-     * @param context Android context.
-     */
     private ConfigurationManager(Context context) {
         read(context);
     }
 
-    /**
-     * Creates a <code>Configuration</code> object from the JSON configuration files.
-     *
-     * @param context Android context.
-     */
-    private void read(Context context) {
+    public static Configuration read(Context context) {
         try {
-            configuration = FileManager.readJSON(Constants.CONFIG_DIRECTORY, Constants.CONFIG_FILENAME,
-                                                Configuration.class);
+            return FileManager.readJSON(Constants.CONFIG_DIRECTORY, Constants.CONFIG_FILENAME, Configuration.class);
         } catch (FileNotFoundException e) {
-            readDefault(context);
+            return readDefault(context);
         }
     }
 
-    /**
-     * Creates a <code>Configuration</code> object from the default JSON configuration files.
-     *
-     * @param context Android context
-     */
-    void readDefault(Context context) {
+    private static Configuration readDefault(Context context) {
         BufferedReader br;
         br = new BufferedReader(new InputStreamReader(context.getResources().openRawResource(R.raw.config)));
         Gson gson = new Gson();
-        configuration = gson.fromJson(br, Configuration.class);
+        return gson.fromJson(br, Configuration.class);
     }
-
-    /**
-     * Writes the current <code>configuration</code> to a JSON configuration file.
-     */
-    public void write(){
+    public static void write(Configuration configuration){
         try {
             FileManager.writeJSON(Constants.CONFIG_DIRECTORY, Constants.CONFIG_FILENAME, configuration);
         } catch (IOException e) {

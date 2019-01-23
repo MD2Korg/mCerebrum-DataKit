@@ -54,7 +54,7 @@ public class PrivacyConfiguration {
      */
     public PrivacyConfiguration(Context context){
         this.context = context;
-        privacyConfig = ConfigurationManager.getInstance(context).configuration.privacy;
+        privacyConfig = ConfigurationManager.read(context).privacy;
     }
 
     /**

@@ -85,7 +85,7 @@ public class CerebralCortexManager {
                 task = new CerebralCortexWrapper(context, configuration.upload.restricted_datasource);
                 task.setPriority(Thread.MIN_PRIORITY);
                 long time = AppInfo.serviceRunningTime(context.getApplicationContext(),
-                                                            org.md2k.datakit.Constants.SERVICE_NAME);
+                        org.md2k.datakit.Constants.SERVICE_NAME);
                 if (time > 0) {
                     task.start();
                 }
@@ -103,7 +103,9 @@ public class CerebralCortexManager {
         this.context = context;
         handler = new Handler();
         active = false;
-        configuration = ConfigurationManager.getInstance(context).configuration;
+        configuration=ConfigurationManager.read(context);
+
+
     }
 
     /**

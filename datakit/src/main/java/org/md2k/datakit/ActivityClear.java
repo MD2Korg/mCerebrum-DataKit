@@ -28,20 +28,24 @@
 package org.md2k.datakit;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.AsyncTask;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.Toast;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 
+import org.md2k.datakit.cerebralcortex.ServiceCerebralCortex;
+import org.md2k.datakit.configuration.Configuration;
 import org.md2k.datakit.configuration.ConfigurationManager;
 import org.md2k.mcerebrum.commons.dialog.Dialog;
 import org.md2k.mcerebrum.commons.dialog.DialogCallback;
 import org.md2k.mcerebrum.commons.storage.Storage;
+import org.md2k.utilities.Apps;
 import org.md2k.utilities.FileManager;
 
-import es.dmoral.toasty.Toasty;
 import rx.Observable;
 import rx.Observer;
 import rx.Subscription;
@@ -69,6 +73,10 @@ public class ActivityClear extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_clear);
+        if (Apps.isServiceRunning(this, ServiceCerebralCortex.class.getName())) {
+            Intent intent = new Intent(this, ServiceCerebralCortex.class);
+            stopService(intent);
+        }
         clearData();
     }
 
@@ -77,7 +85,7 @@ public class ActivityClear extends AppCompatActivity {
      */
     void clearData() {
         Dialog.simple(this, "Delete Database & Archive Files?", "Delete Database & Archive Files?"
-            + "\n\nData can't be recovered after deletion", "Yes", "Cancel", new DialogCallback() {
+                + "\n\nData can't be recovered after deletion", "Yes", "Cancel", new DialogCallback() {
 
             /**
              * Calls <code>deleteData()</code> if necessary.
@@ -108,14 +116,17 @@ public class ActivityClear extends AppCompatActivity {
                      */
                     @Override
                     public Boolean call(Boolean aBoolean) {
+                        Intent intent = new Intent("datakit");
+                        intent.putExtra("action", "stop");
+                        LocalBroadcastManager.getInstance(ActivityClear.this).sendBroadcast(intent);
+
                         dialog = Dialog.progressIndeterminate(ActivityClear.this, "Deleting files...").build();
                         dialog.show();
-
-                        String location = ConfigurationManager.getInstance(ActivityClear.this).configuration.archive.location;
+                        Configuration configuration=ConfigurationManager.read(ActivityClear.this);
+                        String location = configuration.archive.location;
                         String directory = FileManager.getDirectory(ActivityClear.this, location);
                         Storage.deleteDir(directory);
-                        location = ConfigurationManager.getInstance(ActivityClear.this).configuration.database.location;
-
+                        location = configuration.database.location;
                         if (!directory.equals(FileManager.getDirectory(ActivityClear.this, location))) {
                             directory = FileManager.getDirectory(ActivityClear.this, location);
                             Storage.deleteDir(directory);
@@ -129,12 +140,19 @@ public class ActivityClear extends AppCompatActivity {
                     @Override
                     public void onCompleted() {
                         dialog.dismiss();
-                        Toasty.success(ActivityClear.this, "Files are deleted.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ActivityClear.this, "Files are deleted.", Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent("datakit");
+                        intent.putExtra("action", "start");
+                        LocalBroadcastManager.getInstance(ActivityClear.this).sendBroadcast(intent);
                         finish();
                     }
 
                     @Override
-                    public void onError(Throwable e) {}
+                    public void onError(Throwable e) {
+                        Intent intent = new Intent("datakit");
+                        intent.putExtra("action", "start");
+                        LocalBroadcastManager.getInstance(ActivityClear.this).sendBroadcast(intent);
+                    }
 
                     @Override
                     public void onNext(Boolean aBoolean) {}
@@ -151,4 +169,51 @@ public class ActivityClear extends AppCompatActivity {
             subscription.unsubscribe();
         super.onDestroy();
     }
+
+/*
+    class DeleteDataAsyncTask extends AsyncTask<String, String, String> {
+
+        DeleteDataAsyncTask() {
+            dialog = new ProgressDialog(ActivityClear.this);
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            // Shows Progress Bar Dialog and then call doInBackground method
+            dialog.setMessage("Deleting database & archive files. Please wait...");
+            dialog.show();
+        }
+
+        @Override
+        protected String doInBackground(String... strings) {
+            try {
+                String location = ConfigurationManager.getInstance(ActivityClear.this).configuration.archive.location;
+                String directory = FileManager.getDirectory(ActivityClear.this, location);
+                FileManager.deleteDirectory(directory);
+                location = ConfigurationManager.getInstance(ActivityClear.this).configuration.database.location;
+                if (!directory.equals(FileManager.getDirectory(ActivityClear.this, location))) {
+                    directory = FileManager.getDirectory(ActivityClear.this, location);
+                    FileManager.deleteDirectory(directory);
+                }
+            } catch (Exception ignored) {
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String file_url) {
+            if (dialog.isShowing()) {
+                dialog.dismiss();
+            }
+//            Toast.makeText(getActivity(), "Database & Archive files are Deleted", Toast.LENGTH_SHORT).show();
+            if (getIntent().getBooleanExtra("delete", false))
+                getActivity().finish();
+            else
+                setPreferences();
+
+        }
+
+    }
+*/
 }

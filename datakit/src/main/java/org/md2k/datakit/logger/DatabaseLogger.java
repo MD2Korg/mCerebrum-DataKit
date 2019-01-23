@@ -96,8 +96,8 @@ public class DatabaseLogger extends SQLiteOpenHelper {
      */
     public static DatabaseLogger getInstance(Context context) throws IOException {
         if (instance == null) {
-            Configuration configuration = ConfigurationManager.getInstance(context).configuration;
-            String directory = FileManager.getDirectory(context, configuration.database.location);
+            Configuration configuration=ConfigurationManager.read(context);
+            String directory=FileManager.getDirectory(context, configuration.database.location);
             Log.d(TAG, "directory=" + directory);
             if (directory != null)
                 instance = new DatabaseLogger(context, directory + Constants.DATABASE_FILENAME);

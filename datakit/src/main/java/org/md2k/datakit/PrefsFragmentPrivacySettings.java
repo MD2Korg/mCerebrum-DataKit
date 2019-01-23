@@ -99,8 +99,12 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
             remainingTime = Long.MAX_VALUE;
         }
         getPreferenceManager().getSharedPreferences().edit().clear().apply();
-        privacyConfig = ConfigurationManager.getInstance(getActivity()).configuration.privacy;
-        newPrivacyData = new PrivacyData();
+        privacyConfig=ConfigurationManager.read(getActivity()).privacy;
+        if(privacyConfig==null){
+            getActivity().finish();
+            return;
+        }
+        newPrivacyData=new PrivacyData();
         handler = new Handler();
         addPreferencesFromResource(R.xml.pref_privacy);
         try {
@@ -212,16 +216,16 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
             ((Button) getActivity().findViewById(R.id.button_1)).setText("Stop");
             pc.setEnabled(false);
             Spannable summary = new SpannableString("ON (" + DateTime
-                                .convertTimestampToTimeStr(privacyManager.getRemainingTime()) + ")");
+                    .convertTimestampToTimeStr(privacyManager.getRemainingTime()) + ")");
             summary.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getActivity(), R.color.red_700)),
-                                0, summary.length(), 0);
+                    0, summary.length(), 0);
             preference.setSummary(summary);
         } else {
             ((Button) getActivity().findViewById(R.id.button_1)).setText("Start");
             pc.setEnabled(true);
             Spannable summary = new SpannableString("OFF");
             summary.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getActivity(), R.color.teal_700)),
-                                0, summary.length(), 0);
+                    0, summary.length(), 0);
             preference.setSummary(summary);
         }
     }
@@ -262,6 +266,11 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
      */
     @Override
     public void onStart(){
+        if(privacyConfig==null){
+            getActivity().finish();
+            super.onStart();
+            return;
+        }
         setupPreferences();
         super.onStart();
     }
@@ -298,7 +307,7 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
         } else {
             Spannable summary = new SpannableString("(Click Here)");
             summary.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getActivity(), R.color.red_700)),
-                0, summary.length(), 0);
+                    0, summary.length(), 0);
             listPreference.setSummary(summary);
         }
         listPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
@@ -350,7 +359,7 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
         } else {
             Spannable summary = new SpannableString("(Click Here)");
             summary.setSpan(new ForegroundColorSpan(ContextCompat.getColor(getActivity(), R.color.red_700)),
-                0, summary.length(), 0);
+                    0, summary.length(), 0);
             listPreference.setSummary(summary);
         }
         listPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {

@@ -64,14 +64,14 @@ public class PrefsFragmentSettingsArchive extends PreferenceFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        configuration = ConfigurationManager.getInstance(getActivity()).configuration;
+        configuration = ConfigurationManager.read(getActivity());
         getPreferenceManager().getSharedPreferences().edit().clear().apply();
         getPreferenceManager().getSharedPreferences().edit()
-            .putBoolean("key_enabled",configuration.archive.enabled).apply();
+                .putBoolean("key_enabled",configuration.archive.enabled).apply();
         getPreferenceManager().getSharedPreferences().edit()
-            .putString("key_storage",configuration.archive.location).apply();
+                .putString("key_storage",configuration.archive.location).apply();
         getPreferenceManager().getSharedPreferences().edit()
-            .putString("key_interval",String.valueOf(configuration.archive.interval)).apply();
+                .putString("key_interval",String.valueOf(configuration.archive.interval)).apply();
         addPreferencesFromResource(R.xml.pref_settings_archive);
         setBackButton();
         setSaveButton();
@@ -84,7 +84,7 @@ public class PrefsFragmentSettingsArchive extends PreferenceFragment {
      */
     void clearArchive() {
         Dialog.simple(getActivity(), "Delete Archive Files?", "Delete Archive Files?"
-            + "\n\nData can't be recovered after deletion", "Yes", "Cancel", new DialogCallback() {
+                + "\n\nData can't be recovered after deletion", "Yes", "Cancel", new DialogCallback() {
             /**
              * Calls <code>ArchiveDeleteAsyncTask()</code> or <code>getActivity().finish()</code> accordingly.
              *
@@ -180,7 +180,7 @@ public class PrefsFragmentSettingsArchive extends PreferenceFragment {
                     Toast.makeText(getActivity(), "Not Saved...not all values are set properly", Toast.LENGTH_LONG).show();
                     return;
                 }
-                ConfigurationManager.getInstance(getActivity()).write();
+                ConfigurationManager.write(configuration);
                 setupPreferences();
                 Toast.makeText(getActivity(),"Saved...",Toast.LENGTH_LONG).show();
             }
@@ -215,7 +215,7 @@ public class PrefsFragmentSettingsArchive extends PreferenceFragment {
     void setupEnabled(){
         SwitchPreference switchPreference = (SwitchPreference) findPreference("key_enabled");
         boolean enabled = getPreferenceManager().getSharedPreferences()
-            .getBoolean("key_enabled", configuration.archive.enabled);
+                .getBoolean("key_enabled", configuration.archive.enabled);
         switchPreference.setChecked(enabled);
     }
 
@@ -225,9 +225,9 @@ public class PrefsFragmentSettingsArchive extends PreferenceFragment {
     void setupSDCardSpace() {
         Preference preference = findPreference("key_sdcard_size");
         String location = getPreferenceManager().getSharedPreferences()
-            .getString("key_storage", configuration.archive.location);
+                .getString("key_storage", configuration.archive.location);
         preference.setSummary(FileManager.getLocationType(getActivity(), location)
-            + " ["+FileManager.getSDCardSizeString(getActivity(), location)+"]");
+                + " ["+FileManager.getSDCardSizeString(getActivity(), location)+"]");
     }
 
     /**
@@ -236,7 +236,7 @@ public class PrefsFragmentSettingsArchive extends PreferenceFragment {
     void setupSize() {
         Preference preference = findPreference("key_file_size");
         String location = getPreferenceManager().getSharedPreferences()
-            .getString("key_storage", configuration.archive.location);
+                .getString("key_storage", configuration.archive.location);
         long fileSize = FileManager.getFileSize(getActivity(), location, Constants.RAW_DIRECTORY);
         preference.setSummary(FileManager.formatSize(fileSize));
     }
@@ -247,10 +247,10 @@ public class PrefsFragmentSettingsArchive extends PreferenceFragment {
     void setupStorage() {
         ListPreference preference = (ListPreference) findPreference("key_storage");
         String storage = getPreferenceManager().getSharedPreferences()
-            .getString("key_storage", configuration.archive.location);
+                .getString("key_storage", configuration.archive.location);
         preference.setValue(storage);
         preference.setSummary(findString(getResources().getStringArray(R.array.sdcard_values),
-            getResources().getStringArray(R.array.sdcard_text), storage));
+                getResources().getStringArray(R.array.sdcard_text), storage));
         preference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             /**
              * Changes the storage location.
@@ -262,7 +262,7 @@ public class PrefsFragmentSettingsArchive extends PreferenceFragment {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 getPreferenceManager().getSharedPreferences().edit().putString("key_storage",
-                    newValue.toString()).apply();
+                        newValue.toString()).apply();
                 setupPreferences();
                 return false;
             }
@@ -290,7 +290,7 @@ public class PrefsFragmentSettingsArchive extends PreferenceFragment {
     void setupDirectory() {
         Preference preference = findPreference("key_directory");
         String location = getPreferenceManager().getSharedPreferences().getString("key_storage",
-            configuration.archive.location);
+                configuration.archive.location);
         String filename = FileManager.getDirectory(getActivity(), location) + Constants.ARCHIVE_DIRECTORY;
         preference.setSummary(filename);
     }
@@ -332,7 +332,7 @@ public class PrefsFragmentSettingsArchive extends PreferenceFragment {
         @Override
         protected String doInBackground(String... strings) {
             try {
-                String location = ConfigurationManager.getInstance(getActivity()).configuration.archive.location;
+                String location = ConfigurationManager.read(getActivity()).archive.location;
                 String filename = FileManager.getDirectory(getActivity(), location) + Constants.ARCHIVE_DIRECTORY;
                 FileManager.deleteFile(filename);
                 String filename1 = FileManager.getDirectory(getActivity(), location) + Constants.RAW_DIRECTORY;

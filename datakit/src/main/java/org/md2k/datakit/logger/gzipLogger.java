@@ -82,7 +82,7 @@ public class gzipLogger {
      */
     public gzipLogger(Context context) {
         outputStreams = new HashMap<>();
-        Configuration configuration = ConfigurationManager.getInstance(context).configuration;
+        Configuration configuration = ConfigurationManager.read(context);
         RAWDIR = FileManager.getDirectory(context, FileManager.EXTERNAL_SDCARD_PREFERRED) + Constants.RAW_DIRECTORY;
     }
 
@@ -96,54 +96,63 @@ public class gzipLogger {
     public Status insert(ContentValues[] hfValues, int hfValueCount) {
         int ds_id;
         DataTypeDoubleArray dta;
-        for (int ii = 0; ii < hfValueCount; ii++) {
-            ContentValues value = hfValues[ii];
-            ds_id = (int) value.get(C_DATASOURCE_ID);
-            dta = DataTypeDoubleArray.fromRawBytes((long) value.get(C_DATETIME), (byte[]) value.get(C_SAMPLE));
+        try {
+            for (int ii = 0; ii < hfValueCount; ii++) {
+                ContentValues value = hfValues[ii];
+                ds_id = (int) value.get(C_DATASOURCE_ID);
+                dta = DataTypeDoubleArray.fromRawBytes((long) value.get(C_DATETIME), (byte[]) value.get(C_SAMPLE));
 
-            if (!outputStreams.containsKey(ds_id)) {
-                File outputDir = new File(RAWDIR + "raw" + ds_id + "/");
-                outputDir.mkdirs();
-                String date = new SimpleDateFormat("yyyyMMddHH", Locale.US)
-                                                        .format(new Date(System.currentTimeMillis()));
-                String filename = date + "_" + ds_id + ".csv.gz";
-                File outputfile = new File(outputDir + "/" + filename);
-                FileOutputStream output;
+                if (!outputStreams.containsKey(ds_id)) {
+                    File outputDir = new File(RAWDIR + "raw" + ds_id + "/");
+                    outputDir.mkdirs();
+                    String date = new SimpleDateFormat("yyyyMMddHH", Locale.US).format(new Date(System.currentTimeMillis()));
+                    String filename = date + "_" + ds_id + ".csv.gz";
+                    File outputfile = new File(outputDir + "/" + filename);
+
+                    FileOutputStream output;
+                    try {
+                        output = new FileOutputStream(outputfile, true);
+                        Writer writer = new OutputStreamWriter(new GZIPOutputStream(output), "UTF-8");
+                        outputStreams.put(ds_id, writer);
+
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                        return new Status(Status.INTERNAL_ERROR);
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                        return new Status(Status.INTERNAL_ERROR);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        return new Status(Status.INTERNAL_ERROR);
+                    }
+                }
+
                 try {
-                    output = new FileOutputStream(outputfile, true);
-                    Writer writer = new OutputStreamWriter(new GZIPOutputStream(output), "UTF-8");
-                    outputStreams.put(ds_id, writer);
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                    return new Status(Status.INTERNAL_ERROR);
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                    return new Status(Status.INTERNAL_ERROR);
+
+                    outputStreams.get(ds_id).write(dta.getDateTime() + ",");
+                    outputStreams.get(ds_id).write("" + tz + ",");
+                    double[] samples = dta.getSample();
+                    for (int i = 0; i < samples.length - 1; i++)
+                        outputStreams.get(ds_id).write(samples[i] + ",");
+                    outputStreams.get(ds_id).write(samples[samples.length - 1] + "\n");
+
                 } catch (IOException e) {
                     e.printStackTrace();
                     return new Status(Status.INTERNAL_ERROR);
                 }
             }
-            try {
-                outputStreams.get(ds_id).write(dta.getDateTime() + ",");
-                outputStreams.get(ds_id).write("" + tz + ",");
-                double[] samples = dta.getSample();
-                for (int i = 0; i < samples.length - 1; i++)
-                    outputStreams.get(ds_id).write(samples[i] + ",");
-                outputStreams.get(ds_id).write(samples[samples.length - 1] + "\n");
-            } catch (IOException e) {
-                e.printStackTrace();
-                return new Status(Status.INTERNAL_ERROR);
+
+            for (Map.Entry<Integer, Writer> e : outputStreams.entrySet()) {
+                try {
+                    e.getValue().close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
             }
+            outputStreams.clear();
+            return new Status(Status.SUCCESS);
+        }catch (Exception e){
+            return new Status(Status.INTERNAL_ERROR);
         }
-        for (Map.Entry<Integer, Writer> e : outputStreams.entrySet()) {
-            try {
-                e.getValue().close();
-            } catch (IOException e1) {
-                e1.printStackTrace();
-            }
-        }
-        outputStreams.clear();
-        return new Status(Status.SUCCESS);
     }
 }

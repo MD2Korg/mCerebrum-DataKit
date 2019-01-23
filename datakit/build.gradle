@@ -1,4 +1,4 @@
-version = '2.0.13'
+version = '2.0.16'
 apply from: 'versioning.gradle'
 buildscript {
     repositories {
@@ -7,58 +7,20 @@ buildscript {
     }
 
     dependencies {
-        classpath 'io.fabric.tools:gradle:1.24.2'
-        classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
+        classpath 'io.fabric.tools:gradle:1.27.0'
     }
 }
 apply plugin: 'com.android.application'
 apply plugin: 'io.fabric'
-apply plugin: 'com.neenbedankt.android-apt'
 
 repositories {
     maven { url 'https://maven.fabric.io/public' }
 }
 
-def store_file = "keystore_missing"
-if (hasProperty('MD2K_RELEASE_STORE_FILE')) {
-    store_file = MD2K_RELEASE_STORE_FILE
-} else if (System.getenv('MD2K_RELEASE_STORE_FILE')) {
-    store_file = System.getenv('MD2K_RELEASE_STORE_FILE')
-} else {
-    println "ERROR: " + store_file
-}
-
-def store_password = "keystore_password_missing"
-if (hasProperty('MD2K_RELEASE_STORE_PASSWORD')) {
-    store_password = MD2K_RELEASE_STORE_PASSWORD
-} else if (System.getenv('MD2K_RELEASE_STORE_PASSWORD')) {
-    store_password = System.getenv('MD2K_RELEASE_STORE_PASSWORD')
-} else {
-    println "ERROR: " + store_password
-}
-
-
-def key_alias = "release_key_alias_missing"
-if (hasProperty('MD2K_RELEASE_KEY_ALIAS')) {
-    key_alias = MD2K_RELEASE_KEY_ALIAS
-} else if (System.getenv('MD2K_RELEASE_KEY_ALIAS')) {
-    key_alias = System.getenv('MD2K_RELEASE_KEY_ALIAS')
-} else {
-    println "ERROR: " + key_alias
-}
-
-def key_password = "release_key_password_missing"
-if (hasProperty('MD2K_RELEASE_KEY_PASSWORD')) {
-    key_password = MD2K_RELEASE_KEY_PASSWORD
-} else if (System.getenv('MD2K_RELEASE_KEY_PASSWORD')) {
-    key_password = System.getenv('MD2K_RELEASE_KEY_PASSWORD')
-} else {
-    println "ERROR: " + key_password
-}
 
 android {
     compileSdkVersion 25
-    buildToolsVersion '25.0.3'
+    buildToolsVersion '28.0.3'
     useLibrary 'org.apache.http.legacy' //For httpclient
     defaultConfig {
         minSdkVersion 19
@@ -71,11 +33,6 @@ android {
 
     signingConfigs {
         release {
-
-            storeFile file(store_file)
-            storePassword store_password
-            keyAlias key_alias
-            keyPassword key_password
         }
     }
 
@@ -91,8 +48,10 @@ android {
 //            signingConfig getSigningConfig()
             signingConfig signingConfigs.release
             applicationVariants.all { variant ->
-                variant.outputs.each { output ->
-                    output.outputFile = new File(output.outputFile.parent, output.outputFile.name.replace("-release", "${variant.versionName}"))
+                variant.outputs.all { output ->
+                    def relativeRootDir = output.packageApplication.outputDirectory.toPath()
+                            .relativize(rootDir.toPath()).toFile()
+                    output.outputFileName = new File("$relativeRootDir/release", outputFileName.replace("-release", "${variant.versionName}"))
                 }
             }
         }
@@ -102,23 +61,29 @@ android {
 }
 
 dependencies {
-    compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile project(':datakitapi')
-    compile project(':core')
-    compile project(':commons')
-    compile project(':utilities')
-    compile('com.crashlytics.sdk.android:crashlytics:2.6.1@aar') {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation project(':datakitapi')
+    implementation project(':core')
+    implementation project(':commons')
+    implementation project(':utilities')
+    implementation('com.crashlytics.sdk.android:crashlytics:2.6.1@aar') {
         transitive = true;
     }
-    compile('org.apache.httpcomponents:httpmime:4.3.6') {
+/*
+    implementation('org.apache.httpcomponents:httpmime:4.3.6') {
         exclude module: "httpclient-android"
     }
-    compile project(path: ':system')
-    compile 'com.android.support:appcompat-v7:25.3.1'
-    compile 'com.esotericsoftware:kryo:3.0.3'
-    compile 'org.apache.httpcomponents:httpclient-android:4.3.5'
-    compile 'com.bluelinelabs:logansquare:1.3.7'
-    compile 'com.squareup.okhttp3:okhttp:3.4.1'
-    compile 'com.android.support.constraint:constraint-layout:1.0.2'
-    apt 'com.bluelinelabs:logansquare-compiler:1.3.7'
+*/
+    implementation project(path: ':system')
+    implementation 'com.android.support:appcompat-v7:25.3.1'
+    implementation 'com.esotericsoftware:kryo:3.0.3'
+    implementation 'org.apache.httpcomponents:httpclient-android:4.3.5'
+    implementation 'com.bluelinelabs:logansquare:1.3.7'
+    implementation 'com.squareup.okhttp3:okhttp:3.4.1'
+    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
+    implementation 'com.google.code.gson:gson:2.8.2'
+    implementation 'io.reactivex:rxjava:1.3.0'
+    implementation 'io.reactivex:rxandroid:1.2.1'
+    implementation 'com.afollestad.material-dialogs:core:0.9.4.5'
+
 }

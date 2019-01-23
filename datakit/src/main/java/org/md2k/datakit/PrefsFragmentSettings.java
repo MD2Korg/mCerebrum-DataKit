@@ -39,6 +39,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ListView;
 
+import org.md2k.datakit.configuration.Configuration;
 import org.md2k.datakit.configuration.ConfigurationManager;
 import org.md2k.mcerebrum.commons.dialog.Dialog;
 import org.md2k.mcerebrum.commons.dialog.DialogCallback;
@@ -69,7 +70,7 @@ public class PrefsFragmentSettings extends PreferenceFragment {
      */
     void clearData() {
         Dialog.simple(getActivity(), "Delete Database & Archive Files?", "Delete Database & Archive Files?"
-            + "\n\nData can't be recovered after deletion", "Yes", "Cancel", new DialogCallback() {
+                + "\n\nData can't be recovered after deletion", "Yes", "Cancel", new DialogCallback() {
             /**
              * Calls <code>DeleteDataAsyncTask()</code> or <code>getActivity().finish()</code> accordingly.
              *
@@ -124,10 +125,11 @@ public class PrefsFragmentSettings extends PreferenceFragment {
         @Override
         protected String doInBackground(String... strings) {
             try {
-                String location = ConfigurationManager.getInstance(getActivity()).configuration.archive.location;
+                Configuration configuration = ConfigurationManager.read(getActivity());
+                String location = configuration.archive.location;
                 String directory = FileManager.getDirectory(getActivity(), location);
                 FileManager.deleteDirectory(directory);
-                location = ConfigurationManager.getInstance(getActivity()).configuration.database.location;
+                location = configuration.database.location;
                 if(!directory.equals(FileManager.getDirectory(getActivity(), location))) {
                     directory = FileManager.getDirectory(getActivity(), location);
                     FileManager.deleteDirectory(directory);

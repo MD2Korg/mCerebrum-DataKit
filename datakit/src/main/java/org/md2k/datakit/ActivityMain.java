@@ -97,7 +97,7 @@ public class ActivityMain extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         long curTime = System.currentTimeMillis();
         Fabric.with(this, new Crashlytics.Builder().core(new CrashlyticsCore.Builder()
-                    .disabled(BuildConfig.DEBUG).build()).build(), new Crashlytics());
+                .disabled(BuildConfig.DEBUG).build()).build(), new Crashlytics());
         setContentView(R.layout.activity_main);
         PermissionInfo permissionInfo = new PermissionInfo();
         permissionInfo.getPermissions(this, new ResultCallback<Boolean>() {
@@ -167,7 +167,7 @@ public class ActivityMain extends AppCompatActivity {
                 if (time < 0) {
                     ((Button) findViewById(R.id.button_app_status)).setText(R.string.inactive);
                     findViewById(R.id.button_app_status).setBackground(ContextCompat.getDrawable(ActivityMain.this,
-                                    R.drawable.button_status_off));
+                            R.drawable.button_status_off));
                 } else {
                     long runtime = time / 1000;
                     int second = (int) (runtime % 60);
@@ -380,23 +380,25 @@ public class ActivityMain extends AppCompatActivity {
                 startActivity(intent);
                 break;
 
+/*
             case R.id.action_about:
-                intent = new Intent(this, ActivityAbout.class);
+  */
+/*              intent = new Intent(this, ActivityAbout.class);
                 try {
-                    intent.putExtra(org.md2k.utilities.Constants.VERSION_CODE,
-                            String.valueOf(this.getPackageManager().getPackageInfo(getPackageName(), 0).versionCode));
-                    intent.putExtra(org.md2k.utilities.Constants.VERSION_NAME, this.getPackageManager()
-                            .getPackageInfo(getPackageName(), 0).versionName);
+                    intent.putExtra(org.md2k.utilities.Constants.VERSION_CODE, String.valueOf(this.getPackageManager().getPackageInfo(getPackageName(), 0).versionCode));
+                    intent.putExtra(org.md2k.utilities.Constants.VERSION_NAME, this.getPackageManager().getPackageInfo(getPackageName(), 0).versionName);
                 } catch (PackageManager.NameNotFoundException e) {
                     e.printStackTrace();
                 }
-                startActivity(intent);
-                break;
 
-            case R.id.action_copyright:
-                intent = new Intent(this, ActivityCopyright.class);
                 startActivity(intent);
+  *//*
+              break;
+            case R.id.action_copyright:
+//                intent = new Intent(this, ActivityCopyright.class);
+//                startActivity(intent);
                 break;
+*/
         }
         return super.onOptionsItemSelected(item);
     }
