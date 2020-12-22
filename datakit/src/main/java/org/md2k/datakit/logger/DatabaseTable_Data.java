@@ -82,7 +82,7 @@ public class DatabaseTable_Data {
     private static final int HFVALUE_LIMIT = 5000;
 
     /** Maximum number of rows in the data table. */
-    private static final int MAX_DATA_ROW = 50000;
+    private static final int MAX_DATA_ROW = 5000;
 
     private SparseArray<Subscription> subscriptionPrune;
 

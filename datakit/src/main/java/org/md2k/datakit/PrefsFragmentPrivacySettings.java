@@ -27,6 +27,8 @@
 
 package org.md2k.datakit;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.ListPreference;
@@ -34,7 +36,6 @@ import android.preference.MultiSelectListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
-import android.support.v4.content.ContextCompat;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
@@ -45,6 +46,8 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import androidx.core.content.ContextCompat;
 
 import org.md2k.datakit.configuration.ConfigurationManager;
 import org.md2k.datakit.configuration.PrivacyConfig;
@@ -59,6 +62,7 @@ import org.md2k.utilities.data_format.privacy.PrivacyType;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashSet;
 
 /**
@@ -96,7 +100,8 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
         if(getActivity().getIntent().hasExtra("REMAINING_TIME")){
             remainingTime = getActivity().getIntent().getLongExtra("REMAINING_TIME",Long.MAX_VALUE);
         }else{
-            remainingTime = Long.MAX_VALUE;
+            remainingTime = 2*60*60*1000-getUsedTime();
+//            remainingTime = 16*60*1000-getUsedTime();
         }
         getPreferenceManager().getSharedPreferences().edit().clear().apply();
         privacyConfig=ConfigurationManager.read(getActivity()).privacy;
@@ -136,6 +141,21 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
     /**
      * Creates a start/stop toggle button and a cancel button.
      */
+    long getUsedTime(){
+        Calendar c = Calendar.getInstance();
+        String id = String.valueOf(c.get(Calendar.YEAR))+String.valueOf(c.get(Calendar.MONTH))+String.valueOf(c.get(Calendar.DAY_OF_MONTH));
+        SharedPreferences sharedPreference = this.getActivity().getSharedPreferences("PRIVACY", Context.MODE_PRIVATE);
+        return sharedPreference.getLong(id, 0);
+    }
+    void setUsedTime(long value){
+        Calendar c = Calendar.getInstance();
+        String id = String.valueOf(c.get(Calendar.YEAR))+String.valueOf(c.get(Calendar.MONTH))+String.valueOf(c.get(Calendar.DAY_OF_MONTH));
+        SharedPreferences sharedPreference = this.getActivity().getSharedPreferences("PRIVACY", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreference.edit();
+        editor.putLong(id, value);
+        editor.commit();
+    }
+
     void setupButtonSaveCancel() {
         final Button buttonStartStop = (Button) getActivity().findViewById(R.id.button_1);
         Button buttonCancel = (Button) getActivity().findViewById(R.id.button_2);
@@ -152,11 +172,18 @@ public class PrefsFragmentPrivacySettings extends PreferenceFragment {
                     PrivacyData privacyData = privacyManager.getPrivacyData();
                     privacyData.setStatus(false);
                     privacyManager.insertPrivacy(privacyData);
+                    long used = getUsedTime();
+                    if(privacyData.getStartTimeStamp()>0){
+                        used = used - privacyData.getDuration().getValue()+(System.currentTimeMillis()-privacyData.getStartTimeStamp());
+                        setUsedTime(used);
+                    }
                     Toast.makeText(getActivity(), "Privacy Mode Off...", Toast.LENGTH_SHORT).show();
                     getActivity().finish();
                 } else {
                     if(preparePrivacyData()) {
                         privacyManager.insertPrivacy(newPrivacyData);
+                        long used = getUsedTime()+newPrivacyData.getDuration().getValue();
+                        setUsedTime(used);
                         Toast.makeText(getActivity(), "Privacy Mode On...", Toast.LENGTH_SHORT).show();
                         getActivity().finish();
                     }

@@ -33,10 +33,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
-import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
+
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import org.md2k.mcerebrum.core.access.serverinfo.ServerCP;
-import org.md2k.utilities.Report.Log;
 
 import java.io.IOException;
 

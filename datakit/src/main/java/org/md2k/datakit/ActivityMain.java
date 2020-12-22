@@ -34,9 +34,10 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.content.LocalBroadcastManager;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -44,14 +45,14 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.crashlytics.android.Crashlytics;
-import com.crashlytics.android.core.CrashlyticsCore;
 
 import org.md2k.datakit.cerebralcortex.CerebralCortexController;
 import org.md2k.datakit.cerebralcortex.ServiceCerebralCortex;
 import org.md2k.datakit.privacy.PrivacyManager;
 import org.md2k.datakitapi.messagehandler.ResultCallback;
 import org.md2k.datakitapi.time.DateTime;
+import org.md2k.mcerebrum.commons.permission.ActivityPermission;
+import org.md2k.mcerebrum.commons.permission.Permission;
 import org.md2k.utilities.Apps;
 import org.md2k.utilities.Report.LogStorage;
 import org.md2k.utilities.UI.ActivityAbout;
@@ -62,8 +63,6 @@ import org.md2k.utilities.permission.PermissionInfo;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-
-import io.fabric.sdk.android.Fabric;
 
 /**
  * Main activity of the application.
@@ -96,9 +95,8 @@ public class ActivityMain extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         long curTime = System.currentTimeMillis();
-        Fabric.with(this, new Crashlytics.Builder().core(new CrashlyticsCore.Builder()
-                .disabled(BuildConfig.DEBUG).build()).build(), new Crashlytics());
         setContentView(R.layout.activity_main);
+
         PermissionInfo permissionInfo = new PermissionInfo();
         permissionInfo.getPermissions(this, new ResultCallback<Boolean>() {
             /**

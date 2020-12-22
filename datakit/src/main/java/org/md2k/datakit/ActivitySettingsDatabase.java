@@ -28,8 +28,9 @@
 package org.md2k.datakit;
 
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import org.md2k.datakitapi.messagehandler.ResultCallback;
 import org.md2k.utilities.permission.PermissionInfo;

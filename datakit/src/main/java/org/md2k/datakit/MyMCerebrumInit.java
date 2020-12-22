@@ -28,9 +28,11 @@
 package org.md2k.datakit;
 
 import android.content.Context;
+import android.content.Intent;
 
 import org.md2k.datakit.cerebralcortex.ServiceCerebralCortex;
 import org.md2k.mcerebrum.commons.permission.ActivityPermission;
+import org.md2k.mcerebrum.commons.permission.Permission;
 import org.md2k.mcerebrum.commons.permission.PermissionInfo;
 import org.md2k.mcerebrum.commons.permission.ResultCallback;
 import org.md2k.mcerebrum.core.access.MCerebrum;
@@ -53,21 +55,11 @@ public class MyMCerebrumInit extends MCerebrumInfo {
         MCerebrum.setPermissionActivity(context, ActivityPermission.class);
         MCerebrum.setConfigured(context, true);
         MCerebrum.setConfigureExact(context, true);
-
-        if(!MCerebrum.getPermission(context)) {
-            PermissionInfo p = new PermissionInfo();
-            p.getPermissions(context, new ResultCallback<Boolean>() {
-
-                /**
-                 * Uses <code>result</code> to set <code>MCerebrum</code> permissions.
-                 *
-                 * @param result Result of the callback from <code>p.getPermissions()</code>.
-                 */
-                @Override
-                public void onResult(Boolean result) {
-                    MCerebrum.setPermission(context, result);
-                }
-            });
+        if (!Permission.hasPermission(context)) {
+            Intent intent = new Intent(context, ActivityPermission.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
         }
+
     }
 }

@@ -38,7 +38,8 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
-import android.support.v4.content.LocalBroadcastManager;
+
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import org.md2k.datakit.cerebralcortex.ServiceCerebralCortex;
 import org.md2k.datakit.message.MessageController;
@@ -64,9 +65,10 @@ public class ServiceDataKit extends Service {
     MessageController messageController;
     Messenger mMessenger;
     IncomingHandler incomingHandler;
+    private boolean isStarted = false;
 
     /** List of connected data sources. */
-    HashMap<String, Messenger> connectedList;
+    HashMap<String, Messenger> connectedList=new HashMap<>();
 
     /** Set of message handlers. */
     HashSet<Messenger> messengers;
@@ -126,6 +128,7 @@ public class ServiceDataKit extends Service {
      */
     void stop() {
         Log.d(TAG, "stop()...");
+        isStarted= false;
         if(Apps.isServiceRunning(this,"org.md2k.datakit.cerebralcortex.ServiceCerebralCortex")){
             Intent intent = new Intent(this, ServiceCerebralCortex.class);
             stopService(intent);
@@ -173,6 +176,8 @@ public class ServiceDataKit extends Service {
      * </p>
      */
     void start() {
+        if(isStarted) return;
+        isStarted=true;
         incomingHandler = new IncomingHandler();
         connectedList = new HashMap<>();
         messengers = new HashSet<>();
@@ -181,6 +186,11 @@ public class ServiceDataKit extends Service {
             messageController = MessageController.getInstance(getApplicationContext());
             mMessenger = new Messenger(incomingHandler);
         } catch (IOException ignored) {}
+
+        if(!Apps.isServiceRunning(this,"org.md2k.datakit.cerebralcortex.ServiceCerebralCortex")){
+            Intent intent = new Intent(this, ServiceCerebralCortex.class);
+            startService(intent);
+        }
     }
 
     /**
@@ -208,6 +218,7 @@ public class ServiceDataKit extends Service {
         Log.d(TAG, "onDestroy()...");
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
         messengers = null;
+        isStarted = false;
         connectedList = null;
         if (messageController != null) {
             messageController.close();
@@ -228,6 +239,7 @@ public class ServiceDataKit extends Service {
         String pName = intent.getStringExtra("name");
         Messenger messenger = intent.getParcelableExtra("messenger");
         Log.d(TAG, "name=" + pName + " messenger=" + messenger);
+        start();
         connectedList.put(pName, messenger);
         messengers.add(messenger);
         return mMessenger.getBinder();

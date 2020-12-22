@@ -28,7 +28,7 @@
 package org.md2k.datakit.cerebralcortex;
 
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.view.MenuItem;
 
 import org.md2k.datakit.R;
